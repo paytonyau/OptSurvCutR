@@ -6,32 +6,32 @@
 
 `OptCutR` provides a comprehensive and flexible workflow to determine, find, and validate optimal cut-points for continuous predictors. It is designed to work with both time-to-event (survival) and binary classification outcomes, making it a versatile tool for researchers in bioinformatics, ecology, medicine, and beyond.
 
+![OptCutR Workflow Diagram](https://i.imgur.com/8J3b2gH.png)
+
 ### Key Features
 
-* **Complete Workflow:** Guides you from determining the *best number* of cuts, to finding their *location*, and finally to *validating* the result.
-* **Multiple Cut-point Discovery:** Implements a genetic algorithm to find two or more cut-points simultaneously, allowing for stratification into three or more risk groups.
-* **Handles Survival and Binary Outcomes:** A unified interface for both time-to-event analysis (using log-rank tests and Cox models) and binary classification (using ROC-based metrics).
-* **Robust Methods:** Includes a majority-vote system based on AUC, Youden's J-index, and other metrics to ensure stable results.
+* 🔎 **Complete Discovery Workflow:** A suite of functions guides you from determining the *best number* of cuts, to finding their *exact location*, and finally to *validating* the stability of the result.
+* 💪 **Two Powerful Search Methods:**
+    * **Systematic Search:** A robust, "brute-force" method that guarantees finding the single best cut-point for both survival and binary outcomes.
+    * **Genetic Algorithm:** An efficient optimization algorithm for finding multiple cut-points simultaneously in survival analysis, allowing for stratification into three or more risk groups.
+* ✨ **User-Friendly Outputs:** All core functions return objects with custom `print()`, `summary()`, and `plot()` methods, providing clean summaries and publication-ready visualizations with single commands.
+* ✅ **Built-in Validation:** Includes a dedicated function for bootstrap validation to assess the stability of discovered cut-points and generate 95% confidence intervals.
 
 ## Package Workflow
 
-The `OptCutR` workflow is built around three main functions:
+The `OptCutR` workflow is built around three main functions designed to be used in sequence for a complete analysis:
 
+1.  **`find_cutpoint_number()`**: The first step in an exploratory survival analysis. Use this to get statistical evidence (using AIC or BIC) for the most plausible number of cut-points for your data.
+2.  **`find_cutpoint()`**: The main workhorse function. After you know how many cuts to look for (or if you have a specific hypothesis), use this to find their exact locations.
+3.  **`validate_cutpoint()`**: The final step. Use this to assess the stability of your discovered cut-point(s) by running a bootstrap analysis and generating confidence intervals.
 
-**find_cutpoint_number()**: The first step in an analysis. Use this to get statistical evidence for the most plausible number of cut-points (e.g., 0, 1, or 2+) for your data.
+The table below outlines the recommended functions and settings for each scenario.
 
-**find_cutpoint()**: The main workhorse function. After you know how many cuts to look for, use this to find their exact locations using either a `"systematic"` search or a `"genetic"` algorithm.
-
-**validate_cutpoint()**: The final step. Use this to assess the stability of your discovered cut-point(s) by running a bootstrap analysis and generating confidence intervals.
-
-The table below outlines the recommended functions and settings for each scenario. 
-
-| Step | Function | Binary Classification | Time-to-Event Analysis (1 Cut-point) | Time-to-Event Analysis (2+ Cut-points) |
-| :--- | :--- | :--- | :--- | :--- |
-| **1 (Optional)** | `find_cutpoint_number()`  | **Purpose:** Justify dichotomization.<br>**Settings:** `method="systematic"`, `criterion="BIC"` | **Purpose:** Justify dichotomization.<br>**Settings:** `method="systematic"`, `criterion="BIC"` | **Purpose:** Justify using multiple cuts.<br>**Settings:** `method="genetic"`, `max_cuts=2` |
-| **2** | `find_cutpoint()` | **Purpose:** Find the best single cut-point.<br>**Settings:** `method="systematic"`, majority vote from ROC metrics. | **Purpose:** Find the best single cut-point.<br>**Settings:** `method="systematic"`, majority vote from survival metrics. | **Purpose:** Find the location of the two best cut-points.<br>**Settings:** `method="genetic"`, `num_cuts=2` |
-| **3 (Optional)** | `validate_cutpoint()` | **Purpose:** Assess stability.<br>**Settings:** `num_replicates=500` | **Purpose:** Assess stability.<br>**Settings:** `num_replicates=500` | **Purpose:** Assess stability.<br>**Settings:** `num_replicates=500` |
-| **Example** | | [miRNA Diagnostics](https://rpubs.com/payton_yau/OptCutR_1) | [Plant Ecology](https://rpubs.com/payton_yau/OptCutR_2) | [CRC Microbiome](https://rpubs.com/payton_yau/OptCutR_3) |
+| Step | Binary Classification (1 Cut-point) | Survival Analysis (1 Cut-point) | Survival Analysis (2+ Cut-points) |
+| :--- | :--- | :--- | :--- |
+| **1. Find Number of Cuts** | **Not Applicable.**<br>The decision for 1 cut is hypothesis-driven. | **Optional & Exploratory.**<br>Use `find_cutpoint_number()` to see if the data supports 1 cut. | **Recommended.**<br>Use `find_cutpoint_number()` to determine the most plausible number of cuts. |
+| **2. Find Cut-point(s)** | **Recommended Method.**<br>`find_cutpoint(method="systematic")` with majority vote from ROC metrics. | **Recommended Method.**<br>`find_cutpoint(method="systematic")` for the most robust single cut-point. | **Required Method.**<br>`find_cutpoint(method="genetic")` with `num_cuts` set from Step 1. |
+| **3. Validate Stability** | Assess stability with bootstrapping.<br>`validate_cutpoint()` | Assess stability with bootstrapping.<br>`validate_cutpoint()` | Assess stability with bootstrapping.<br>`validate_cutpoint()` |
 
 ## Installation
 
@@ -42,21 +42,57 @@ You can install the development version of `OptCutR` from GitHub with:
 devtools::install_github("paytonyau/OptCutR")
 ```
 
-*(Once the package is on CRAN, you will be able to install it with `install.packages("OptCutR")`.)*
+## Quick Example: A Complete Workflow in a Few Lines
 
-## Getting Started: A Full Tutorial
+Here is a minimal example showing the full workflow for a survival analysis with two cut-points.
 
-For a detailed, step-by-step walkthrough of these workflows using real-world data, please see the "Getting Started" vignette, which you can access after installation:
+```r
+# Load the package and some example data
+library(OptCutR)
+library(survival)
+
+# Step 1: Find the optimal number of cuts (let's assume it's 2)
+# num_res <- find_cutpoint_number(data = lung, predictor = "age", outcome_time = "time", outcome_event = "status", max_cuts = 3)
+# best_n_cuts <- num_res$results$num_cuts[which.min(num_res$results$BIC)]
+
+# Step 2: Find the exact location of the two best cut-points
+cut_res <- find_cutpoint(
+  data = lung,
+  predictor = "age",
+  outcome_time = "time",
+  outcome_event = "status",
+  method = "genetic",
+  num_cuts = 2,
+  nmin = 0.1
+)
+
+# Step 3: Validate the stability of the cut-points
+val_res <- validate_cutpoint(cut_res, num_replicates = 100) # Use more replicates for real analysis
+
+# Plot the final Kaplan-Meier curve and the validation results
+plot(cut_res)
+plot(val_res)
+```
+
+## Getting Started: Full Tutorials
+
+For detailed, step-by-step walkthroughs of these workflows using real-world data, please see the package vignettes, which you can access after installation:
 
 ```r
 browseVignettes(package = "OptCutR")
 ```
 
+The vignettes include:
+
+* **Example 1: Diagnostic Cut-point Analysis:** A complete guide to finding and validating a single cut-point for a binary outcome.
+* **Example 2: (Placeholder)** *A planned example, e.g., focusing on ecological data.*
+* **Example 3: Rapeseed Germination Analysis:** A full three-step workflow for finding and validating multiple cut-points in a survival analysis.
+
 ## How to Cite
 
 If you use `OptCutR` in your research, please cite our manuscript:
 
-> Currently in preparation 
+> Currently in preparation
 
 ## Contributing
 

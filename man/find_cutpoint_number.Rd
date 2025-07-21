@@ -2,7 +2,9 @@
 % Please edit documentation in R/find_cutpoint_number.R
 \name{find_cutpoint_number}
 \alias{find_cutpoint_number}
-\title{Find the Optimal Number of Cut-points}
+\alias{summary.find_cutpoint_number_result}
+\alias{plot.find_cutpoint_number_result}
+\title{Find the Optimal Number of Cut-points for a Continuous Predictor}
 \usage{
 find_cutpoint_number(
   data,
@@ -17,6 +19,10 @@ find_cutpoint_number(
   use_parallel = FALSE,
   ...
 )
+
+\method{summary}{find_cutpoint_number_result}(object, ...)
+
+\method{plot}{find_cutpoint_number_result}(x, y, ...)
 }
 \arguments{
 \item{data}{A data frame containing the variables.}
@@ -31,20 +37,27 @@ find_cutpoint_number(
 
 \item{method}{The algorithm to use: "systematic" or "genetic".}
 
-\item{criterion}{The information criterion to use: "BIC" (default) or "AIC".}
+\item{criterion}{The information criterion ("AIC" or "BIC") to use for model selection.}
 
-\item{max_cuts}{The maximum number of cut-points to test.}
+\item{max_cuts}{The maximum number of cut-points to test for.}
 
 \item{nmin}{The minimum number of observations in each group.}
 
 \item{use_parallel}{Logical. If TRUE, uses multiple CPU cores.}
 
 \item{...}{Additional arguments passed to the genetic algorithm.}
+
+\item{object}{An object of class `find_cutpoint_number_result`.}
+
+\item{x}{An object of class `find_cutpoint_number_result`.}
+
+\item{y}{Unused.}
 }
 \value{
-An object of class `find_cutpoint_number_result`.
+An object containing the results of the cut-point analysis.
 }
 \description{
-Compares models with different numbers of cut-points to determine the most
-plausible number of cuts for a predictor.
+Determines the optimal number of cut-points (from 0 to `max_cuts`) for a
+continuous variable by comparing models using an information criterion (AIC or BIC).
+It now also returns the values of the optimal cuts and provides a summary method.
 }

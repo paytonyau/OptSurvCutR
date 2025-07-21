@@ -2,54 +2,71 @@
 % Please edit documentation in R/find_cutpoint.R
 \name{find_cutpoint}
 \alias{find_cutpoint}
-\title{Find an Optimal Cut-point for a Continuous Predictor}
+\alias{print.find_cutpoint_systematic}
+\alias{print.find_cutpoint_genetic}
+\alias{summary.find_cutpoint_systematic}
+\alias{summary.find_cutpoint_genetic}
+\alias{plot.find_cutpoint_systematic}
+\alias{plot.find_cutpoint_genetic}
+\title{Find Optimal Cut-points with Advanced Features}
 \usage{
 find_cutpoint(
   data,
   predictor,
+  num_cuts = 1,
+  method = "systematic",
   covariates = NULL,
   outcome_time = NULL,
   outcome_event = NULL,
   outcome_binary = NULL,
-  method = "systematic",
-  num_cuts = 1,
   nmin = 20,
-  vote_methods = NULL,
-  use_parallel = FALSE,
   ...
 )
+
+\method{print}{find_cutpoint_systematic}(x, ...)
+
+\method{print}{find_cutpoint_genetic}(x, ...)
+
+\method{summary}{find_cutpoint_systematic}(object, ...)
+
+\method{summary}{find_cutpoint_genetic}(object, ...)
+
+\method{plot}{find_cutpoint_systematic}(x, type = "outcome", ...)
+
+\method{plot}{find_cutpoint_genetic}(x, type = "outcome", ...)
 }
 \arguments{
-\item{data}{A data frame containing the variables.}
+\item{data}{A data frame.}
 
-\item{predictor}{The name of the predictor variable, as a string.}
-
-\item{covariates}{A character vector of covariate names to adjust for in the model.}
-
-\item{outcome_time}{The name of the time variable, as a string (for survival).}
-
-\item{outcome_event}{The name of the event variable, as a string (for survival).}
-
-\item{outcome_binary}{The name of the binary outcome variable, as a string.}
-
-\item{method}{The algorithm to use: "systematic" or "genetic".}
+\item{predictor}{The name of the predictor variable.}
 
 \item{num_cuts}{The number of cut-points to find.}
 
-\item{nmin}{The minimum number of observations in each group.}
+\item{method}{The algorithm to use: "systematic" or "genetic".}
 
-\item{vote_methods}{For the systematic method, a character vector specifying
-which criteria to include in the majority vote.}
+\item{covariates}{Covariates to adjust for.}
 
-\item{use_parallel}{Logical. If TRUE, uses multiple CPU cores.}
+\item{outcome_time}{Time variable for survival analysis.}
 
-\item{...}{Additional arguments passed to the genetic algorithm.}
+\item{outcome_event}{Event variable for survival analysis.}
+
+\item{outcome_binary}{Binary outcome variable.}
+
+\item{nmin}{Minimum number of observations per group.}
+
+\item{...}{Additional arguments.}
+
+\item{x}{An object from `find_cutpoint`.}
+
+\item{object}{An object from `find_cutpoint`.}
+
+\item{type}{The type of plot.}
 }
 \value{
-An object containing the results of the cut-point analysis.
+An object containing the results of the analysis.
 }
 \description{
-Determines the optimal cut-point(s) for a continuous variable. It can use
-a "systematic" search or a "genetic" algorithm (survival only). The analysis
-can be adjusted for specified covariates.
+Determines optimal cut-point(s) using a systematic search (for 1-2 cuts)
+or a genetic algorithm (for any number of cuts). The genetic algorithm now
+supports both survival and logistic regression outcomes.
 }

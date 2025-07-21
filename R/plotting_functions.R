@@ -1,5 +1,6 @@
 #' Plot Effect Size vs. Cut-point
 #'
+#' @description
 #' Visualizes how the effect size (Hazard Ratio or Odds Ratio) and its
 #' confidence interval change across the full range of possible cut-points.
 #'
@@ -17,11 +18,19 @@ plot_effect_size <- function(cutpoint_result) {
   analysis_type <- cutpoint_result$parameters$analysis_type
 
   if (analysis_type == "survival") {
+    # Check if confidence interval columns exist
+    if (!all(c("HR_low", "HR_up") %in% names(plot_data))) {
+      stop("Confidence interval columns (HR_low, HR_up) not found in results.", call. = FALSE)
+    }
     p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = Cut1, y = HR)) +
       ggplot2::geom_ribbon(ggplot2::aes(ymin = HR_low, ymax = HR_up), alpha = 0.2, fill = "dodgerblue") +
       ggplot2::geom_line(color = "dodgerblue", linewidth = 1) +
       ggplot2::labs(y = "Hazard Ratio (HR)", title = "Hazard Ratio vs. Cut-point")
   } else { # logistic
+    # Check if confidence interval columns exist
+    if (!all(c("OR_low", "OR_up") %in% names(plot_data))) {
+      stop("Confidence interval columns (OR_low, OR_up) not found in results.", call. = FALSE)
+    }
     p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = Cut1, y = OR)) +
       ggplot2::geom_ribbon(ggplot2::aes(ymin = OR_low, ymax = OR_up), alpha = 0.2, fill = "darkorange") +
       ggplot2::geom_line(color = "darkorange", linewidth = 1) +
@@ -43,12 +52,14 @@ plot_effect_size <- function(cutpoint_result) {
 
 #' Plot a Waterfall Chart of Classification
 #'
+#' @description
 #' Visualizes how an optimal cut-point classifies individual subjects in a
 #' binary outcome analysis.
 #'
 #' @param cutpoint_result An object returned by `find_cutpoint(method = "systematic")`
 #'   from a binary outcome analysis.
 #' @return A ggplot object.
+#' @importFrom magrittr %>%
 #' @export
 plot_waterfall <- function(cutpoint_result) {
 

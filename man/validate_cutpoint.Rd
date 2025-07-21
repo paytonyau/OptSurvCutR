@@ -2,14 +2,21 @@
 % Please edit documentation in R/validate_cutpoint.R
 \name{validate_cutpoint}
 \alias{validate_cutpoint}
+\alias{print.validate_cutpoint_result}
+\alias{plot.validate_cutpoint_result}
 \title{Validate an Optimal Cut-point Using Bootstrapping}
 \usage{
 validate_cutpoint(
   cutpoint_result,
   num_replicates = 500,
   use_parallel = FALSE,
-  nmin = 15
+  nmin = 15,
+  ...
 )
+
+\method{print}{validate_cutpoint_result}(x, ...)
+
+\method{plot}{validate_cutpoint_result}(x, ...)
 }
 \arguments{
 \item{cutpoint_result}{An object returned by the `find_cutpoint` function.}
@@ -18,7 +25,13 @@ validate_cutpoint(
 
 \item{use_parallel}{Logical. If TRUE, uses multiple CPU cores for bootstrapping.}
 
-\item{nmin}{The minimum group size to use during bootstrap runs.}
+\item{nmin}{The minimum group size to enforce during bootstrap runs. This
+may need to be smaller than the `nmin` from the original analysis, as
+bootstrap samples can be sparse.}
+
+\item{...}{Unused.}
+
+\item{x}{An object of class `validate_cutpoint_result`.}
 }
 \value{
 An object of class `validate_cutpoint_result` containing the

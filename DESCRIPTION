@@ -20,17 +20,22 @@ Imports:
     cli,
     dplyr,
     doParallel,
-    flexmix,
     foreach,
     ggplot2,
-    maxstat,
+    magrittr,
     pROC,
     rgenoud,
-    survival
+    tidyr,
+    survival,
+    survminer
 Suggests: 
     testthat (>= 3.0.0),
     readxl,
-    survminer,
     patchwork,
-    coxphf
+    coxphf,
+    knitr,
+    rmarkdown,
+    ggrepel
 Config/testthat/edition: 3
+Depends: 
+    R (>= 3.5)
