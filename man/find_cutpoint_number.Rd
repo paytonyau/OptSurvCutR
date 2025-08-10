@@ -2,37 +2,25 @@
 % Please edit documentation in R/find_cutpoint_number.R
 \name{find_cutpoint_number}
 \alias{find_cutpoint_number}
-\alias{print.find_cutpoint_number_result}
 \alias{summary.find_cutpoint_number_result}
 \alias{plot.find_cutpoint_number_result}
-\title{Find the Optimal Number of Cut-points for Survival Data}
+\title{Find the Optimal Number of Cut-points for a Continuous Predictor}
 \usage{
 find_cutpoint_number(
   data,
   predictor,
-  outcome_time,
-  outcome_event,
+  outcome_time = NULL,
+  outcome_event = NULL,
+  outcome_binary = NULL,
   method = "systematic",
   criterion = "BIC",
   max_cuts = 2,
   nmin = 0.1,
   use_parallel = FALSE,
-  seed = NULL,
-  maxiter = 100,
   ...
 )
 
-\method{print}{find_cutpoint_number_result}(x, ...)
-
-\method{summary}{find_cutpoint_number_result}(
-  object,
-  show_comparison_table = TRUE,
-  show_best_model_details = TRUE,
-  show_group_counts = TRUE,
-  show_medians = TRUE,
-  plot.it = FALSE,
-  ...
-)
+\method{summary}{find_cutpoint_number_result}(object, ...)
 
 \method{plot}{find_cutpoint_number_result}(x, y, ...)
 }
@@ -41,13 +29,15 @@ find_cutpoint_number(
 
 \item{predictor}{The name of the predictor variable, as a string.}
 
-\item{outcome_time}{The name of the time variable, as a string.}
+\item{outcome_time}{The name of the time variable, as a string (for survival).}
 
-\item{outcome_event}{The name of the event variable, as a string.}
+\item{outcome_event}{The name of the event variable, as a string (for survival).}
+
+\item{outcome_binary}{The name of the binary outcome variable, as a string.}
 
 \item{method}{The algorithm to use: "systematic" or "genetic".}
 
-\item{criterion}{The information criterion ("AIC", "AICc", or "BIC") to use for model selection.}
+\item{criterion}{The information criterion ("AIC" or "BIC") to use for model selection.}
 
 \item{max_cuts}{The maximum number of cut-points to test for.}
 
@@ -55,26 +45,11 @@ find_cutpoint_number(
 
 \item{use_parallel}{Logical. If TRUE, uses multiple CPU cores.}
 
-\item{seed}{An optional integer to set the random seed for reproducible results
-when `method = "genetic"`.}
-
-\item{maxiter}{The number of generations for the genetic algorithm. Default is 100.}
-
 \item{...}{Additional arguments passed to the genetic algorithm.}
 
-\item{x}{An object of class `find_cutpoint_number_result` (for S3 methods).}
+\item{object}{An object of class `find_cutpoint_number_result`.}
 
-\item{object}{An object of class `find_cutpoint_number_result` (for S3 methods).}
-
-\item{show_comparison_table}{Logical. If TRUE, shows the model comparison table.}
-
-\item{show_best_model_details}{Logical. If TRUE, shows full details for the best model.}
-
-\item{show_group_counts}{Logical. If TRUE, shows group counts for the best model.}
-
-\item{show_medians}{Logical. If TRUE, shows median survival for the best model.}
-
-\item{plot.it}{Logical. If TRUE, displays the model selection plot.}
+\item{x}{An object of class `find_cutpoint_number_result`.}
 
 \item{y}{Unused.}
 }
@@ -83,6 +58,6 @@ An object containing the results of the cut-point analysis.
 }
 \description{
 Determines the optimal number of cut-points (from 0 to `max_cuts`) for a
-continuous variable in a survival context by comparing models using an
-information criterion (AIC, AICc, or BIC).
+continuous variable by comparing models using an information criterion (AIC or BIC).
+It now also returns the values of the optimal cuts and provides a summary method.
 }
