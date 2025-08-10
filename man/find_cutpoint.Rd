@@ -2,71 +2,98 @@
 % Please edit documentation in R/find_cutpoint.R
 \name{find_cutpoint}
 \alias{find_cutpoint}
-\alias{print.find_cutpoint_systematic}
-\alias{print.find_cutpoint_genetic}
-\alias{summary.find_cutpoint_systematic}
-\alias{summary.find_cutpoint_genetic}
-\alias{plot.find_cutpoint_systematic}
-\alias{plot.find_cutpoint_genetic}
-\title{Find Optimal Cut-points with Advanced Features}
+\alias{print.find_cutpoint}
+\alias{summary.find_cutpoint}
+\alias{plot.find_cutpoint}
+\title{Find Optimal Cut-points for Survival Data}
 \usage{
 find_cutpoint(
   data,
   predictor,
+  outcome_time,
+  outcome_event,
   num_cuts = 1,
   method = "systematic",
+  criterion = "logrank",
   covariates = NULL,
-  outcome_time = NULL,
-  outcome_event = NULL,
-  outcome_binary = NULL,
   nmin = 20,
+  seed = NULL,
+  maxiter = 100,
+  use_parallel = TRUE,
+  quiet = FALSE,
   ...
 )
 
-\method{print}{find_cutpoint_systematic}(x, ...)
+\method{print}{find_cutpoint}(x, ...)
 
-\method{print}{find_cutpoint_genetic}(x, ...)
+\method{summary}{find_cutpoint}(
+  object,
+  show_model = TRUE,
+  show_group_counts = TRUE,
+  show_medians = TRUE,
+  show_ph_test = TRUE,
+  show_params = TRUE,
+  ...
+)
 
-\method{summary}{find_cutpoint_systematic}(object, ...)
-
-\method{summary}{find_cutpoint_genetic}(object, ...)
-
-\method{plot}{find_cutpoint_systematic}(x, type = "outcome", ...)
-
-\method{plot}{find_cutpoint_genetic}(x, type = "outcome", ...)
+\method{plot}{find_cutpoint}(x, type = "outcome", ...)
 }
 \arguments{
-\item{data}{A data frame.}
+\item{data}{A data frame containing the analysis variables.}
 
-\item{predictor}{The name of the predictor variable.}
+\item{predictor}{The name of the continuous predictor variable to find cut-points for.}
 
-\item{num_cuts}{The number of cut-points to find.}
+\item{outcome_time}{The name of the time-to-event variable for survival analysis.}
+
+\item{outcome_event}{The name of the event status variable for survival analysis.}
+
+\item{num_cuts}{The number of cut-points to find. Default is 1.}
 
 \item{method}{The algorithm to use: "systematic" or "genetic".}
 
-\item{covariates}{Covariates to adjust for.}
+\item{criterion}{The statistical criterion to optimize. Options are:
+"logrank" (maximizes the log-rank chi-squared statistic),
+"hazard_ratio" (maximizes the Hazard Ratio from a Cox model), or
+"p_value" (minimizes the p-value from a Cox model).}
 
-\item{outcome_time}{Time variable for survival analysis.}
+\item{covariates}{A character vector of covariate names to include in the model.}
 
-\item{outcome_event}{Event variable for survival analysis.}
+\item{nmin}{The minimum number of observations required in each group created by the cut-points.
+Can be specified as an integer (e.g., 20) or a proportion (e.g., 0.1).}
 
-\item{outcome_binary}{Binary outcome variable.}
+\item{seed}{An optional integer to set the random seed for reproducible results
+when `method = "genetic"`.}
 
-\item{nmin}{Minimum number of observations per group.}
+\item{maxiter}{The number of generations for the genetic algorithm. Default is 100.}
 
-\item{...}{Additional arguments.}
+\item{use_parallel}{Logical. If TRUE, uses multiple CPU cores for the systematic search.}
+
+\item{quiet}{Logical. If TRUE, suppresses the printing of the final result object.}
+
+\item{...}{Additional arguments passed to the genetic algorithm (e.g., `popSize`).}
 
 \item{x}{An object from `find_cutpoint`.}
 
 \item{object}{An object from `find_cutpoint`.}
 
-\item{type}{The type of plot.}
+\item{show_model}{Logical. If TRUE, shows the full summary of the final Cox model.}
+
+\item{show_group_counts}{Logical. If TRUE, shows the number of subjects and events in each group.}
+
+\item{show_medians}{Logical. If TRUE, shows the median survival for each group.}
+
+\item{show_ph_test}{Logical. If TRUE, shows the proportional hazards assumption test.}
+
+\item{show_params}{Logical. If TRUE, shows the parameters of the original function call.}
+
+\item{type}{The type of plot to generate: "outcome" (a survival plot) or "distribution".}
 }
 \value{
-An object containing the results of the analysis.
+An object of class `find_cutpoint` containing the optimal cut-points,
+  the corresponding statistic, and other parameters used in the analysis.
 }
 \description{
-Determines optimal cut-point(s) using a systematic search (for 1-2 cuts)
-or a genetic algorithm (for any number of cuts). The genetic algorithm now
-supports both survival and logistic regression outcomes.
+Determines optimal cut-point(s) for a continuous predictor in a time-to-event
+(survival) analysis context. It can use a systematic search for 1-2 cut-points
+or a more flexible genetic algorithm for any number of cut-points.
 }

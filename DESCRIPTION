@@ -1,41 +1,44 @@
-Package: OptCutR
+Package: OptSurvCutR
 Type: Package
-Title: Optimal Cut-point Discovery and Validation
-Version: 0.1.0
+Title: Optimal Survival Cut-point Discovery for time-to-event Analysis
+Version: 0.1.5
 Author: Payton Yau [aut, cre]
 Maintainer: Payton Yau <tungon@gmail.com>
 Description: 
     Provides a comprehensive workflow to determine, find, and 
-    validate optimal cut-points for continuous predictors. It handles 
-    both survival (time-to-event) and binary classification outcomes. 
-    The package includes functions to first determine the optimal number 
-    of cut-points, then find their locations using either a systematic 
-    search or a genetic algorithm (for multiple cut-points), and finally 
-    to assess the stability of the result via bootstrapping.
+    validate optimal cut-points for continuous predictors in a survival 
+    (time-to-event) context. The package includes functions to first 
+    determine the optimal number of cut-point(s), then find their 
+    location(s) using either a systematic search or a genetic algorithm, 
+    and finally to assess the stability of the result via bootstrapping.
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
+VignetteBuilder: knitr
 Imports: 
     cli,
-    dplyr,
     doParallel,
     foreach,
     ggplot2,
-    magrittr,
-    pROC,
+    parallel,
     rgenoud,
-    tidyr,
+    stats,
     survival,
-    survminer
+    survminer,
+    tidyr,
+    tools
 Suggests: 
-    testthat (>= 3.0.0),
-    readxl,
-    patchwork,
     coxphf,
+    dplyr,
     knitr,
+    magrittr,
+    patchwork,
+    pROC,
+    readxl,
     rmarkdown,
-    ggrepel
+    testthat (>= 3.0.0),
+    tibble
 Config/testthat/edition: 3
 Depends: 
     R (>= 3.5)

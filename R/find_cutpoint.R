@@ -1,352 +1,400 @@
-#' Find Optimal Cut-points with Advanced Features
+#' Find Optimal Cut-points for Survival Data
 #'
 #' @description
-#' Determines optimal cut-point(s) using a systematic search (for 1-2 cuts)
-#' or a genetic algorithm (for any number of cuts). The genetic algorithm now
-#' supports both survival and logistic regression outcomes.
+#' Determines optimal cut-point(s) for a continuous predictor in a time-to-event
+#' (survival) analysis context. It can use a systematic search for 1-2 cut-points
+#' or a more flexible genetic algorithm for any number of cut-points.
 #'
-#' @param data A data frame.
-#' @param predictor The name of the predictor variable.
-#' @param num_cuts The number of cut-points to find.
+#' @param data A data frame containing the analysis variables.
+#' @param predictor The name of the continuous predictor variable to find cut-points for.
+#' @param outcome_time The name of the time-to-event variable for survival analysis.
+#' @param outcome_event The name of the event status variable for survival analysis.
+#' @param num_cuts The number of cut-points to find. Default is 1.
 #' @param method The algorithm to use: "systematic" or "genetic".
-#' @param covariates Covariates to adjust for.
-#' @param outcome_time Time variable for survival analysis.
-#' @param outcome_event Event variable for survival analysis.
-#' @param outcome_binary Binary outcome variable.
-#' @param nmin Minimum number of observations per group.
-#' @param ... Additional arguments for the genetic algorithm (e.g., `popSize`, `maxiter`).
+#' @param criterion The statistical criterion to optimize. Options are:
+#'   "logrank" (maximizes the log-rank chi-squared statistic),
+#'   "hazard_ratio" (maximizes the Hazard Ratio from a Cox model), or
+#'   "p_value" (minimizes the p-value from a Cox model).
+#' @param covariates A character vector of covariate names to include in the model.
+#' @param nmin The minimum number of observations required in each group created by the cut-points.
+#'   Can be specified as an integer (e.g., 20) or a proportion (e.g., 0.1).
+#' @param seed An optional integer to set the random seed for reproducible results
+#'   when `method = "genetic"`.
+#' @param maxiter The number of generations for the genetic algorithm. Default is 100.
+#' @param use_parallel Logical. If TRUE, uses multiple CPU cores for the systematic search.
+#' @param quiet Logical. If TRUE, suppresses the printing of the final result object.
+#' @param ... Additional arguments passed to the genetic algorithm (e.g., `popSize`).
+#' @param x An object from `find_cutpoint`.
+#' @param object An object from `find_cutpoint`.
+#' @param show_model Logical. If TRUE, shows the full summary of the final Cox model.
+#' @param show_group_counts Logical. If TRUE, shows the number of subjects and events in each group.
+#' @param show_medians Logical. If TRUE, shows the median survival for each group.
+#' @param show_ph_test Logical. If TRUE, shows the proportional hazards assumption test.
+#' @param show_params Logical. If TRUE, shows the parameters of the original function call.
+#' @param type The type of plot to generate: "outcome" (a survival plot) or "distribution".
 #'
-#' @return An object containing the results of the analysis.
-#' @importFrom stats na.omit as.formula pchisq glm binomial predict confint dnorm uniroot quantile sd fitted AIC rnorm runif
-#' @importFrom survival coxph Surv survdiff
-#' @importFrom cli cli_h1 cli_text cli_alert_info cli_alert_success cli_bullets cli_progress_bar cli_progress_update cli_progress_done
-#' @importFrom pROC roc auc coords ggroc
+#' @return An object of class `find_cutpoint` containing the optimal cut-points,
+#'   the corresponding statistic, and other parameters used in the analysis.
+#' @importFrom stats na.omit as.formula pchisq sd rnorm runif anova aggregate
+#' @importFrom survival Surv survfit survdiff coxph cox.zph
+#' @importFrom cli cli_h1 cli_text cli_alert_info cli_alert_success cli_bullets cli_progress_bar cli_progress_update cli_progress_done cli_alert_danger cli_warn
 #' @importFrom ggplot2 ggplot aes .data geom_line geom_vline labs theme_minimal geom_histogram geom_density
 #' @importFrom foreach %dopar%
+#' @importFrom doParallel registerDoParallel
+#' @importFrom parallel detectCores makeCluster stopCluster
+#' @importFrom survminer ggsurvplot
+#' @importFrom tools toTitleCase
 #' @export
-find_cutpoint <- function(data, predictor, num_cuts = 1, method = "systematic", covariates = NULL,
-                          outcome_time = NULL, outcome_event = NULL,
-                          outcome_binary = NULL, nmin = 20, ...) {
+find_cutpoint <- function(data, predictor, outcome_time, outcome_event, num_cuts = 1, method = "systematic",
+                          criterion = "logrank", covariates = NULL, nmin = 20, seed = NULL, maxiter = 100, use_parallel = TRUE, quiet = FALSE, ...) {
 
   # --- 1. Input Validation and Data Prep ---
   method <- match.arg(method, choices = c("systematic", "genetic"))
-  if (is.null(predictor)) stop("A 'predictor' variable must be specified.", call. = FALSE)
+  criterion <- match.arg(criterion, choices = c("logrank", "hazard_ratio", "p_value"))
+  if (is.null(predictor) || !predictor %in% names(data)) stop("A valid 'predictor' variable must be specified.", call. = FALSE)
+  if (is.null(outcome_time) || is.null(outcome_event)) stop("Both 'outcome_time' and 'outcome_event' must be specified.", call. = FALSE)
 
-  if (!is.null(outcome_time) && !is.null(outcome_event)) {
-    analysis_type <- "survival"
-  } else if (!is.null(outcome_binary)) {
-    analysis_type <- "logistic"
-  } else {
-    stop("You must specify outcome variables.", call. = FALSE)
+  if (criterion == "hazard_ratio" && num_cuts > 1) {
+    stop("'hazard_ratio' criterion is only supported for num_cuts = 1.", call. = FALSE)
   }
 
-  required_vars <- c(predictor, covariates, outcome_time, outcome_event, outcome_binary)
+  if (method == "genetic" && !is.null(seed)) {
+    set.seed(seed)
+  }
+
+  required_vars <- c(predictor, covariates, outcome_time, outcome_event)
   userdata <- data[, unique(required_vars), drop = FALSE]
   userdata <- stats::na.omit(userdata)
 
+  original_predictor_name <- predictor
   names(userdata)[names(userdata) == predictor] <- "factor"
-  if(analysis_type == "survival") {
-    names(userdata)[names(userdata) == outcome_time] <- "time"
-    names(userdata)[names(userdata) == outcome_event] <- "event"
-  } else {
-    names(userdata)[names(userdata) == outcome_binary] <- "outcome"
+  names(userdata)[names(userdata) == outcome_time] <- "time"
+  names(userdata)[names(userdata) == outcome_event] <- "event"
+
+  if (nmin > 0 && nmin < 1) nmin <- floor(nmin * nrow(userdata))
+  if (nrow(userdata) < nmin * (num_cuts + 1)) {
+    stop(paste0("Not enough data (", nrow(userdata), ") for nmin (", nmin, ") and ", num_cuts, " cut(s)."), call. = FALSE)
   }
 
-  # --- 2. Route to appropriate method ---
-  if (method == "systematic") {
-    # Bundle parameters into a list to avoid "unused argument" warnings
-    params <- list(userdata = userdata, num_cuts = num_cuts,
-                   analysis_type = analysis_type, covariates = covariates, nmin = nmin)
-    .systematic_search(params)
+  # --- 2. Route to appropriate search method ---
+  params <- list(userdata = userdata, num_cuts = num_cuts, criterion = criterion,
+                 covariates = covariates, nmin = nmin, predictor_name = original_predictor_name,
+                 maxiter = maxiter, use_parallel = use_parallel, ...)
+
+  output <- if (method == "systematic") {
+    do.call(.systematic_search, params)
   } else { # genetic
-    .genetic_search(userdata = userdata, num_cuts = num_cuts,
-                    analysis_type = analysis_type, covariates = covariates, nmin = nmin, ...)
-  }
-}
+    cli::cli_alert_info("Starting genetic algorithm for {num_cuts} cut-point(s) using '{criterion}' criterion...")
 
-# --- Internal Helper: Systematic Search ---
-.systematic_search <- function(p) { # p is for parameters
-  if (!p$num_cuts %in% c(1, 2)) {
-    stop("Systematic search only supports num_cuts = 1 or 2.", call. = FALSE)
-  }
+    ga_result <- .run_genetic_search(
+      target = userdata$factor,
+      numcut = num_cuts,
+      time = userdata$time,
+      censor = userdata$event,
+      confound = if(!is.null(covariates)) userdata[, covariates, drop=FALSE] else NULL,
+      nmin = nmin,
+      criterion = criterion,
+      numgen = maxiter,
+      ...
+    )
 
-  cli::cli_alert_info("Starting systematic search for {p$num_cuts} optimal cut-point(s)...")
-
-  p$userdata <- p$userdata[order(p$userdata$factor), ]
-  cov_part <- if (!is.null(p$covariates)) paste(" +", paste(p$covariates, collapse = " + ")) else ""
-
-  best_stat <- if(p$analysis_type == "survival") Inf else -Inf
-  best_cut_val <- rep(NA, p$num_cuts)
-  all_stats_df <- NULL
-
-  if (p$num_cuts == 1) {
-    search_grid <- unique(p$userdata$factor[p$nmin:(nrow(p$userdata) - p$nmin)])
-    stats_per_cut <- sapply(search_grid, .get_stat, num_cuts = 1, data_in = p$userdata, analysis = p$analysis_type, cov_formula = cov_part, nmin = p$nmin)
-    if(all(is.na(stats_per_cut))) stop("Could not find any valid cut-points.", call. = FALSE)
-
-    best_idx <- if(p$analysis_type == "survival") which.min(stats_per_cut) else which.max(stats_per_cut)
-    best_cut_val <- search_grid[best_idx]
-    best_stat <- stats_per_cut[best_idx]
-    all_stats_df <- data.frame(cut1 = search_grid, stat = stats_per_cut)
-
-  } else { # num_cuts == 2
-    cli::cli_alert_info("Searching for 2 cuts is computationally intensive and may be slow.")
-
-    grid1 <- unique(p$userdata$factor[p$nmin:(nrow(p$userdata) - 2 * p$nmin)])
-    pb <- cli::cli_progress_bar("Evaluating cut-point pairs", total = length(grid1))
-
-    for (c1 in grid1) {
-      cli::cli_progress_update(id = pb)
-      min_idx_c2 <- which(p$userdata$factor > c1)[p$nmin]
-      if (is.na(min_idx_c2)) next
-      max_idx_c2 <- nrow(p$userdata) - p$nmin
-      if (min_idx_c2 > max_idx_c2) next
-
-      grid2 <- unique(p$userdata$factor[min_idx_c2:max_idx_c2])
-
-      for (c2 in grid2) {
-        stat <- .get_stat(c(c1, c2), num_cuts = 2, data_in = p$userdata, analysis = p$analysis_type, cov_formula = cov_part, nmin = p$nmin)
-        if (is.na(stat)) next
-
-        is_better <- if(p$analysis_type == "survival") (stat < best_stat) else (stat > best_stat)
-        if (is_better) {
-          best_stat <- stat
-          best_cut_val <- c(c1, c2)
-        }
+    if (is.null(ga_result) || !is.finite(ga_result$value)) {
+      cli::cli_warn("Genetic algorithm could not find a valid solution with the given constraints.")
+      optimal_cuts <- rep(NA, num_cuts)
+      optimal_stat <- NA
+    } else {
+      optimal_cuts <- sort(ga_result$par)
+      optimal_stat <- ga_result$value
+      if (criterion == "p_value") {
+        optimal_stat <- 1 - optimal_stat
       }
     }
-    cli::cli_progress_done(id = pb)
+
+    list(
+      optimal_cuts = optimal_cuts,
+      optimal_stat = optimal_stat,
+      all_stats = NULL,
+      userdata = userdata,
+      parameters = list(method = "genetic", analysis_type = "survival", predictor = original_predictor_name,
+                        num_cuts = num_cuts, criterion = criterion,
+                        covariates = covariates, nmin = nmin)
+    )
+  }
+
+  class(output) <- "find_cutpoint"
+
+  # Only print the output if not in quiet mode
+  if (!quiet) {
+    print(output)
+  }
+
+  invisible(output)
+}
+
+
+# --- Internal Helper: Systematic Search ---
+.systematic_search <- function(userdata, num_cuts, criterion, covariates, nmin, predictor_name, use_parallel, ...) {
+  if (!num_cuts %in% c(1, 2)) {
+    stop("Systematic search currently only supports num_cuts = 1 or 2.", call. = FALSE)
+  }
+  cli::cli_alert_info("Starting systematic search for {num_cuts} optimal cut-point(s) using '{criterion}' criterion...")
+  userdata <- userdata[order(userdata$factor), ]
+  cov_part <- if (!is.null(covariates)) paste(" +", paste(covariates, collapse = " + ")) else ""
+
+  direction <- if (criterion == "p_value") "min" else "max"
+  best_stat <- if (direction == "min") Inf else -Inf
+  best_cut_val <- rep(NA, num_cuts)
+  all_stats_df <- NULL
+
+  if (num_cuts == 1) {
+    search_grid <- unique(userdata$factor[nmin:(nrow(userdata) - nmin)])
+    if(length(search_grid) == 0) {
+      best_stat <- NA # Indicate failure
+    } else {
+      stats_per_cut <- sapply(search_grid, .get_stat, num_cuts = 1, data_in = userdata,
+                              criterion = criterion, cov_formula = cov_part, nmin = nmin)
+      if (all(is.na(stats_per_cut))) {
+        best_stat <- NA
+      } else {
+        best_idx <- if (direction == "min") which.min(stats_per_cut) else which.max(stats_per_cut)
+        best_cut_val <- search_grid[best_idx]
+        best_stat <- stats_per_cut[best_idx]
+        all_stats_df <- data.frame(cut1 = search_grid, stat = stats_per_cut)
+      }
+    }
+  } else { # num_cuts == 2
+    cli::cli_alert_info("Searching for 2 cuts is computationally intensive. Using parallel processing if available.")
+
+    if (use_parallel) {
+      if (!requireNamespace("doParallel", quietly = TRUE)) {
+        stop("Package 'doParallel' is required for parallel processing.", call. = FALSE)
+      }
+      cores <- parallel::detectCores()
+      cl <- parallel::makeCluster(cores)
+      doParallel::registerDoParallel(cl)
+      on.exit(parallel::stopCluster(cl), add = TRUE)
+      cli::cli_alert_info("Using {cores} cores for parallel systematic search...")
+    } else {
+      foreach::registerDoSEQ()
+    }
+
+    possible_c1_indices <- nmin:(nrow(userdata) - (2 * nmin))
+    grid1_values <- unique(userdata$factor[possible_c1_indices])
+
+    results_list <- foreach::foreach(c1 = grid1_values, .combine = 'rbind', .export = c(".get_stat")) %dopar% {
+      best_local_stat <- if (direction == "min") Inf else -Inf
+      best_local_c2 <- NA
+      c1_max_index <- max(which(userdata$factor == c1))
+
+      start_index_c2 <- c1_max_index + nmin
+      end_index_c2 <- nrow(userdata) - nmin
+      if (start_index_c2 > end_index_c2) {
+        return(NULL)
+      }
+      possible_c2_indices <- start_index_c2:end_index_c2
+
+      grid2_values <- unique(userdata$factor[possible_c2_indices])
+
+      for (c2 in grid2_values) {
+        stat <- .get_stat(c(c1, c2), 2, userdata, criterion, cov_part, nmin)
+        if (is.na(stat)) next
+
+        is_better <- if (direction == "min") (stat < best_local_stat) else (stat > best_local_stat)
+        if (is_better && !is.infinite(stat)) {
+          best_local_stat <- stat
+          best_local_c2 <- c2
+        }
+      }
+      if(is.na(best_local_c2)) return(NULL)
+      data.frame(stat = best_local_stat, c1 = c1, c2 = best_local_c2)
+    }
+
+    if(!is.null(results_list) && nrow(results_list) > 0){
+      best_idx <- if(direction == "min") which.min(results_list$stat) else which.max(results_list$stat)
+      best_stat <- results_list$stat[best_idx]
+      best_cut_val <- c(results_list$c1[best_idx], results_list$c2[best_idx])
+    } else {
+      best_stat <- NA
+    }
+  }
+
+  if(is.na(best_stat) || is.infinite(best_stat)){
+    cli::cli_warn("Systematic search could not find any valid cut-points with the given constraints.")
+    return(list(optimal_cuts = rep(NA, num_cuts), optimal_stat = NA, all_stats = NULL, userdata = userdata,
+                parameters = list(method = "systematic", analysis_type = "survival", predictor = predictor_name,
+                                  num_cuts = num_cuts, criterion = criterion,
+                                  covariates = covariates, nmin = nmin)))
   }
 
   output <- list(
-    best_cut = best_cut_val,
-    best_stat = best_stat,
+    optimal_cuts = best_cut_val,
+    optimal_stat = best_stat,
     all_stats = all_stats_df,
-    parameters = list(analysis_type = p$analysis_type, predictor = "factor", num_cuts = p$num_cuts, covariates = p$covariates, nmin = p$nmin),
-    userdata = p$userdata
+    parameters = list(method = "systematic", analysis_type = "survival", predictor = predictor_name,
+                      num_cuts = num_cuts, criterion = criterion,
+                      covariates = covariates, nmin = nmin),
+    userdata = userdata
   )
-  class(output) <- "find_cutpoint_systematic"
   cli::cli_alert_success("Systematic search complete.")
   return(output)
 }
 
-# --- Internal Helper: Genetic Algorithm ---
-.genetic_search <- function(userdata, num_cuts, analysis_type, covariates, nmin, ...) {
-  cli::cli_alert_info("Starting genetic algorithm for {num_cuts} cut-point(s)...")
 
-  cov_part <- if (!is.null(covariates)) paste(" +", paste(covariates, collapse = " + ")) else ""
+# --- Internal Core Logic: Calculate Statistic (for systematic search) ---
+.get_stat <- function(cuts, num_cuts, data_in, criterion, cov_formula, nmin) {
+  breaks <- sort(unique(c(-Inf, cuts, Inf)))
+  num_intervals <- length(breaks) - 1
+  data_in$group <- factor(cut(data_in$factor, breaks = breaks, labels = 1:num_intervals))
 
-  if (analysis_type == "survival") {
-    fitness_function <- function(cuts, data) {
-      val <- .get_stat(cuts, num_cuts, data, "survival", cov_part, nmin)
-      if(is.na(val)) return(Inf)
-      return(val)
+  if (any(table(data_in$group) < nmin) || nlevels(data_in$group) != (num_cuts + 1)) {
+    return(NA)
+  }
+
+  formula_str <- paste("Surv(time, event) ~ group", cov_formula)
+
+  if (criterion == "logrank") {
+    fit <- tryCatch(survival::survdiff(as.formula(formula_str), data = data_in), error = function(e) NULL)
+    if (is.null(fit)) return(NA)
+    return(fit$chisq)
+  } else { # Cox-based criteria
+    fit <- tryCatch(survival::coxph(as.formula(formula_str), data = data_in), error = function(e) NULL)
+    if (is.null(fit)) return(NA)
+
+    if (criterion == "hazard_ratio") {
+      return(summary(fit)$conf.int[1, "exp(coef)"])
+    } else if (criterion == "p_value") {
+      return(summary(fit)$logtest["pvalue"])
     }
-    direction <- "min"
-  } else { # Logistic
-    fitness_function <- function(cuts, data) {
-      val <- .get_stat(cuts, num_cuts, data, "logistic", cov_part, nmin)
-      if(is.na(val)) return(Inf)
-      return(val)
-    }
-    direction <- "min" # We minimize AIC
   }
-
-  ga_result <- .run_ga(fitness_function, direction = direction, num_cuts = num_cuts, data = userdata, ...)
-
-  output <- list(
-    optimal_cuts = sort(ga_result$best_solution),
-    userdata = userdata,
-    parameters = list(analysis_type = analysis_type, num_cuts = num_cuts, covariates = covariates, nmin = nmin)
-  )
-  class(output) <- "find_cutpoint_genetic"
-  cli::cli_alert_success("Genetic algorithm complete.")
-  return(output)
 }
-
-#' Perform Permutation Testing for a Systematic Cut-point Search
-#'
-#' @description
-#' Calculates an adjusted p-value for a result from a systematic `find_cutpoint`
-#' search to correct for multiple testing.
-#'
-#' @param cutpoint_result An object from `find_cutpoint(method = "systematic")`.
-#' @param permutations The number of permutations to perform.
-#'
-#' @return A list containing the original statistic and the adjusted p-value.
-#' @export
-permute_cutpoint <- function(cutpoint_result, permutations = 1000) {
-  if (!inherits(cutpoint_result, "find_cutpoint_systematic")) {
-    stop("Permutation testing is only applicable to results from a systematic search.", call. = FALSE)
-  }
-
-  params <- cutpoint_result$parameters
-  observed_stat <- cutpoint_result$best_stat
-
-  cli::cli_alert_info("Running {permutations} permutations for p-value adjustment...")
-  pb <- cli::cli_progress_bar("Permutations", total = permutations)
-
-  perm_stats <- replicate(permutations, {
-    cli::cli_progress_update(id = pb)
-    perm_data <- cutpoint_result$userdata
-    perm_data$factor <- sample(perm_data$factor)
-
-    # Bundle params for the internal call
-    p_perm <- list(userdata = perm_data, num_cuts = params$num_cuts,
-                   analysis_type = params$analysis_type,
-                   covariates = params$covariates, nmin = params$nmin)
-
-    perm_res <- .systematic_search(p_perm)
-    return(perm_res$best_stat)
-  })
-  cli::cli_progress_done(id = pb)
-
-  if(params$analysis_type == "survival") {
-    p_adj <- mean(perm_stats <= observed_stat, na.rm = TRUE)
-  } else {
-    p_adj <- mean(perm_stats >= observed_stat, na.rm = TRUE)
-  }
-
-  cli::cli_alert_success("Permutation test complete.")
-  return(list(original_statistic = observed_stat, adjusted_p_value = p_adj))
-}
-
 
 # --- S3 Methods for Print, Summary, Plot ---
-#' @param x An object from `find_cutpoint`.
-#' @param ... Additional arguments.
+
 #' @rdname find_cutpoint
 #' @export
-print.find_cutpoint_systematic <- function(x, ...) {
-  cli::cli_h1("Optimal Cut-point Analysis (Systematic)")
+print.find_cutpoint <- function(x, ...) {
+  if(is.null(x) || any(is.na(x$optimal_cuts))) {
+    cli::cli_alert_danger("No optimal cut-point could be determined with the given parameters.")
+    return(invisible(x))
+  }
+
+  method_name <- tools::toTitleCase(x$parameters$method)
+  cli::cli_h1("Optimal Cut-point Analysis for Survival Data ({method_name})")
+
+  stat_label <- switch(x$parameters$criterion,
+                       "logrank" = "Optimal Log-Rank Statistic",
+                       "hazard_ratio" = "Optimal Hazard Ratio",
+                       "p_value" = "Optimal P-value")
+
   cli::cli_bullets(c(
-    "\u2714" = "Final Recommended Cut-point(s): {.strong {paste(round(x$best_cut, 3), collapse = ', ')}}"
+    "*" = "Predictor: {.strong {x$parameters$predictor}}",
+    "*" = "Criterion: {.strong {x$parameters$criterion}}",
+    "*" = "{stat_label}: {.strong {round(x$optimal_stat, 4)}}",
+    "v" = "Recommended Cut-point(s): {.strong {paste(round(x$optimal_cuts, 3), collapse = ', ')}}"
   ))
   invisible(x)
 }
 
 #' @rdname find_cutpoint
 #' @export
-print.find_cutpoint_genetic <- function(x, ...) {
-  cli::cli_h1("Optimal Cut-point Analysis (Genetic)")
-  cli::cli_bullets(c(
-    "\u2714" = "Final Recommended Cut-point(s): {.strong {paste(round(x$optimal_cuts, 3), collapse = ', ')}}"
-  ))
-  invisible(x)
+summary.find_cutpoint <- function(object, show_model = TRUE, show_group_counts = TRUE,
+                                  show_medians = TRUE, show_ph_test = TRUE, show_params = TRUE, ...) {
+
+  if(is.null(object) || any(is.na(object$optimal_cuts))) {
+    cli::cli_alert_danger("Cannot generate summary because no optimal cut-point was found.")
+    return(invisible(NULL))
+  }
+
+  print(object)
+
+  data <- object$userdata
+  cuts <- object$optimal_cuts
+  num_cuts <- object$parameters$num_cuts
+
+  data$group <- factor(cut(data$factor, breaks = c(-Inf, cuts, Inf),
+                           labels = paste0("G", 1:(num_cuts + 1))))
+
+  if (show_group_counts) {
+    cli::cli_h2("Group Counts")
+    counts_table <- as.data.frame(table(data$group))
+    names(counts_table) <- c("Group", "N")
+    event_counts <- stats::aggregate(event ~ group, data = data, sum)
+    names(event_counts) <- c("Group", "Events")
+    print(merge(counts_table, event_counts, by = "Group"))
+  }
+
+  if (show_medians) {
+    cli::cli_h2("Median Survival by Group")
+    fit_km <- survival::survfit(survival::Surv(time, event) ~ group, data = data)
+    print(fit_km)
+  }
+
+  formula_str <- "survival::Surv(time, event) ~ group"
+  if (!is.null(object$parameters$covariates)) {
+    formula_str <- paste(formula_str, "+", paste(object$parameters$covariates, collapse = " + "))
+  }
+  fit_cox <- survival::coxph(as.formula(formula_str), data = data)
+
+  if (show_model) {
+    cli::cli_h2("Final Cox Model Summary")
+    print(summary(fit_cox))
+  }
+
+  if (show_ph_test) {
+    cli::cli_h2("Proportional Hazards Assumption Test")
+    print(survival::cox.zph(fit_cox))
+  }
+
+  if (show_params) {
+    cli::cli_h1("Analysis Parameters")
+    params <- object$parameters
+    param_bullets <- c(
+      "*" = "Search Method: {tools::toTitleCase(params$method)}",
+      "*" = "Predictor: {params$predictor}",
+      "*" = "Number of cuts: {params$num_cuts}",
+      "*" = "Minimum group size (nmin): {params$nmin}"
+    )
+    if(!is.null(params$covariates)){
+      param_bullets <- c(param_bullets, "*" = "Covariates: {paste(params$covariates, collapse=', ')}")
+    }
+    cli::cli_bullets(param_bullets)
+  }
+
+  invisible(object)
 }
 
-#' @rdname find_cutpoint
-#' @param object An object from `find_cutpoint`.
-#' @export
-summary.find_cutpoint_systematic <- function(object, ...) {
-  cli::cli_h1("Summary for Systematic Search")
-  print(object$parameters)
-}
 
 #' @rdname find_cutpoint
 #' @export
-summary.find_cutpoint_genetic <- function(object, ...) {
-  cli::cli_h1("Summary for Genetic Algorithm Search")
-  print(object$parameters)
-}
-
-#' @rdname find_cutpoint
-#' @param type The type of plot.
-#' @importFrom survminer ggsurvplot
-#' @export
-plot.find_cutpoint_systematic <- function(x, type = "outcome", ...) {
-  plot.find_cutpoint_genetic(x, type = type, ...)
-}
-
-#' @rdname find_cutpoint
-#' @export
-plot.find_cutpoint_genetic <- function(x, type = "outcome", ...) {
+plot.find_cutpoint <- function(x, type = "outcome", ...) {
   type <- match.arg(type, choices = c("outcome", "distribution"))
-  cuts <- if(!is.null(x$best_cut)) x$best_cut else x$optimal_cuts
+
+  if(is.null(x) || any(is.na(x$optimal_cuts))) {
+    cli::cli_alert_warning("Cannot generate plot, no valid cut-point found.")
+    return(invisible(NULL))
+  }
+
+  cuts <- x$optimal_cuts
 
   if (type == "distribution") {
     p <- ggplot2::ggplot(x$userdata, ggplot2::aes(x = .data$factor)) +
-      ggplot2::geom_histogram(aes(y = ggplot2::after_stat(density)), bins = 30, fill = "grey", color = "white") +
-      ggplot2::geom_vline(xintercept = cuts, color = "red", linetype = "dashed", linewidth = 1.2) +
-      ggplot2::labs(title = "Distribution of Predictor with Optimal Cut-points")
+      ggplot2::geom_histogram(aes(y = ggplot2::after_stat(density)), bins = 30, fill = "#56B4E9", color = "black", alpha = 0.7) +
+      ggplot2::geom_density(color = "#0072B2", linewidth = 1) +
+      ggplot2::geom_vline(xintercept = cuts, color = "#D55E00", linetype = "dashed", linewidth = 1.2) +
+      ggplot2::labs(title = "Distribution of Predictor with Optimal Cut-points", x = x$parameters$predictor, y = "Density") +
+      ggplot2::theme_minimal()
     return(p)
   }
 
   if (type == "outcome") {
     data <- x$userdata
     data$group <- factor(cut(data$factor, breaks = c(-Inf, cuts, Inf)))
-    if (x$parameters$analysis_type == "survival") {
-      fit <- survival::survfit(Surv(time, event) ~ group, data = data)
-      p <- survminer::ggsurvplot(fit, data = data, pval = TRUE, risk.table = TRUE)
-      return(p)
-    } else {
-      roc_obj <- pROC::roc(data$outcome, data$factor, quiet = TRUE)
-      p <- pROC::ggroc(roc_obj) + ggplot2::labs(title = "ROC Curve for Predictor")
-      return(p)
-    }
+    fit <- survival::survfit(Surv(time, event) ~ group, data = data)
+    p <- survminer::ggsurvplot(fit, data = data, pval = TRUE, risk.table = TRUE,
+                               legend.title = "Groups",
+                               palette = "jco",
+                               ggtheme = ggplot2::theme_minimal())
+    p$plot <- p$plot + ggplot2::labs(title = paste("Survival Curves by", x$parameters$predictor, "Group"))
+    return(p)
   }
 }
-
-# --- Internal Core Logic ---
-.get_stat <- function(cuts, num_cuts, data_in, analysis, cov_formula, nmin) {
-  breaks <- c(-Inf, sort(cuts), Inf)
-  data_in$group <- factor(cut(data_in$factor, breaks = breaks))
-
-  if(any(table(data_in$group) < nmin) || nlevels(data_in$group) < (num_cuts + 1)) return(NA)
-
-  formula_str <- paste("~ group", cov_formula)
-
-  if(analysis == "survival") {
-    formula_str <- paste("Surv(time, event)", formula_str)
-    fit <- tryCatch(survival::coxph(as.formula(formula_str), data = data_in), error = function(e) NULL)
-    if(is.null(fit)) return(NA)
-    return(summary(fit)$sctest["pvalue"])
-  } else { # logistic
-    formula_str <- paste("outcome", formula_str)
-    fit <- tryCatch(stats::glm(as.formula(formula_str), data = data_in, family = "binomial"), error=function(e) NULL)
-    if(is.null(fit)) return(NA)
-    return(stats::AIC(fit))
-  }
-}
-
-.run_ga <- function(fitness, direction, num_cuts, data, popSize = 50, maxiter = 100, ...) {
-  min_val <- min(data$factor)
-  max_val <- max(data$factor)
-
-  population <- t(replicate(popSize, sort(stats::runif(num_cuts, min_val, max_val))))
-
-  best_fitness <- if(direction == "min") Inf else -Inf
-  best_solution <- population[1, ]
-
-  for (i in 1:maxiter) {
-    fitness_scores <- apply(population, 1, fitness, data = data)
-
-    current_best_idx <- if(direction == "min") which.min(fitness_scores) else which.max(fitness_scores)
-    current_best_fitness <- fitness_scores[current_best_idx]
-
-    if ((direction == "min" && current_best_fitness < best_fitness) ||
-        (direction == "max" && current_best_fitness > best_fitness)) {
-      best_fitness <- current_best_fitness
-      best_solution <- population[current_best_idx, ]
-    }
-
-    parents_idx <- sample(1:popSize, size = popSize, replace = TRUE)
-    parents <- population[parents_idx, ]
-
-    for (j in 1:popSize) {
-      if (stats::runif(1) < 0.8 && num_cuts > 1) {
-        parent2_idx <- sample(1:popSize, 1)
-        crossover_point <- sample(1:(num_cuts - 1), 1)
-        population[j, ] <- c(parents[j, 1:crossover_point], parents[parent2_idx, (crossover_point+1):num_cuts])
-      }
-      if (stats::runif(1) < 0.1) {
-        mutate_point <- sample(1:num_cuts, 1)
-        population[j, mutate_point] <- population[j, mutate_point] + stats::rnorm(1, 0, sd(data$factor)/10)
-      }
-    }
-  }
-  return(list(best_solution = best_solution, best_fitness = best_fitness))
-}
-
-# Suppress NOTE about ggplot2 'density' aesthetic
-utils::globalVariables(c("density"))
