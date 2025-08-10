@@ -4,34 +4,57 @@
 \alias{validate_cutpoint}
 \alias{print.validate_cutpoint_result}
 \alias{plot.validate_cutpoint_result}
+\alias{summary.validate_cutpoint_result}
 \title{Validate an Optimal Cut-point Using Bootstrapping}
 \usage{
 validate_cutpoint(
   cutpoint_result,
   num_replicates = 500,
   use_parallel = FALSE,
-  nmin = 15,
+  seed = NULL,
+  nmin = NULL,
   ...
 )
 
 \method{print}{validate_cutpoint_result}(x, ...)
 
 \method{plot}{validate_cutpoint_result}(x, ...)
+
+\method{summary}{validate_cutpoint_result}(
+  object,
+  show_descriptives = TRUE,
+  show_ci = TRUE,
+  show_params = TRUE,
+  plot.it = FALSE,
+  ...
+)
 }
 \arguments{
 \item{cutpoint_result}{An object returned by the `find_cutpoint` function.}
 
-\item{num_replicates}{The number of bootstrap replicates to perform.}
+\item{num_replicates}{The number of bootstrap replicates to perform. Default is 500.}
 
 \item{use_parallel}{Logical. If TRUE, uses multiple CPU cores for bootstrapping.}
 
-\item{nmin}{The minimum group size to enforce during bootstrap runs. This
-may need to be smaller than the `nmin` from the original analysis, as
-bootstrap samples can be sparse.}
+\item{seed}{An optional integer to set the random seed for reproducible results.}
+
+\item{nmin}{The minimum group size to enforce during bootstrap runs. Defaults
+to 90% of the `nmin` from the original analysis to reduce failures
+in sparse bootstrap samples.}
 
 \item{...}{Unused.}
 
 \item{x}{An object of class `validate_cutpoint_result`.}
+
+\item{object}{An object of class `validate_cutpoint_result`.}
+
+\item{show_descriptives}{Logical. If TRUE, shows descriptive statistics of the bootstrap distributions.}
+
+\item{show_ci}{Logical. If TRUE, shows the confidence intervals.}
+
+\item{show_params}{Logical. If TRUE, shows the parameters of the validation run.}
+
+\item{plot.it}{Logical. If TRUE, displays the density plot of the bootstrap distributions.}
 }
 \value{
 An object of class `validate_cutpoint_result` containing the
@@ -40,4 +63,5 @@ An object of class `validate_cutpoint_result` containing the
 \description{
 Assesses the stability of optimal cut-points found by `find_cutpoint` by
 performing a bootstrap analysis and generating 95% confidence intervals.
+This version is streamlined for survival (time-to-event) analysis.
 }
