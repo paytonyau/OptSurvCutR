@@ -1,13 +1,10 @@
 # This file declares global variables to satisfy R CMD check.
 # These are column names created and used within dplyr pipes or ggplot aes().
 utils::globalVariables(c(
-  # Used in plot.find_cutpoint
-  "density",
+  # From previous versions
+  "density", "Value", "everything", "c1",
 
-  # Used in plot.validate_cutpoint_result
-  "Value",
-  "everything",
-
-  # Used in foreach loop in .systematic_search
-  "c1"
+  # New variables from plot_effect_size and plot_waterfall
+  "Cut1", "HR", "HR_low", "HR_up", "OR", "OR_low", "OR_up",
+  "classified_group", "is_correct", "outcome", "patient_id"
 ))

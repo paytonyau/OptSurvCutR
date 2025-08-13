@@ -178,5 +178,6 @@
 #' Infix operator for providing a default value for NULL.
 #' @param a The value to check.
 #' @param b The default value to use if a is NULL.
+#' @name or-operator
 #' @export
 `%||%` <- function(a, b) if (is.null(a)) b else a
