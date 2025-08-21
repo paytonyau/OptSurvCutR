@@ -8,16 +8,15 @@
 A data frame with 1040 rows and 5 variables:
 \describe{
   \item{temperature}{The experimental temperature in degrees Celsius.}
-  \item{replicate}{The experimental replicate number (1-4 for each temperature).}
+  \item{replicate}{The experimental replicate number.}
   \item{time}{The day of measurement for each seed.}
-  \item{growth}{A simulated measure of seedling growth (e.g., shoot length). Growth is 0 for seeds that did not germinate.}
+  \item{growth}{A simulated measure of seedling growth.}
   \item{germinated}{The germination status: 1 for germinated, 0 for not germinated.}
 }
 }
 \source{
-The simulation parameters are derived from Haj Sghaier et al. (2022)
-  \doi{10.3390/plants11212819}. The script to generate this simulated data
-  is in `data-raw/datasets.R`.
+This dataset was computationally simulated based on parameters derived from
+  Haj Sghaier et al. (2022) \doi{10.3390/plants11212819}.
 }
 \usage{
 germination
@@ -25,8 +24,6 @@ germination
 \description{
 A dataset simulating the germination and early growth of rapeseed
 (Brassica napus L.) across a range of temperatures. The simulation is based
-on parameters published by Haj Sghaier et al. (2022) and includes interpolated
-data points to create a more continuous temperature variable. The relationship
-between germination time and temperature is non-monotonic (U-shaped).
+on parameters published by Haj Sghaier et al. (2022).
 }
 \keyword{datasets}
