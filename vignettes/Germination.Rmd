@@ -148,7 +148,7 @@ number_result_bic <- find_cutpoint_number(
   outcome_event = "germinated",
   method = "genetic",
   criterion = "BIC",
-  use_parallel = TRUE,
+  # use_parallel = TRUE,
   max_cuts = 5,
   nmin = 0.1,
   maxiter = 500,
@@ -188,7 +188,7 @@ multi_cut_result <- find_cutpoint(
   outcome_event = "germinated",
   method = "genetic",
   criterion = "logrank",
-  use_parallel = TRUE,
+  # use_parallel = TRUE,
   num_cuts = 3,
   nmin = 0.1,
   maxiter = 500,
@@ -217,8 +217,8 @@ cli_alert_info("Step 3: Validating cut-point stability with bootstrapping...")
 
 validation_result <- validate_cutpoint(
   cutpoint_result = multi_cut_result,
-  num_replicates = 100, # Use a higher number (e.g., 500) for publication
-  use_parallel = TRUE,
+  num_replicates = 200, # Use a higher number (e.g., 500) for publication
+  # use_parallel = TRUE,
   seed = 456,
   maxiter = 100
 )

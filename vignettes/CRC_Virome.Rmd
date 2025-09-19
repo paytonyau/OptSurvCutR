@@ -146,7 +146,7 @@ number_result <- find_cutpoint_number(
   max_cuts = 4,
   nmin = 0.2,
   maxiter = 100,
-  use_parallel = TRUE,
+  # use_parallel = TRUE,
   seed = 42 # Use the built-in seed argument for reproducible results
 ) 
 ```
@@ -176,7 +176,7 @@ multi_cut_result <- find_cutpoint(
   num_cuts = 2,
   nmin = 0.2,
   maxiter = 500,
-  use_parallel = TRUE,
+  # use_parallel = TRUE,
   seed = 123 # Use a different seed for this distinct analysis step
 )
 
@@ -214,7 +214,7 @@ This is a crucial step to assess how reliable our discovered cut-points are. We 
 validation_result <- validate_cutpoint(
   cutpoint_result = multi_cut_result,
   num_replicates = 200, # Use a higher number (e.g., 500) for a final analysis.
-  use_parallel = TRUE,  # Enable parallel processing.
+  # use_parallel = TRUE,  # Enable parallel processing.
   seed = 456
 )
 ```

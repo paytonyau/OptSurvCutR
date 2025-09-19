@@ -70,7 +70,6 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500, use_paralle
     pb <- cli::cli_progress_bar("Bootstrapping", total = num_replicates)
   }
 
-  # We no longer need to manually export `%||%` because it's an exported function
   functions_to_export <- c("find_cutpoint", ".systematic_search", ".get_stat",
                            ".run_genetic_search", ".obj")
 
@@ -131,6 +130,17 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500, use_paralle
     cli::cli_warn("{failed_reps} of {num_replicates} bootstrap replicates failed to find a valid cut-point.")
   }
   cli::cli_alert_success("{successful_reps} replicates completed successfully.")
+
+  # --- FIXED: Add a base R warning when the success rate is low ---
+  # This warning will be caught by testthat::expect_warning()
+  warn_threshold <- 0.8
+  if (successful_reps / num_replicates < warn_threshold && successful_reps > 0) {
+    warning(
+      paste(successful_reps, "of", num_replicates, "bootstrap replicates succeeded.",
+            "The confidence intervals may be unreliable.")
+    )
+  }
+  # --- End of fix ---
 
   min_required_reps <- 20
   if (successful_reps < min_required_reps) {

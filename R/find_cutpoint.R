@@ -51,8 +51,19 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event, num_cuts
   # --- 1. Input Validation and Data Prep ---
   method <- match.arg(method, choices = c("systematic", "genetic"))
   criterion <- match.arg(criterion, choices = c("logrank", "hazard_ratio", "p_value"))
-  if (is.null(predictor) || !predictor %in% names(data)) stop("A valid 'predictor' variable must be specified.", call. = FALSE)
+
+  # --- FIXED: Consolidated and robust input validation for all required columns ---
+  if (is.null(predictor)) stop("A 'predictor' variable must be specified.", call. = FALSE)
   if (is.null(outcome_time) || is.null(outcome_event)) stop("Both 'outcome_time' and 'outcome_event' must be specified.", call. = FALSE)
+
+  required_vars <- c(predictor, outcome_time, outcome_event, covariates)
+  missing_vars <- setdiff(required_vars, names(data))
+
+  if (length(missing_vars) > 0) {
+    stop(paste0("The following required column(s) were not found in the data: '",
+                paste(missing_vars, collapse = "', '"), "'"), call. = FALSE)
+  }
+  # --- End of fix ---
 
   if (criterion == "hazard_ratio" && num_cuts > 1) {
     stop("'hazard_ratio' criterion is only supported for num_cuts = 1.", call. = FALSE)
@@ -62,7 +73,6 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event, num_cuts
     set.seed(seed)
   }
 
-  required_vars <- c(predictor, covariates, outcome_time, outcome_event)
   userdata <- data[, unique(required_vars), drop = FALSE]
   userdata <- stats::na.omit(userdata)
 
@@ -70,6 +80,10 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event, num_cuts
   names(userdata)[names(userdata) == predictor] <- "factor"
   names(userdata)[names(userdata) == outcome_time] <- "time"
   names(userdata)[names(userdata) == outcome_event] <- "event"
+
+  if (any(userdata$time < 0)) {
+    stop("Time variable must be non-negative.", call. = FALSE)
+  }
 
   if (nmin > 0 && nmin < 1) nmin <- floor(nmin * nrow(userdata))
   if (nrow(userdata) < nmin * (num_cuts + 1)) {
