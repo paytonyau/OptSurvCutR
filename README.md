@@ -1,8 +1,5 @@
 # OptSurvCutR: An R Package for Optimal Cut-point Discovery in Survival Analysis
 
-[![R-CMD-check](https://github.com/paytonyau/OptSurvCutR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/paytonyau/OptSurvCutR/actions/workflows/R-CMD-check.yaml)
-<!-- [![CRAN status](https://www.r-pkg.org/badges/version/OptSurvCutR)](https://cran.r-project.org/package=OptSurvCutR) -->
-
 `OptSurvCutR` provides a comprehensive and flexible workflow to determine, find, and validate optimal cut-points for continuous predictors, with a dedicated focus on **time-to-event (survival)** data. The package's primary goal is to move beyond arbitrary median splits by providing a statistically robust framework to stratify subjects into distinct prognostic groups, with a unique strength in identifying multiple cut-points for complex, non-linear relationships.
 
 ### Why OptSurvCutR?
@@ -73,22 +70,9 @@ plot(multi_cut_result, type = "outcome")
 
 ## Package Workflow
 
-The `OptSurvCutR` workflow is built around three core functions designed to be used in sequence. The flowchart below illustrates the recommended analytical path.
+The `OptSurvCutR` workflow is built around three core functions designed to be used in sequence. 
 
-```mermaid
-graph TD
-    A[Start with Data] --> B{How many cut-points?};
-    B -- Unsure --> C[Step 1: find_cutpoint_number()];
-    C -- Optimal number is N --> D[Step 2: find_cutpoint(num_cuts = N)];
-    B -- I already know --> D;
-    D --> E[Step 3: validate_cutpoint()];
-    E --> F[Final Validated Model & Plots];
-
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style F fill:#f9f,stroke:#333,stroke-width:2px
-```
-
-1.  **`find_cutpoint_number()`**: The recommended first step. Use this to get statistical evidence (using BIC or AIC) for the most plausible number of cut-points for your data.
+1.  **`find_cutpoint_number()`**: The recommended first step. Use this to get statistical evidence (using BIC, AIC or AICc) for the most plausible number of cut-points for your data.
 
 2.  **`find_cutpoint()`**: The main workhorse function. After you know how many cuts to look for (from Step 1, or if you have a prior hypothesis), use this to find their exact locations.
 
