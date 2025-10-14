@@ -30,7 +30,7 @@ validate_cutpoint(
 )
 }
 \arguments{
-\item{cutpoint_result}{An object returned by the `find_cutpoint` function.}
+\item{cutpoint_result}{An object returned by the \code{\link{find_cutpoint}} function.}
 
 \item{num_replicates}{The number of bootstrap replicates to perform. Default is 500.}
 
@@ -39,7 +39,7 @@ validate_cutpoint(
 \item{seed}{An optional integer to set the random seed for reproducible results.}
 
 \item{nmin}{The minimum group size to enforce during bootstrap runs. Defaults
-to 90% of the `nmin` from the original analysis to reduce failures
+to 90\% of the `nmin` from the original analysis to reduce failures
 in sparse bootstrap samples.}
 
 \item{...}{Unused.}
@@ -58,10 +58,10 @@ in sparse bootstrap samples.}
 }
 \value{
 An object of class `validate_cutpoint_result` containing the
-  original cut-point(s) and their 95% confidence intervals.
+  original cut-point(s) and their 95\% confidence intervals.
 }
 \description{
-Assesses the stability of optimal cut-points found by `find_cutpoint` by
-performing a bootstrap analysis and generating 95% confidence intervals.
+Assesses the stability of optimal cut-points found by \code{\link{find_cutpoint}} by
+performing a bootstrap analysis and generating 95\% confidence intervals.
 This version is streamlined for survival (time-to-event) analysis.
 }

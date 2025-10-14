@@ -1,4 +1,4 @@
-# OptSurvCutR: An R Package for Optimal Cut-point Discovery in Survival Analysis
+# OptSurvCutR: Validated Cut-point Selection for Survival Analysis
 
 `OptSurvCutR` provides a comprehensive and flexible workflow to determine, find, and validate optimal cut-points for continuous predictors, with a dedicated focus on **time-to-event (survival)** data. The package's primary goal is to move beyond arbitrary median splits by providing a statistically robust framework to stratify subjects into distinct prognostic groups, with a unique strength in identifying multiple cut-points for complex, non-linear relationships.
 
@@ -86,9 +86,9 @@ Please note that this project is released with a [Contributor Code of Conduct](C
 
 ## How to Cite
 
-If you use `OptSurvCutR` in your research, please cite our manuscript:
+If you use `OptSurvCutR` in your research, please cite our preprint manuscript:
 
-> Currently in preparation
+Yau, Payton T. O. "OptSurvCutR: Validated Cut-point Selection for Survival Analysis." bioRxiv preprint, posted October 18, 2025. https://doi.org/10.1101/2025.10.08.681246.
 
 ## License
 

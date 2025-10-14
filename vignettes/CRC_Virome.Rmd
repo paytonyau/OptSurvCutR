@@ -69,11 +69,14 @@ This guide covers a complete and robust workflow:
 First, we load all the necessary R packages. The `pacman` package will automatically install any missing packages.
 
 ```{r load-libraries}
-if (!require("pacman")) install.packages("pacman")
-pacman::p_load(
-  OptSurvCutR, dplyr,
-  survival, survminer, patchwork, ggplot2
-)
+# Load all necessary libraries for the analysis.
+# The user is expected to have these installed as they are dependencies of the package.
+library(OptSurvCutR)
+library(dplyr)
+library(survival)
+library(survminer)
+library(patchwork)
+library(ggplot2)
 ```
 
 ### Defining Parameters

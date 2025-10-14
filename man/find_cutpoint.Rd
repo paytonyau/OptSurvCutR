@@ -61,8 +61,8 @@ find_cutpoint(
 \item{nmin}{The minimum number of observations required in each group created by the cut-points.
 Can be specified as an integer (e.g., 20) or a proportion (e.g., 0.1).}
 
-\item{seed}{An optional integer to set the random seed for reproducible results
-when `method = "genetic"`.}
+\item{seed}{An optional integer for setting the random seed to ensure
+reproducible results when using the "genetic" method.}
 
 \item{maxiter}{The number of generations for the genetic algorithm. Default is 100.}
 
@@ -72,9 +72,9 @@ when `method = "genetic"`.}
 
 \item{...}{Additional arguments passed to the genetic algorithm (e.g., `popSize`).}
 
-\item{x}{An object from `find_cutpoint`.}
+\item{x}{An object from \code{\link{find_cutpoint}}.}
 
-\item{object}{An object from `find_cutpoint`.}
+\item{object}{An object from \code{\link{find_cutpoint}}.}
 
 \item{show_model}{Logical. If TRUE, shows the full summary of the final Cox model.}
 
@@ -89,7 +89,7 @@ when `method = "genetic"`.}
 \item{type}{The type of plot to generate: "outcome" (a survival plot) or "distribution".}
 }
 \value{
-An object of class `find_cutpoint` containing the optimal cut-points,
+An object of class \code{find_cutpoint} containing the optimal cut-points,
   the corresponding statistic, and other parameters used in the analysis.
 }
 \description{

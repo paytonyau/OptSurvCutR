@@ -18,14 +18,14 @@
 #' @param covariates A character vector of covariate names to include in the model.
 #' @param nmin The minimum number of observations required in each group created by the cut-points.
 #'   Can be specified as an integer (e.g., 20) or a proportion (e.g., 0.1).
-#' @param seed An optional integer to set the random seed for reproducible results
-#'   when `method = "genetic"`.
+#' @param seed An optional integer for setting the random seed to ensure
+#'   reproducible results when using the "genetic" method.
 #' @param maxiter The number of generations for the genetic algorithm. Default is 100.
 #' @param use_parallel Logical. If TRUE, uses multiple CPU cores for the systematic search.
 #' @param quiet Logical. If TRUE, suppresses the printing of the final result object.
 #' @param ... Additional arguments passed to the genetic algorithm (e.g., `popSize`).
-#' @param x An object from `find_cutpoint`.
-#' @param object An object from `find_cutpoint`.
+#' @param x An object from \code{\link{find_cutpoint}}.
+#' @param object An object from \code{\link{find_cutpoint}}.
 #' @param show_model Logical. If TRUE, shows the full summary of the final Cox model.
 #' @param show_group_counts Logical. If TRUE, shows the number of subjects and events in each group.
 #' @param show_medians Logical. If TRUE, shows the median survival for each group.
@@ -33,12 +33,14 @@
 #' @param show_params Logical. If TRUE, shows the parameters of the original function call.
 #' @param type The type of plot to generate: "outcome" (a survival plot) or "distribution".
 #'
-#' @return An object of class `find_cutpoint` containing the optimal cut-points,
+#' @return An object of class \code{find_cutpoint} containing the optimal cut-points,
 #'   the corresponding statistic, and other parameters used in the analysis.
 #' @importFrom stats na.omit as.formula pchisq sd rnorm runif anova aggregate
 #' @importFrom survival Surv survfit survdiff coxph cox.zph
-#' @importFrom cli cli_h1 cli_text cli_alert_info cli_alert_success cli_bullets cli_progress_bar cli_progress_update cli_progress_done cli_alert_danger cli_warn
-#' @importFrom ggplot2 ggplot aes .data geom_line geom_vline labs theme_minimal geom_histogram geom_density
+#' @importFrom cli cli_h1 cli_text cli_alert_info cli_alert_success cli_bullets cli_progress_bar
+#'   cli_progress_update cli_progress_done cli_alert_danger cli_warn
+#' @importFrom ggplot2 ggplot aes .data geom_line geom_vline labs theme_minimal
+#'   geom_histogram geom_density
 #' @importFrom foreach %dopar%
 #' @importFrom doParallel registerDoParallel
 #' @importFrom parallel detectCores makeCluster stopCluster

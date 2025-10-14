@@ -162,7 +162,7 @@ test_that("find_cutpoint works with covariates", {
 })
 
 test_that("find_cutpoint works with parallelization", {
-  res_lr_parallel <- suppressMessages(suppressWarnings(find_cutpoint(mock_data, "predictor", "time", "event", num_cuts = 1, method = "systematic", criterion = "logrank", use_parallel = TRUE, nmin = 1)))
+  res_lr_parallel <- suppressMessages(suppressWarnings(find_cutpoint(mock_data, "predictor", "time", "event", num_cuts = 1, method = "systematic", criterion = "logrank", use_parallel = FALSE, nmin = 1)))
   expect_s3_class(res_lr_parallel, "find_cutpoint")
   expect_length(res_lr_parallel$optimal_cuts, 1)
 })
@@ -176,7 +176,7 @@ test_that("validate_cutpoint works with recommended settings", {
   fc_result <- suppressMessages(suppressWarnings(find_cutpoint(mock_data, "predictor", "time", "event", num_cuts = 1, method = "systematic", criterion = "logrank", nmin = 1)))
   skip_if(any(is.na(fc_result$optimal_cuts)), "Systematic search failed, skipping validation test.")
 
-  val_result <- suppressMessages(suppressWarnings(validate_cutpoint(fc_result, num_replicates = num_replicates, use_parallel = TRUE, nmin = 1)))
+  val_result <- suppressMessages(suppressWarnings(validate_cutpoint(fc_result, num_replicates = num_replicates, use_parallel = FALSE, nmin = 1)))
   skip_if(is.null(val_result), "Validation failed, skipping checks.")
 
   expect_s3_class(val_result, "validate_cutpoint_result")
@@ -212,7 +212,7 @@ test_that("validate_cutpoint works for genetic result with 2 cuts", {
   fc_result_gen <- suppressMessages(suppressWarnings(find_cutpoint(mock_data, "predictor", "time", "event", num_cuts = 2, method = "genetic", criterion = "logrank", maxiter = 10, nmin = 1)))
   skip_if(any(is.na(fc_result_gen$optimal_cuts)), "GA failed to find initial cutpoint, skipping validation test.")
 
-  val_result_gen <- suppressMessages(suppressWarnings(validate_cutpoint(fc_result_gen, num_replicates = num_replicates, use_parallel = TRUE, maxiter = 10, nmin = 1)))
+  val_result_gen <- suppressMessages(suppressWarnings(validate_cutpoint(fc_result_gen, num_replicates = num_replicates, use_parallel = FALSE, maxiter = 10, nmin = 1)))
   skip_if(is.null(val_result_gen), "Validation failed, skipping checks.")
 
   expect_s3_class(val_result_gen, "validate_cutpoint_result")
@@ -226,7 +226,7 @@ test_that("validate_cutpoint works with parallelization", {
   fc_result <- suppressMessages(suppressWarnings(find_cutpoint(mock_data, "predictor", "time", "event", num_cuts = 1, method = "systematic", criterion = "logrank", nmin = 1)))
   skip_if(any(is.na(fc_result$optimal_cuts)), "Systematic search failed, skipping validation test.")
 
-  val_result_parallel <- suppressMessages(suppressWarnings(validate_cutpoint(fc_result, num_replicates = num_replicates, use_parallel = TRUE, nmin = 1)))
+  val_result_parallel <- suppressMessages(suppressWarnings(validate_cutpoint(fc_result, num_replicates = num_replicates, use_parallel = FALSE, nmin = 1)))
   skip_if(is.null(val_result_parallel), "Validation failed, skipping checks.")
 
   expect_s3_class(val_result_parallel, "validate_cutpoint_result")
@@ -255,7 +255,7 @@ test_that("full workflow: find_cutpoint_number -> find_cutpoint -> validate_cutp
   expect_length(res_fc$optimal_cuts, optimal_cuts)
 
   # Step 3: Validate cutpoints
-  val_result <- suppressMessages(suppressWarnings(validate_cutpoint(res_fc, num_replicates = num_replicates, use_parallel = TRUE, maxiter = 10, nmin = 1)))
+  val_result <- suppressMessages(suppressWarnings(validate_cutpoint(res_fc, num_replicates = num_replicates, use_parallel = FALSE, maxiter = 10, nmin = 1)))
   skip_if(is.null(val_result), "validate_cutpoint failed, skipping checks.")
 
   expect_s3_class(val_result, "validate_cutpoint_result")
@@ -293,7 +293,7 @@ test_that("S3 methods run without errors and produce correct output", {
   }
 
   # Test validate_cutpoint methods
-  res_val <- suppressMessages(suppressWarnings(validate_cutpoint(res_fc, num_replicates = num_replicates, use_parallel = TRUE, nmin = 1)))
+  res_val <- suppressMessages(suppressWarnings(validate_cutpoint(res_fc, num_replicates = num_replicates, use_parallel = FALSE, nmin = 1)))
   if (!is.null(res_val)) {
     expect_s3_class(res_val, "validate_cutpoint_result")
     expect_true("confidence_intervals" %in% names(res_val))

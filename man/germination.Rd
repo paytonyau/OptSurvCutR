@@ -16,7 +16,7 @@ A data frame with 1040 rows and 5 variables:
 }
 \source{
 This dataset was computationally simulated based on parameters derived from
-  Haj Sghaier et al. (2022) \doi{10.3390/plants11212819}.
+  Haj Sghaier et al. (2022) [\url{https://doi.org/10.3390/plants11212819}].
 }
 \usage{
 germination

@@ -14,21 +14,24 @@
 #' @param max_cuts The maximum number of cut-points to test for.
 #' @param nmin The minimum number of observations in each group.
 #' @param use_parallel Logical. If TRUE, uses multiple CPU cores.
-#' @param seed An optional integer to set the random seed for reproducible results
-#'   when `method = "genetic"`.
+#' @param seed An optional integer for setting the random seed to ensure
+#'   reproducible results when using the "genetic" method.
 #' @param maxiter The number of generations for the genetic algorithm. Default is 100.
-#' @param object An object of class `find_cutpoint_number_result` (for S3 methods).
-#' @param x An object of class `find_cutpoint_number_result` (for S3 methods).
+#' @param object An object of class \code{find_cutpoint_number_result} (for S3 methods).
+#' @param x An object of class \code{find_cutpoint_number_result} (for S3 methods).
 #' @param y Unused.
 #' @param ... Additional arguments passed to the genetic algorithm.
 #'
-#' @return An object containing the results of the cut-point analysis.
+#' @return An object of class `find_cutpoint_number_result`. This is a list
+#'   containing a data frame of the model comparison results, the analysis
+#'   parameters, and the data used.
 #' @importFrom foreach %dopar%
 #' @importFrom doParallel registerDoParallel
 #' @importFrom parallel detectCores makeCluster stopCluster
 #' @importFrom stats na.omit as.formula pchisq logLik aggregate
 #' @importFrom survival coxph Surv survfit
-#' @importFrom cli cli_h1 cli_text cli_alert_info cli_alert_success cli_warn cli_alert_danger cli_progress_bar cli_progress_update cli_progress_done
+#' @importFrom cli cli_h1 cli_text cli_alert_info cli_alert_success cli_warn cli_alert_danger cli_progress_bar
+#'  cli_progress_update cli_progress_done
 #' @importFrom ggplot2 ggplot aes .data geom_line geom_point labs theme_minimal scale_x_continuous
 #' @export
 find_cutpoint_number <- function(data, predictor,

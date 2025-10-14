@@ -55,16 +55,16 @@ find_cutpoint_number(
 
 \item{use_parallel}{Logical. If TRUE, uses multiple CPU cores.}
 
-\item{seed}{An optional integer to set the random seed for reproducible results
-when `method = "genetic"`.}
+\item{seed}{An optional integer for setting the random seed to ensure
+reproducible results when using the "genetic" method.}
 
 \item{maxiter}{The number of generations for the genetic algorithm. Default is 100.}
 
 \item{...}{Additional arguments passed to the genetic algorithm.}
 
-\item{x}{An object of class `find_cutpoint_number_result` (for S3 methods).}
+\item{x}{An object of class \code{find_cutpoint_number_result} (for S3 methods).}
 
-\item{object}{An object of class `find_cutpoint_number_result` (for S3 methods).}
+\item{object}{An object of class \code{find_cutpoint_number_result} (for S3 methods).}
 
 \item{show_comparison_table}{Logical. If TRUE, shows the model comparison table.}
 
@@ -79,7 +79,9 @@ when `method = "genetic"`.}
 \item{y}{Unused.}
 }
 \value{
-An object containing the results of the cut-point analysis.
+An object of class `find_cutpoint_number_result`. This is a list
+  containing a data frame of the model comparison results, the analysis
+  parameters, and the data used.
 }
 \description{
 Determines the optimal number of cut-points (from 0 to `max_cuts`) for a
