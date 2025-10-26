@@ -62,6 +62,7 @@ number_result <- find_cutpoint_number(
 )
 
 print(number_result)
+
 # The BIC suggests 2 cut-points are optimal for this data.
 
 # --- 3. Find the optimal VALUE of those cut-points ---
@@ -95,6 +96,7 @@ summary(validation_result)
 # using the original optimal cuts found in step 3.
 plot(validation_result, type = "outcome")
 ```
+
 ## Workflow Summary
 OptSurvCutR provides a three-step workflow for cut-point analysis:
 
