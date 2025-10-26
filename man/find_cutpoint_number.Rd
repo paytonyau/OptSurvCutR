@@ -14,9 +14,9 @@ find_cutpoint_number(
   outcome_event,
   method = "systematic",
   criterion = "BIC",
+  covariates = NULL,
   max_cuts = 2,
   nmin = 0.1,
-  use_parallel = FALSE,
   seed = NULL,
   maxiter = 100,
   ...
@@ -49,11 +49,11 @@ find_cutpoint_number(
 
 \item{criterion}{The information criterion ("AIC", "AICc", or "BIC") to use for model selection.}
 
+\item{covariates}{A character vector of covariate names to include in the model.}
+
 \item{max_cuts}{The maximum number of cut-points to test for.}
 
 \item{nmin}{The minimum number of observations in each group.}
-
-\item{use_parallel}{Logical. If TRUE, uses multiple CPU cores.}
 
 \item{seed}{An optional integer for setting the random seed to ensure
 reproducible results when using the "genetic" method.}
@@ -81,7 +81,7 @@ reproducible results when using the "genetic" method.}
 \value{
 An object of class `find_cutpoint_number_result`. This is a list
   containing a data frame of the model comparison results, the analysis
-  parameters, and the data used.
+  parameters, the data used, optimal_num_cuts, and optimal_cuts.
 }
 \description{
 Determines the optimal number of cut-points (from 0 to `max_cuts`) for a

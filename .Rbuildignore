@@ -5,3 +5,7 @@
 ^data-raw$
 ^CODE_OF_CONDUCT\.md$
 ^contributing\.md$
+^\.github$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

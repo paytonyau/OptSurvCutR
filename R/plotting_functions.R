@@ -1,104 +1,84 @@
-#' Plot Effect Size vs. Cut-point
+#' Plot Optimization Curve from a Systematic Search
 #'
 #' @description
-#' Visualizes how the effect size (Hazard Ratio or Odds Ratio) and its
-#' confidence interval change across the full range of possible cut-points.
+#' Visualizes the optimization process from a `find_cutpoint()` systematic search
+#' with `num_cuts = 1`. It plots the chosen metric (e.g., Log-Rank statistic,
+#' Hazard Ratio, or p-value) against all evaluated cut-points.
 #'
-#' @param cutpoint_result An object returned by `find_cutpoint(method = "systematic")`.
-#' @return A ggplot object.
+#' This plot helps to visually confirm the optimal cut-point and assess the
+#' sensitivity of the metric to the choice of cut-point.
+#'
+#' @param cutpoint_result An object returned by `find_cutpoint()` where
+#'   `method = "systematic"` and `num_cuts = 1` was used.
+#'
+#' @return A ggplot object showing the metric values across the range of
+#'   cut-points. The optimal cut-point is marked with a vertical dashed line.
+#'
+#' @importFrom ggplot2 ggplot aes geom_line geom_vline labs theme_minimal .data
+#' @importFrom cli cli_abort
+#' @importFrom tools toTitleCase
 #' @export
-plot_effect_size <- function(cutpoint_result) {
+plot_optimization_curve <- function(cutpoint_result) {
 
-  if (!inherits(cutpoint_result, "find_cutpoint_systematic")) {
-    stop("This plot is only for results from find_cutpoint(method = 'systematic').", call. = FALSE)
+  # --- 1. Input Validation ---
+  params <- cutpoint_result$parameters
+  if (!inherits(cutpoint_result, "find_cutpoint")) {
+    cli::cli_abort("Input must be an object from the {.fn find_cutpoint} function.")
+  }
+  if (is.null(params$method) || params$method != "systematic") {
+    cli::cli_abort("This plot is only for results from {.fn find_cutpoint} with `method = \"systematic\"`.")
+  }
+  if (is.null(params$num_cuts) || params$num_cuts != 1) {
+    cli::cli_abort("This plot is only supported for results with `num_cuts = 1`.")
+  }
+  if (is.null(cutpoint_result$all_stats) || nrow(cutpoint_result$all_stats) == 0) {
+    cli::cli_abort("The {.arg cutpoint_result} object does not contain the necessary `all_stats` data for this plot.")
   }
 
-  plot_data <- cutpoint_result$allcut
-  optimal_cut <- cutpoint_result$best_by_vote
-  analysis_type <- cutpoint_result$parameters$analysis_type
+  # --- 2. Data Preparation ---
+  plot_data <- cutpoint_result$all_stats
+  optimal_cut <- cutpoint_result$optimal_cuts[1]
+  criterion <- params$criterion
 
-  if (analysis_type == "survival") {
-    # Check if confidence interval columns exist
-    if (!all(c("HR_low", "HR_up") %in% names(plot_data))) {
-      stop("Confidence interval columns (HR_low, HR_up) not found in results.", call. = FALSE)
-    }
-    p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = Cut1, y = HR)) +
-      ggplot2::geom_ribbon(ggplot2::aes(ymin = HR_low, ymax = HR_up), alpha = 0.2, fill = "dodgerblue") +
-      ggplot2::geom_line(color = "dodgerblue", linewidth = 1) +
-      ggplot2::labs(y = "Hazard Ratio (HR)", title = "Hazard Ratio vs. Cut-point")
-  } else { # logistic
-    # Check if confidence interval columns exist
-    if (!all(c("OR_low", "OR_up") %in% names(plot_data))) {
-      stop("Confidence interval columns (OR_low, OR_up) not found in results.", call. = FALSE)
-    }
-    p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = Cut1, y = OR)) +
-      ggplot2::geom_ribbon(ggplot2::aes(ymin = OR_low, ymax = OR_up), alpha = 0.2, fill = "darkorange") +
-      ggplot2::geom_line(color = "darkorange", linewidth = 1) +
-      ggplot2::labs(y = "Odds Ratio (OR)", title = "Odds Ratio vs. Cut-point")
+  # Determine plot labels based on the criterion used
+  y_label <- switch(criterion,
+                    "logrank" = "Log-Rank Statistic",
+                    "hazard_ratio" = "Hazard Ratio (HR)",
+                    "p_value" = "P-value",
+                    tools::toTitleCase(criterion)
+  )
+  plot_title <- paste(y_label, "vs. Cut-point")
+  subtitle_text <- if (!is.na(optimal_cut)) {
+    paste("Optimal cut-point at", round(optimal_cut, 3))
+  } else {
+    "No optimal cut-point found."
   }
 
-  p <- p +
-    ggplot2::geom_hline(yintercept = 1, linetype = "dotted") +
-    ggplot2::geom_vline(xintercept = optimal_cut, linetype = "dashed", color = "red", linewidth = 1) +
+  # --- 3. Generate Plot ---
+  p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data$cut1, y = .data$stat)) +
+    ggplot2::geom_line(color = "#0072B2", linewidth = 1) +
     ggplot2::labs(
-      subtitle = paste("Optimal cut-point at", round(optimal_cut, 2)),
-      x = "Cut-point Value"
+      title = plot_title,
+      subtitle = subtitle_text,
+      x = "Cut-point Value",
+      y = y_label
     ) +
-    ggplot2::theme_minimal()
+    ggplot2::theme_minimal(base_size = 14)
 
-  return(p)
-}
-
-
-#' Plot a Waterfall Chart of Classification
-#'
-#' @description
-#' Visualizes how an optimal cut-point classifies individual subjects in a
-#' binary outcome analysis.
-#'
-#' @param cutpoint_result An object returned by `find_cutpoint(method = "systematic")`
-#'   from a binary outcome analysis.
-#' @return A ggplot object.
-#' @importFrom magrittr %>%
-#' @export
-plot_waterfall <- function(cutpoint_result) {
-
-  if (!inherits(cutpoint_result, "find_cutpoint_systematic") ||
-      cutpoint_result$parameters$analysis_type != "logistic") {
-    stop("Waterfall plot is only for binary outcome results from method = 'systematic'.", call. = FALSE)
-  }
-
-  plot_data <- cutpoint_result$userdata
-  optimal_cut <- cutpoint_result$best_by_vote
-
-  # Prepare data for plotting
-  plot_data <- plot_data %>%
-    dplyr::arrange(factor) %>%
-    dplyr::mutate(
-      patient_id = dplyr::row_number(),
-      # Classify based on the cut-point
-      classified_group = ifelse(factor <= optimal_cut, 0, 1),
-      # Check if classification was correct
-      is_correct = (classified_group == outcome)
+  # Add line for optimal cut if it was found
+  if (!is.na(optimal_cut)) {
+    p <- p + ggplot2::geom_vline(
+      xintercept = optimal_cut,
+      linetype = "dashed",
+      color = "#D55E00",
+      linewidth = 1.2
     )
+  }
 
-  # Plot the waterfall chart
-  p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = patient_id, y = factor, fill = is_correct)) +
-    ggplot2::geom_col(width = 1) +
-    ggplot2::geom_hline(yintercept = optimal_cut, linetype = "dashed", color = "red", linewidth = 1) +
-    ggplot2::scale_fill_manual(
-      name = "Classification",
-      values = c("TRUE" = "forestgreen", "FALSE" = "firebrick"),
-      labels = c("TRUE" = "Correct", "FALSE" = "Incorrect")
-    ) +
-    ggplot2::labs(
-      title = "Waterfall Plot of Patient Classification",
-      subtitle = paste("Cut-point at", round(optimal_cut, 2)),
-      x = "Patients (ordered by predictor value)",
-      y = "Predictor Value"
-    ) +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.ticks.x = ggplot2::element_blank())
+  # For HR plots, add a reference line at 1
+  if (criterion == "hazard_ratio") {
+    p <- p + ggplot2::geom_hline(yintercept = 1, linetype = "dotted")
+  }
 
   return(p)
 }

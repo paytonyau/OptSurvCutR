@@ -19,7 +19,6 @@ find_cutpoint(
   nmin = 20,
   seed = NULL,
   maxiter = 100,
-  use_parallel = TRUE,
   quiet = FALSE,
   ...
 )
@@ -36,7 +35,7 @@ find_cutpoint(
   ...
 )
 
-\method{plot}{find_cutpoint}(x, type = "outcome", ...)
+\method{plot}{find_cutpoint}(x, type = "outcome", reference_group = NULL, ...)
 }
 \arguments{
 \item{data}{A data frame containing the analysis variables.}
@@ -66,8 +65,6 @@ reproducible results when using the "genetic" method.}
 
 \item{maxiter}{The number of generations for the genetic algorithm. Default is 100.}
 
-\item{use_parallel}{Logical. If TRUE, uses multiple CPU cores for the systematic search.}
-
 \item{quiet}{Logical. If TRUE, suppresses the printing of the final result object.}
 
 \item{...}{Additional arguments passed to the genetic algorithm (e.g., `popSize`).}
@@ -86,7 +83,9 @@ reproducible results when using the "genetic" method.}
 
 \item{show_params}{Logical. If TRUE, shows the parameters of the original function call.}
 
-\item{type}{The type of plot to generate: "outcome" (a survival plot) or "distribution".}
+\item{type}{The type of plot to generate: "outcome" (a survival plot), "distribution", or "forest".}
+
+\item{reference_group}{The reference group for the forest plot (e.g., "G1").}
 }
 \value{
 An object of class \code{find_cutpoint} containing the optimal cut-points,

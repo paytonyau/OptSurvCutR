@@ -11,6 +11,7 @@ validate_cutpoint(
   cutpoint_result,
   num_replicates = 500,
   use_parallel = FALSE,
+  n_cores = NULL,
   seed = NULL,
   nmin = NULL,
   ...
@@ -36,6 +37,8 @@ validate_cutpoint(
 
 \item{use_parallel}{Logical. If TRUE, uses multiple CPU cores for bootstrapping.}
 
+\item{n_cores}{Number of cores to use for parallel processing; if NULL, defaults to 2.}
+
 \item{seed}{An optional integer to set the random seed for reproducible results.}
 
 \item{nmin}{The minimum group size to enforce during bootstrap runs. Defaults
@@ -58,7 +61,8 @@ in sparse bootstrap samples.}
 }
 \value{
 An object of class `validate_cutpoint_result` containing the
-  original cut-point(s) and their 95\% confidence intervals.
+  original cut-point(s), their 95\% confidence intervals, bootstrap distribution,
+  and analysis parameters.
 }
 \description{
 Assesses the stability of optimal cut-points found by \code{\link{find_cutpoint}} by

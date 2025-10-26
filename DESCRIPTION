@@ -1,11 +1,11 @@
 Package: OptSurvCutR
 Type: Package
-Title: Optimal Survival Cut-point Discovery for time-to-event Analysis
-Version: 0.1.6
-Date: 2025-10-13
+Title: Optimal Survival Cut-point Discovery for Time-to-Event Analysis
+Version: 0.1.7
+Date: 2025-10-25
 Author: Payton Yau [aut, cre]
 Maintainer: Payton Yau <tungon@gmail.com>
-Description: 
+Description:
     Provides a comprehensive workflow to determine, find, and
     validate optimal cut-points for continuous predictors in a survival
     (time-to-event) context. The package includes functions to first
@@ -15,16 +15,16 @@ Description:
     the stability of the result via bootstrapping. The methods are described
     in Yau, Payton T.O. (2025) doi:10.1101/2025.10.08.681246.
 License: GPL-3 + file LICENSE
+URL: https://github.com/paytonyau/OptSurvCutR
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr
-Imports: 
+Imports:
     cli,
     doParallel,
     foreach,
     ggplot2,
-    magrittr,
     parallel,
     rgenoud,
     stats,
@@ -32,7 +32,8 @@ Imports:
     survminer,
     tidyr,
     tools
-Suggests: 
+Suggests:
+    broom,
     coxphf,
     dplyr,
     knitr,
@@ -42,8 +43,9 @@ Suggests:
     rmarkdown,
     spelling,
     testthat (>= 3.0.0),
-    tibble
+    tibble,
+    withr
 Config/testthat/edition: 3
-Depends: 
+Depends:
     R (>= 3.5)
 Language: en-GB

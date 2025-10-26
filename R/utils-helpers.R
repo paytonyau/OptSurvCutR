@@ -12,10 +12,11 @@
 #' @param gap The minimum required distance between cut-points.
 #' @param nmin The minimum number of observations required in each group.
 #' @param criterion The statistic to maximize: "loglik", "logrank", "p_value", or "hazard_ratio".
+#' @param loglik0 The log-likelihood of the null model (for p_value optimization).
 #'
 #' @return A single numeric value representing the fitness of the solution.
 #' @noRd
-.obj <- function(params, time, censor, target, confound, numcut, gap, nmin, criterion) {
+.obj <- function(params, time, censor, target, confound, numcut, gap, nmin, criterion, loglik0 = NA_real_) {
   # --- 1. Extract cut-points and perform validation ---
   cutoff <- params[1:numcut]
 
@@ -49,12 +50,33 @@
     "hazard_ratio" = {
       # This is only valid for numcut = 1. A check in the main find_cutpoint function prevents misuse.
       fit <- tryCatch(survival::coxph(fit_formula, data = data_for_fit), error = function(e) NULL)
-      if (is.null(fit)) -Inf else summary(fit)$conf.int[1, "exp(coef)"]
+      # Optimized: Extract coefficient directly, avoiding summary()
+      if (is.null(fit) || is.null(fit$coefficients) || !("cut_design2" %in% names(fit$coefficients))) {
+        -Inf
+      } else {
+        exp(fit$coefficients["cut_design2"])
+      }
     },
     "p_value" = {
       fit <- tryCatch(survival::coxph(fit_formula, data = data_for_fit), error = function(e) NULL)
-      # We maximize (1 - p_value), which is equivalent to minimizing p_value.
-      if (is.null(fit) || is.null(summary(fit)$logtest)) -Inf else 1 - summary(fit)$logtest["pvalue"]
+      if (is.null(fit) || is.null(fit$loglik)) return(-Inf)
+
+      # Optimized Likelihood Ratio Test
+      if (!is.na(loglik0)) {
+        loglik1 <- fit$loglik[2]
+        statistic <- -2 * (loglik0 - loglik1)
+        df <- numcut # df = number of cut-points
+        pval <- stats::pchisq(statistic, df, lower.tail = FALSE)
+        return(1 - pval) # Maximize (1 - p_value)
+      } else {
+        # Fallback to the slower summary() method if loglik0 wasn't provided
+        sfit <- tryCatch(summary(fit), error = function(e) NULL)
+        if (is.null(sfit) || is.null(sfit$logtest)) {
+          -Inf
+        } else {
+          1 - sfit$logtest["pvalue"]
+        }
+      }
     },
     "loglik" = {
       # This efficient path is for find_cutpoint_number. It uses initial betas to avoid a full fit.
@@ -125,7 +147,32 @@
     if(is.na(gap) || gap == 0) gap <- 1e-4 # Fallback for edge cases
   }
 
-  # --- 5. Run the Genetic Algorithm ---
+  # --- 5. Optimization: Pre-calculate null model log-likelihood for p-value criterion ---
+  loglik0 <- NA_real_
+  if (criterion == "p_value") {
+    null_formula_str <- "survival::Surv(time, censor) ~ 1"
+
+    # Add covariates to the null model as well
+    data_for_null_fit <- data.frame(time = time, censor = censor)
+    if (!is.null(confound) && ncol(confound) > 0) {
+      confound_null <- confound
+      colnames(confound_null) <- make.names(colnames(confound_null))
+      data_for_null_fit <- cbind(data_for_null_fit, confound_null)
+      null_formula_str <- paste(null_formula_str, "+", paste(colnames(confound_null), collapse = " + "))
+    }
+
+    null_fit <- tryCatch(
+      survival::coxph(as.formula(null_formula_str), data = data_for_null_fit),
+      error = function(e) NULL
+    )
+
+    if (!is.null(null_fit) && !is.null(null_fit$loglik)) {
+      loglik0 <- null_fit$loglik[length(null_fit$loglik)] # Use last loglik (full model)
+    }
+  }
+  # --- End Optimization ---
+
+  # --- 6. Run the Genetic Algorithm ---
   if (!requireNamespace("rgenoud", quietly = TRUE)) {
     stop("The 'rgenoud' package is required for this function. Please install it.", call. = FALSE)
   }
@@ -137,7 +184,8 @@
     starting.values = initial_values, Domains = domain, print.level = print.level,
     # Pass all necessary arguments to the objective function .obj
     time = time, censor = censor, target = target, confound = confound,
-    numcut = numcut, gap = gap, nmin = nmin, criterion = criterion
+    numcut = numcut, gap = gap, nmin = nmin, criterion = criterion,
+    loglik0 = loglik0 # Pass the pre-calculated log-likelihood
   ), error = function(e) NULL)
 
   return(optim_result)
@@ -181,3 +229,4 @@
 #' @name or-operator
 #' @export
 `%||%` <- function(a, b) if (is.null(a)) b else a
+
