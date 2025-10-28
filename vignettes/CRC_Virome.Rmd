@@ -8,7 +8,7 @@ output:
     toc: true
     fig_caption: yes
 vignette: >
-  %\VignetteIndexEntry{Stratifying Colorectal Cancer Patients by Gut Enterovirus Abundance Demonstrating Covariate Adjustment}
+  %\VignetteIndexEntry{Stratifying Colorectal Cancer Patients by Gut Enterovirus Abundance (Adjusted for Sex)}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
