@@ -1,3 +1,109 @@
-url: https://paytonyau.github.io/OptSurvCutR
+# URL where the pkgdown site will be published
+url: https://paytonyau.github.io/OptSurvCutR/
+
 template:
   bootstrap: 5
+  bootswatch: "litera" # Choose a Bootswatch themea
+  light-switch: true # Enable light/dark mode 
+  theme: gruvbox-light
+  theme-dark: gruvbox-dark
+  highlight: default # Using a light code highlighting theme
+
+development:
+  mode: auto
+
+# --- NEW: Added basic metadata keywords ---
+meta:
+  keywords: survival analysis, time-to-event, cutpoint, threshold, biomarker, R package, bioinformatics, biostatistics, genetic algorithm, bootstrap, covariate adjustment
+# ----------------------------------------
+
+navbar:
+  structure:
+    left:  [intro, reference, articles, news, manuscript]
+    right: [search, github]
+  components:
+    intro:
+      text: Get started
+      href: index.html
+    reference:
+      text: Reference
+      href: reference/index.html
+    articles:
+      text: Vignettes
+      menu:
+        - text: "CRC Virome Workflow" # Match vignette title/entry
+          href: articles/CRC_Virome.html
+        - text: "Rapeseed Germination Workflow" # Match vignette title/entry
+          href: articles/Germination.html
+    news:
+      text: Changelog
+      href: news/index.html
+    manuscript:
+       text: Manuscript
+       href: https://doi.org/10.1101/2025.10.08.681246
+       target: _blank
+    github:
+      icon: fab fa-github fa-lg
+      href: https://github.com/paytonyau/OptSurvCutR/
+      aria-label: "GitHub repository"
+
+reference:
+  - title: "Core Workflow Functions"
+    desc: "The main functions for the 3-step analysis."
+    contents:
+      - find_cutpoint_number
+      - find_cutpoint
+      - validate_cutpoint
+  - title: "Plotting Functions"
+    desc: "Functions and methods for visualizing results."
+    contents:
+      - starts_with("plot.") # Automatically include all plot methods
+      - plot_optimization_curve
+  - title: "Datasets"
+    desc: "Example datasets included with the package."
+    contents:
+      - crc_virome
+      - germination
+  - title: "Utilities"
+    contents:
+      - '`%||%`'
+
+footer:
+  left: "Developed by Payton Yau."
+  right:
+    - text: "GitHub"
+      href: https://github.com/paytonyau/OptSurvCutR/
+    - text: "Report Issue"
+      href: https://github.com/paytonyau/OptSurvCutR/issues
+
+# Control Table of Contents depth in vignettes/articles
+toc:
+  depth: 3
+
+# Customize the sidebar (especially on the homepage)
+sidebar:
+  structure: [links, vignettes, reference, license, community, support, dev] # Control order/sections
+  components:
+    vignettes:
+      title: Vignettes
+      links:
+      - text: "CRC Virome Workflow"
+        href: articles/CRC_Virome.html
+      - text: "Germination Workflow"
+        href: articles/Germination.html
+    support:
+      title: Support Development
+      links:
+      - text: Buy Me a Coffee
+        href: https://www.buymeacoffee.com/payton.yau
+        target: _blank
+    community:
+      title: Community & Help
+      links:
+      - text: Report an Issue
+        href: https://github.com/paytonyau/OptSurvCutR/issues
+      - text: Contributing Guide
+        href: contributing.html # Assumes CONTRIBUTING.md exists
+
+# Ensure a blank line at the end of the file
+
