@@ -1,28 +1,64 @@
+# OptSurvCutR 0.1.8
+
+## CRITICAL BUG FIXES
+
+* **Parallel Validation:** Fixed a critical bug where `validate_cutpoint(use_parallel = TRUE)` would fail. This was caused by helper functions not being exported to the parallel workers.
+* **Event Column Validation:** Fixed a major bug where non-numeric `outcome_event` data (e.g., `"0:LIVING"`) caused silent failures. The functions now "fail-fast" with an error, validating the column is numeric with only 0s and 1s.
+* **Genetic Algorithm Reporting:** Fixed a bug where `method = "genetic"` would report a failure (`-Inf`) as a successful result. The functions now correctly check for the failure signal and return `NA`.
+
+---
+
+## NEW FEATURES
+
+* **G3.1a Compliance — Schoenfeld Residual Diagnostics**: Added `plot_diagnostics()` to generate publication-ready Schoenfeld residual plots, assessing the proportional hazards (PH) assumption.
+
+---
+
+## IMPROVEMENTS
+
+* **Code Quality (Refactoring):** Refactored `find_cutpoint()` to resolve "high cyclomatic complexity" `NOTE`s by moving validation logic to internal helper functions.
+* **Test Coverage:** Increased test coverage by adding new unit tests for error conditions, edge cases, and validation logic.
+* **rOpenSci/`pkgcheck` Compliance:**
+    * Added examples to all exported functions.
+    * Added `@srrstats` tags to satisfy multi-directory requirements.
+* **`R CMD check` Compliance:** Addressed all `ERROR`s, `WARNING`s, and `NOTE`s:
+    * Added `inst/WORDLIST`, `_PACKAGE` documentation, and fixed empty `Rd` sections.
+    * Added `codemeta.json` to `.Rbuildignore`.
+* **Code Style:**
+    * Reformatted code to follow Tidyverse Style Guide principles (e.g., `<-` for assignment, `"` for strings, consistent spacing around operators).
+    * Strictly enforced an 80-character maximum line length for all code, comments, and documentation.
+    * Made Roxygen documentation, inline comments, and user-facing messages more concise.
+    * Replaced `sapply()` with type-safe `vapply()` in S3 methods to prevent potential bugs.
+
+* **Internal Data:** The `crc_virome` dataset's `status` column was corrected to be numeric 0/1 to match documentation and new validation rules.
+
+---
+
 # OptSurvCutR 0.1.7
 
 ## NEW FEATURES
-- **Covariate Adjustment Added**: Both `find_cutpoint()` (for `method = "systematic"` and `method = "genetic"`) and `find_cutpoint_number()` now support covariate adjustment via the `covariates` argument. This allows finding optimal cut-points and determining the optimal number of groups while accounting for potential confounders, providing a more robust assessment of a biomarker's independent prognostic value. (#issue_number_if_applicable)
+- **Covariate Adjustment Added**: Both `find_cutpoint()` (for `method = "systematic"` and `method = "genetic"`) and `find_cutpoint_number()` now support covariate adjustment via the `covariates` argument. This allows finding optimal cut-points and determining the optimal number of groups while accounting for potential confounders, providing a more robust assessment of a biomarker's independent prognostic value.
 
 ## IMPROVEMENTS
-- **Major Performance Optimisation**: Significantly optimised performance in `find_cutpoint()` for `criterion = "hazard_ratio"` and `criterion = "p_value"` (both systematic and genetic methods). This was achieved by removing computationally expensive `summary()` calls, extracting coefficients and statistics directly from model objects, and using a fast, manual Likelihood Ratio Test for p-value calculation. (#issue_number)
-- **Simplified Parallelism**: Removed internal parallel processing (`use_parallel` argument) from `find_cutpoint` and `find_cutpoint_number` systematic search. This prevents potential issues with nested parallel calls and relies on standard external parallelisation approaches, such as the explicit parallel loop within `validate_cutpoint`. (#issue_number)
-- **Test Suite Overhaul**: Revamped the entire `testthat` suite for improved reliability and robustness. Replaced brittle `expect_snapshot()` tests with more stable checks like `expect_output()`, `expect_s3_class()`, and specific value comparisons. Corrected logic for error and warning expectations and improved mocking for dependency checks. Code coverage increased significantly (for example, to ~86%). (#issue_number)
-- **User-Friendly `rgenoud` Check**: Added clear, informative error messages using `cli` in `find_cutpoint()` and `find_cutpoint_number()` that trigger immediately if `method = "genetic"` is requested but the suggested `rgenoud` package is not installed, guiding the user on how to install it. (#issue_number)
-- **Dependency Management**: Moved optional dependencies `broom` (for plotting) and `withr` (for testing) from `Imports` to `Suggests` in the `DESCRIPTION` file, making the core package installation lighter. Removed unused `magrittr` import. (#issue_number)
+- **Major Performance Optimisation**: Significantly optimised performance in `find_cutpoint()` for `criterion = "hazard_ratio"` and `criterion = "p_value"` (both systematic and genetic methods). This was achieved by removing computationally expensive `summary()` calls, extracting coefficients and statistics directly from model objects, and using a fast, manual Likelihood Ratio Test for p-value calculation.
+- **Simplified Parallelism**: Removed internal parallel processing (`use_parallel` argument) from `find_cutpoint` and `find_cutpoint_number` systematic search. This prevents potential issues with nested parallel calls and relies on standard external parallelisation approaches, such as the explicit parallel loop within `validate_cutpoint`.
+- **Test Suite Overhaul**: Revamped the entire `testthat` suite for improved reliability and robustness. Replaced brittle `expect_snapshot()` tests with more stable checks like `expect_output()`, `expect_s3_class()`, and specific value comparisons. Corrected logic for error and warning expectations and improved mocking for dependency checks. Code coverage increased significantly (for example, to ~86%).
+- **User-Friendly `rgenoud` Check**: Added clear, informative error messages using `cli` in `find_cutpoint()` and `find_cutpoint_number()` that trigger immediately if `method = "genetic"` is requested but the suggested `rgenoud` package is not installed, guiding the user on how to install it.
+- **Dependency Management**: Moved optional dependencies `broom` (for plotting) and `withr` (for testing) from `Imports` to `Suggests` in the `DESCRIPTION` file, making the core package installation lighter. Removed unused `magrittr` import.
 - **Simplified Evidence Labels**: Renamed evidence labels in `find_cutpoint_number()` results for brevity (for example, "Substantial support" -> "Substantial").
 - **Code Maintainability**: Centralised all `utils::globalVariables` definitions into `globals.R` to resolve R CMD check `NOTEs` and improve clarity. Removed redundant code.
 
 ## BUG FIXES
-- **quiet = TRUE Message Fix**: Fixed a critical bug where `find_cutpoint()` and `find_cutpoint_number()` would fail silently (no console message) when `quiet = TRUE` was set. Failure messages are now always printed to the console via internal helpers, regardless of the `quiet` setting, improving user feedback on errors. (#issue_number)
-- **Genetic Algorithm Edge Cases**: Added more robust input validation and handling within the internal `.run_genetic_search()` function to gracefully manage edge cases like insufficient data variability or non-finite predictor ranges, preventing downstream errors and cryptic warnings. (#issue_number)
-- **Genetic Algorithm Monitor**: Fixed the internal monitoring function used by the genetic algorithm (`rgenoud::genoud`) to correctly respect the `print.level` argument (controlled indirectly via user functions), ensuring progress updates are displayed or suppressed as intended. (#issue_number)
-- **NAMESPACE Fix (stats::)**: Resolved `NAMESPACE` errors and related test failures by adding explicit `stats::` calls where needed (for example, for `stats::quantile`, `stats::sd`, `stats::pchisq`) and ensuring correct regeneration of the `NAMESPACE` file via `devtools::document()`. (#issue_number)
+- **quiet = TRUE Message Fix**: Fixed a critical bug where `find_cutpoint()` and `find_cutpoint_number()` would fail silently (no console message) when `quiet = TRUE` was set. Failure messages are now always printed to the console via internal helpers, regardless of the `quiet` setting, improving user feedback on errors.
+- **Genetic Algorithm Edge Cases**: Added more robust input validation and handling within the internal `.run_genetic_search()` function to gracefully manage edge cases like insufficient data variability or non-finite predictor ranges, preventing downstream errors and cryptic warnings.
+- **Genetic Algorithm Monitor**: Fixed the internal monitoring function used by the genetic algorithm (`rgenoud::genoud`) to correctly respect the `print.level` argument (controlled indirectly via user functions), ensuring progress updates are displayed or suppressed as intended.
+- **NAMESPACE Fix (stats::)**: Resolved `NAMESPACE` errors and related test failures by adding explicit `stats::` calls where needed (for example, for `stats::quantile`, `stats::sd`, `stats::pchisq`) and ensuring correct regeneration of the `NAMESPACE` file via `devtools::document()`.
 - **foreach NOTE Fix**: Resolved R CMD check `NOTE` regarding "no visible binding for global".
-
 
 ## IMPROVEMENTS
 - Planned:  A ROpenSci submission is planned for review.
 - Planned:  A JOSS submission is planned post-rOpenSci review.
+
 ---
 
 # OptSurvCutR 0.1.6
@@ -71,19 +107,3 @@
 
 ## DEPRECATIONS
 - None (initial release).
-
----
-
-# OptSurvCutR (development version)
-
-## NEW FEATURES
-- Planned: Add support for quantile-based grid search in `find_cutpoint()` for faster systematic searches with high-cardinality predictors.
-
-## IMPROVEMENTS
-- Planned: Further optimise NA handling across all functions for robustness.
-
-## BUG FIXES
-- None yet.
-
-## DEPRECATIONS
-- None.

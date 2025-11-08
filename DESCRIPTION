@@ -1,8 +1,7 @@
 Package: OptSurvCutR
 Type: Package
-Title: Optimal Survival Cut-point Discovery for Time-to-Event Analysis
-Version: 0.1.7
-Date: 2025-10-28
+Title: Optimal Survival Cut-Point Discovery for Time-to-Event Analysis
+Version: 0.1.8
 Authors@R: 
     person(
         given = "Payton",
@@ -23,13 +22,12 @@ Description:
     <doi:10.1101/2025.10.08.681246>.
 License: GPL-3 + file LICENSE
 URL: https://github.com/paytonyau/OptSurvCutR, 
-    https://paytonyau.github.io/OptSurvCutR/, 
-    https://www.buymeacoffee.com/payton.yau
+     https://paytonyau.github.io/OptSurvCutR/
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr
-Imports:
+Imports: 
     cli,
     doParallel,
     foreach,
@@ -39,7 +37,7 @@ Imports:
     survival,
     survminer,
     tidyr,
-    tools
+    srr
 Suggests:
     broom,
     coxphf,
@@ -59,4 +57,3 @@ Depends:
     R (>= 3.5)
 Language: en-GB
 BugReports: https://github.com/paytonyau/OptSurvCutR/issues
-copyright: 2025 Payton T.O. Yau

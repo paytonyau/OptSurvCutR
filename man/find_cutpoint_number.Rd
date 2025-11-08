@@ -5,7 +5,7 @@
 \alias{print.find_cutpoint_number_result}
 \alias{summary.find_cutpoint_number_result}
 \alias{plot.find_cutpoint_number_result}
-\title{Find the Optimal Number of Cut-points for Survival Data}
+\title{Find Optimal Number of Cut-points for Survival Data}
 \usage{
 find_cutpoint_number(
   data,
@@ -37,54 +37,99 @@ find_cutpoint_number(
 \method{plot}{find_cutpoint_number_result}(x, y, ...)
 }
 \arguments{
-\item{data}{A data frame containing the variables.}
+\item{data}{Input data frame.}
 
-\item{predictor}{The name of the predictor variable, as a string.}
+\item{predictor}{Continuous predictor variable name (character).}
 
-\item{outcome_time}{The name of the time variable, as a string.}
+\item{outcome_time}{Time-to-event variable name (character).}
 
-\item{outcome_event}{The name of the event variable, as a string.}
+\item{outcome_event}{Event indicator name (0/1) (character).}
 
-\item{method}{The algorithm to use: "systematic" or "genetic".}
+\item{method}{`"systematic"` (max_cuts <= 2) or `"genetic"`.}
 
-\item{criterion}{The information criterion ("AIC", "AICc", or "BIC") to use for model selection.}
+\item{criterion}{`"AIC"`, `"AICc"` or `"BIC"`.}
 
-\item{covariates}{A character vector of covariate names to include in the model.}
+\item{covariates}{Character vector of covariate names (optional).}
 
-\item{max_cuts}{The maximum number of cut-points to test for.}
+\item{max_cuts}{Max number of cut-points to test (non-negative int).}
 
-\item{nmin}{The minimum number of observations in each group.}
+\item{nmin}{Min. group size (count or proportion).}
 
-\item{seed}{An optional integer for setting the random seed to ensure
-reproducible results when using the "genetic" method.}
+\item{seed}{Integer or `NULL`; random seed for `rgenoud`.}
 
-\item{maxiter}{The number of generations for the genetic algorithm. Default is 100.}
+\item{maxiter}{Integer; generations for `rgenoud` (default 100).}
 
-\item{...}{Additional arguments passed to the genetic algorithm.}
+\item{...}{Additional arguments passed to `rgenoud`.}
 
-\item{x}{An object of class \code{find_cutpoint_number_result} (for S3 methods).}
+\item{x}{An object from [find_cutpoint_number()].}
 
-\item{object}{An object of class \code{find_cutpoint_number_result} (for S3 methods).}
+\item{object}{An object from [find_cutpoint_number()].}
 
-\item{show_comparison_table}{Logical. If TRUE, shows the model comparison table.}
+\item{show_comparison_table}{Logical. Show model comparison table?}
 
-\item{show_best_model_details}{Logical. If TRUE, shows full details for the best model.}
+\item{show_best_model_details}{Logical. Show details for best model?}
 
-\item{show_group_counts}{Logical. If TRUE, shows group counts for the best model.}
+\item{show_group_counts}{Logical. Show group counts for best model?}
 
-\item{show_medians}{Logical. If TRUE, shows median survival for the best model.}
+\item{show_medians}{Logical. Show median survival for best model?}
 
-\item{plot.it}{Logical. If TRUE, displays the model selection plot.}
+\item{plot.it}{Logical. Display model selection plot?}
 
 \item{y}{Unused.}
 }
 \value{
-An object of class `find_cutpoint_number_result`. This is a list
-  containing a data frame of the model comparison results, the analysis
-  parameters, the data used, optimal_num_cuts, and optimal_cuts.
+An S3 object (`find_cutpoint_number_result`) with
+`results`, `parameters`, `userdata`, `optimal_num_cuts`,
+and `optimal_cuts`.
 }
 \description{
-Determines the optimal number of cut-points (from 0 to `max_cuts`) for a
-continuous variable in a survival context by comparing models using an
-information criterion (AIC, AICc, or BIC).
+Finds optimal cut-point number (0 to `max_cuts`) for a Cox model
+by comparing AIC, AICc, or BIC. Supports systematic search
+(`max_cuts <= 2`) and genetic algorithm (`rgenoud`).
+}
+\details{
+`method = "systematic"`: grid search respecting `nmin`.
+`method = "genetic"`: `rgenoud` global optimization.
+Systematic search is slow for `max_cuts > 2`; use `genetic`.
+}
+\section{srrstats compliance}{
+
+.
+}
+
+\examples{
+data(crc_virome)
+res <- find_cutpoint_number(
+  data = head(crc_virome, 50),
+  predictor = "Alphapapillomavirus",
+  outcome_time = "time_months",
+  outcome_event = "status",
+  method = "systematic",
+  max_cuts = 1
+)
+
+}
+\references{
+Akaike, H. (1974). A new look at the statistical model identification.
+*IEEE Transactions on Automatic Control*, **19**(6), 716–723.
+\doi{10.1109/TAC.1974.1100705}
+
+Chang, C., Hsieh, M.-K., Chang, W.-Y., Chiang, A. J., &
+Chen, J. (2017). Determining the optimal number and location of cutoff
+points with application to data of cervical cancer. *PLOS ONE*, 12(4),
+e0176231. \doi{10.1371/journal.pone.0176231}
+
+Chen, Y., Huang, J., He, X., Gao, Y., Mahara, G., Lin, Z.,
+& Zhang, J. (2019). A novel approach to determine two optimal
+cut-points of a continuous predictor with a U-shaped relationship to
+hazard ratio in survival data: Simulation and application. *BMC Medical
+Research Methodology*, 19(1), 96. \doi{10.1186/s12874-019-0738-4}
+
+Schwarz, G. (1978). Estimating the dimension of a model.
+*The Annals of Statistics*, **6**(2), 461–464.
+\doi{10.1214/aos/1176344136}
+
+Hurvich, C. M., & Tsai, C.-L. (1989). Regression and time series model
+selection in small samples. *Biometrika*, **76**(2), 297–307.
+\doi{10.1093/biomet/76.2.297}
 }

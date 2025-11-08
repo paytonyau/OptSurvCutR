@@ -1,181 +1,217 @@
 # ===================================================================
 # DATA DOCUMENTATION SCRIPT
-# This file contains the documentation for all datasets in the package.
+# Documentation for all package datasets.
 # ===================================================================
-
 #' Colon and Rectal Cancer Clinical and Virome Data
 #'
-#' A dataset containing cleaned key clinical, survival, and virome abundance data
-#' for patients with colon and rectal adenocarcinoma from the TCGA PanCancer Atlas study.
+#' Cleaned clinical, survival, and virome abundance data for patients
+#' with colon and rectal adenocarcinoma (TCGA PanCancer Atlas).
+#'
+#' @section srrstats compliance:
+#' .
+#' @srrstats {G1.4} Example data provided.
+#' @srrstats {G1.4a} Fully documented with source, structure, variables.
 #'
 #' @format A data frame with patient data in rows and variables in columns:
 #' \describe{
-#'   \item{sample_id}{Unique TCGA patient identifier.}
-#'   \item{time_months}{Overall survival time in months, censored at 60 months.}
-#'   \item{status}{Overall survival status: 1 for deceased, 0 for alive.}
-#'   \item{age}{Age of the patient at diagnosis.}
-#'   \item{sex}{Sex of the patient.}
-#'   \item{race}{Race of the patient.}
-#'   \item{ethnicity}{Ethnicity of the patient.}
-#'   \item{stage}{AJCC pathologic tumor stage.}
-#'   \item{Alfamovirus}{Normalised abundance for the Alfamovirus genus.}
-#'   \item{Allexivirus}{Normalised abundance for the Allexivirus genus.}
-#'   \item{Alphacoronavirus}{Normalised abundance for the Alphacoronavirus genus.}
-#'   \item{Alphaentomopoxvirus}{Normalised abundance for the Alphaentomopoxvirus genus.}
-#'   \item{Alphafusellovirus}{Normalised abundance for the Alphafusellovirus genus.}
-#'   \item{Alphapapillomavirus}{Normalised abundance for the Alphapapillomavirus genus.}
-#'   \item{Alphapartitivirus}{Normalised abundance for the Alphapartitivirus genus.}
-#'   \item{Alpharetrovirus}{Normalised abundance for the Alpharetrovirus genus.}
-#'   \item{Alphatorquevirus}{Normalised abundance for the Alphatorquevirus genus.}
-#'   \item{Alphavirus}{Normalised abundance for the Alphavirus genus.}
-#'   \item{Ambidensovirus}{Normalised abundance for the Ambidensovirus genus.}
-#'   \item{Ampelovirus}{Normalised abundance for the Ampelovirus genus.}
-#'   \item{Andromedalikevirus}{Normalised abundance for the Andromedalikevirus genus.}
-#'   \item{Aparavirus}{Normalised abundance for the Aparavirus genus.}
-#'   \item{Aquamavirus}{Normalised abundance for the Aquamavirus genus.}
-#'   \item{Arenavirus}{Normalised abundance for the Arenavirus genus.}
-#'   \item{Avastrovirus}{Normalised abundance for the Avastrovirus genus.}
-#'   \item{Bacilladnavirus}{Normalised abundance for the Bacilladnavirus genus.}
-#'   \item{Bafinivirus}{Normalised abundance for the Bafinivirus genus.}
-#'   \item{Barnyardlikevirus}{Normalised abundance for the Barnyardlikevirus genus.}
-#'   \item{Batrachovirus}{Normalised abundance for the Batrachovirus genus.}
-#'   \item{Bcep22likevirus}{Normalised abundance for the Bcep22likevirus genus.}
-#'   \item{Betacoronavirus}{Normalised abundance for the Betacoronavirus genus.}
-#'   \item{Betaentomopoxvirus}{Normalised abundance for the Betaentomopoxvirus genus.}
-#'   \item{Betapapillomavirus}{Normalised abundance for the Betapapillomavirus genus.}
-#'   \item{Betapartitivirus}{Normalised abundance for the Betapartitivirus genus.}
-#'   \item{Betaretrovirus}{Normalised abundance for the Betaretrovirus genus.}
-#'   \item{Betatorquevirus}{Normalised abundance for the Betatorquevirus genus.}
-#'   \item{Bicaudavirus}{Normalised abundance for the Bicaudavirus genus.}
-#'   \item{Bracovirus}{Normalised abundance for the Bracovirus genus.}
-#'   \item{Bromovirus}{Normalised abundance for the Bromovirus genus.}
-#'   \item{Cafeteriavirus}{Normalised abundance for the Cafeteriavirus genus.}
-#'   \item{Capripoxvirus}{Normalised abundance for the Capripoxvirus genus.}
-#'   \item{Carlavirus}{Normalised abundance for the Carlavirus genus.}
-#'   \item{Caulimovirus}{Normalised abundance for the Caulimovirus genus.}
-#'   \item{Cavemovirus}{Normalised abundance for the Cavemovirus genus.}
-#'   \item{Cervidpoxvirus}{Normalised abundance for the Cervidpoxvirus genus.}
-#'   \item{Chlorovirus}{Normalised abundance for the Chlorovirus genus.}
-#'   \item{Closterovirus}{Normalised abundance for the Closterovirus genus.}
-#'   \item{Comovirus}{Normalised abundance for the Comovirus genus.}
-#'   \item{Cp220likevirus}{Normalised abundance for the Cp220likevirus genus.}
-#'   \item{Crinivirus}{Normalised abundance for the Crinivirus genus.}
-#'   \item{Cripavirus}{Normalised abundance for the Cripavirus genus.}
-#'   \item{Cucumovirus}{Normalised abundance for the Cucumovirus genus.}
-#'   \item{Cytomegalovirus}{Normalised abundance for the Cytomegalovirus genus.}
-#'   \item{Deltabaculovirus}{Normalised abundance for the Deltabaculovirus genus.}
-#'   \item{Dicipivirus}{Normalised abundance for the Dicipivirus genus.}
-#'   \item{Dyopipapillomavirus}{Normalised abundance for the Dyopipapillomavirus genus.}
-#'   \item{Emaravirus}{Normalised abundance for the Emaravirus genus.}
-#'   \item{Endornavirus}{Normalised abundance for the Endornavirus genus.}
-#'   \item{Enterovirus}{Normalised abundance for the Enterovirus genus.}
-#'   \item{Fabavirus}{Normalised abundance for the Fabavirus genus.}
-#'   \item{Flavivirus}{Normalised abundance for the Flavivirus genus.}
-#'   \item{Furovirus}{Normalised abundance for the Furovirus genus.}
-#'   \item{Gammacoronavirus}{Normalised abundance for the Gammacoronavirus genus.}
-#'   \item{Gammapapillomavirus}{Normalised abundance for the Gammapapillomavirus genus.}
-#'   \item{Gammaretrovirus}{Normalised abundance for the Gammaretrovirus genus.}
-#'   \item{Gammatorquevirus}{Normalised abundance for the Gammatorquevirus genus.}
-#'   \item{Hepacivirus}{Normalised abundance for the Hepacivirus genus.}
-#'   \item{Hepatovirus}{Normalised abundance for the Hepatovirus genus.}
-#'   \item{Higrevirus}{Normalised abundance for the Higrevirus genus.}
-#'   \item{Hordeivirus}{Normalised abundance for the Hordeivirus genus.}
-#'   \item{Hypovirus}{Normalised abundance for the Hypovirus genus.}
-#'   \item{I3likevirus}{Normalised abundance for the I3likevirus genus.}
-#'   \item{Ichnovirus}{Normalised abundance for the Ichnovirus genus.}
-#'   \item{Iflavirus}{Normalised abundance for the Iflavirus genus.}
-#'   \item{Ilarvirus}{Normalised abundance for the Ilarvirus genus.}
-#'   \item{Influenzavirus_C}{Normalised abundance for the Influenzavirus_C genus.}
-#'   \item{Isavirus}{Normalised abundance for the Isavirus genus.}
-#'   \item{Kobuvirus}{Normalised abundance for the Kobuvirus genus.}
-#'   \item{L5likevirus}{Normalised abundance for the L5likevirus genus.}
-#'   \item{Lambdalikevirus}{Normalised abundance for the Lambdalikevirus genus.}
-#'   \item{Lambdapapillomavirus}{Normalised abundance for the Lambdapapillomavirus genus.}
-#'   \item{Lentivirus}{Normalised abundance for the Lentivirus genus.}
-#'   \item{Leporipoxvirus}{Normalised abundance for the Leporipoxvirus genus.}
-#'   \item{Lymphocryptovirus}{Normalised abundance for the Lymphocryptovirus genus.}
-#'   \item{Mamastrovirus}{Normalised abundance for the Mamastrovirus genus.}
-#'   \item{Mardivirus}{Normalised abundance for the Mardivirus genus.}
-#'   \item{Mastadenovirus}{Normalised abundance for the Mastadenovirus genus.}
-#'   \item{Microvirus}{Normalised abundance for the Microvirus genus.}
-#'   \item{Mimivirus}{Normalised abundance for the Mimivirus genus.}
-#'   \item{Molluscipoxvirus}{Normalised abundance for the Molluscipoxvirus genus.}
-#'   \item{Muromegalovirus}{Normalised abundance for the Muromegalovirus genus.}
-#'   \item{Muscavirus}{Normalised abundance for the Muscavirus genus.}
-#'   \item{N4likevirus}{Normalised abundance for the N4likevirus genus.}
-#'   \item{Narnavirus}{Normalised abundance for the Narnavirus genus.}
-#'   \item{Nepovirus}{Normalised abundance for the Nepovirus genus.}
-#'   \item{Nyavirus}{Normalised abundance for the Nyavirus genus.}
-#'   \item{Omegapapillomavirus}{Normalised abundance for the Omegapapillomavirus genus.}
-#'   \item{Orthobunyavirus}{Normalised abundance for the Orthobunyavirus genus.}
-#'   \item{Orthohepadnavirus}{Normalised abundance for the Orthohepadnavirus genus.}
-#'   \item{Orthopoxvirus}{Normalised abundance for the Orthopoxvirus genus.}
-#'   \item{Ostreavirus}{Normalised abundance for the Ostreavirus genus.}
-#'   \item{Parapoxvirus}{Normalised abundance for the Parapoxvirus genus.}
-#'   \item{Pecluvirus}{Normalised abundance for the Pecluvirus genus.}
-#'   \item{Pestivirus}{Normalised abundance for the Pestivirus genus.}
-#'   \item{Phi29likevirus}{Normalised abundance for the Phi29likevirus genus.}
-#'   \item{Phikmvlikevirus}{Normalised abundance for the Phikmvlikevirus genus.}
-#'   \item{Phikzlikevirus}{Normalised abundance for the Phikzlikevirus genus.}
-#'   \item{Piscihepevirus}{Normalised abundance for the Piscihepevirus genus.}
-#'   \item{Pithovirus}{Normalised abundance for the Pithovirus genus.}
-#'   \item{Polyomavirus}{Normalised abundance for the Polyomavirus genus.}
-#'   \item{Pomovirus}{Normalised abundance for the Pomovirus genus.}
-#'   \item{Potexvirus}{Normalised abundance for the Potexvirus genus.}
-#'   \item{Potyvirus}{Normalised abundance for the Potyvirus genus.}
-#'   \item{Prasinovirus}{Normalised abundance for the Prasinovirus genus.}
-#'   \item{Proboscivirus}{Normalised abundance for the Proboscivirus genus.}
-#'   \item{Protoparvovirus}{Normalised abundance for the Protoparvovirus genus.}
-#'   \item{Prymnesiovirus}{Normalised abundance for the Prymnesiovirus genus.}
-#'   \item{Ranavirus}{Normalised abundance for the Ranavirus genus.}
-#'   \item{Rhadinovirus}{Normalised abundance for the Rhadinovirus genus.}
-#'   \item{Rubulavirus}{Normalised abundance for the Rubulavirus genus.}
-#'   \item{Salivirus}{Normalised abundance for the Salivirus genus.}
-#'   \item{Sapelovirus}{Normalised abundance for the Sapelovirus genus.}
-#'   \item{Sclerodarnavirus}{Normalised abundance for the Sclerodarnavirus genus.}
-#'   \item{Senecavirus}{Normalised abundance for the Senecavirus genus.}
-#'   \item{Sfi1unalikevirus}{Normalised abundance for the Sfi1unalikevirus genus.}
-#'   \item{Sfi21dtunalikevirus}{Normalised abundance for the Sfi21dtunalikevirus genus.}
-#'   \item{Sicinivirus}{Normalised abundance for the Sicinivirus genus.}
-#'   \item{Simplexvirus}{Normalised abundance for the Simplexvirus genus.}
-#'   \item{Skunalikevirus}{Normalised abundance for the Skunalikevirus genus.}
-#'   \item{Sp6likevirus}{Normalised abundance for the Sp6likevirus genus.}
-#'   \item{Spo1virus}{Normalised abundance for the Spo1virus genus.}
-#'   \item{Spounalikevirus}{Normalised abundance for the Spounalikevirus genus.}
-#'   \item{T4likevirus}{Normalised abundance for the T4likevirus genus.}
-#'   \item{T5likevirus}{Normalised abundance for the T5likevirus genus.}
-#'   \item{Taupapillomavirus}{Normalised abundance for the Taupapillomavirus genus.}
-#'   \item{Tenuivirus}{Normalised abundance for the Tenuivirus genus.}
-#'   \item{Tobamovirus}{Normalised abundance for the Tobamovirus genus.}
-#'   \item{Totivirus}{Normalised abundance for the Totivirus genus.}
-#'   \item{Trichovirus}{Normalised abundance for the Trichovirus genus.}
-#'   \item{Tritimovirus}{Normalised abundance for the Tritimovirus genus.}
-#'   \item{Tunalikevirus}{Normalised abundance for the Tunalikevirus genus.}
-#'   \item{Tymovirus}{Normalised abundance for the Tymovirus genus.}
-#'   \item{Vesivirus}{Normalised abundance for the Vesivirus genus.}
-#'   \item{Waikavirus}{Normalised abundance for the Waikavirus genus.}
-#'   \item{Whispovirus}{Normalised abundance for the Whispovirus genus.}
-#'   \item{Yatapoxvirus}{Normalised abundance for the Yatapoxvirus genus.}
+#'   \item{sample_id}{Unique TCGA patient identifier (character).}
+#'   \item{time_months}{Overall survival time (months), censored at
+#'     60 mos. (numeric).}
+#'   \item{status}{Overall survival status: 1 = deceased, 0 = alive
+#'     (integer).}
+#'   \item{age}{Age at diagnosis (numeric).}
+#'   \item{sex}{Sex of the patient (character).}
+#'   \item{race}{Race of the patient (character).}
+#'   \item{ethnicity}{Ethnicity of the patient (character).}
+#'   \item{stage}{AJCC pathologic tumour stage (character).}
+#'   \item{Alfamovirus}{Normalised abundance (numeric).}
+#'   \item{Allexivirus}{Normalised abundance (numeric).}
+#'   \item{Alphacoronavirus}{Normalised abundance (numeric).}
+#'   \item{Alphaentomopoxvirus}{Normalised abundance (numeric).}
+#'   \item{Alphafusellovirus}{Normalised abundance (numeric).}
+#'   \item{Alphapapillomavirus}{Normalised abundance (numeric).}
+#'   \item{Alphapartitivirus}{Normalised abundance (numeric).}
+#'   \item{Alpharetrovirus}{Normalised abundance (numeric).}
+#'   \item{Alphatorquevirus}{Normalised abundance (numeric).}
+#'   \item{Alphavirus}{Normalised abundance (numeric).}
+#'   \item{Ambidensovirus}{Normalised abundance (numeric).}
+#'   \item{Ampelovirus}{Normalised abundance (numeric).}
+#'   \item{Andromedalikevirus}{Normalised abundance (numeric).}
+#'   \item{Aparavirus}{Normalised abundance (numeric).}
+#'   \item{Aquamavirus}{Normalised abundance (numeric).}
+#'   \item{Arenavirus}{Normalised abundance (numeric).}
+#'   \item{Avastrovirus}{Normalised abundance (numeric).}
+#'   \item{Bacilladnavirus}{Normalised abundance (numeric).}
+#'   \item{Bafinivirus}{Normalised abundance (numeric).}
+#'   \item{Barnyardlikevirus}{Normalised abundance (numeric).}
+#'   \item{Batrachovirus}{Normalised abundance (numeric).}
+#'   \item{Bcep22likevirus}{Normalised abundance (numeric).}
+#'   \item{Betacoronavirus}{Normalised abundance (numeric).}
+#'   \item{Betaentomopoxvirus}{Normalised abundance (numeric).}
+#'   \item{Betapapillomavirus}{Normalised abundance (numeric).}
+#'   \item{Betapartitivirus}{Normalised abundance (numeric).}
+#'   \item{Betaretrovirus}{Normalised abundance (numeric).}
+#'   \item{Betatorquevirus}{Normalised abundance (numeric).}
+#'   \item{Bicaudavirus}{Normalised abundance (numeric).}
+#'   \item{Bracovirus}{Normalised abundance (numeric).}
+#'   \item{Bromovirus}{Normalised abundance (numeric).}
+#'   \item{Cafeteriavirus}{Normalised abundance (numeric).}
+#'   \item{Capripoxvirus}{Normalised abundance (numeric).}
+#'   \item{Carlavirus}{Normalised abundance (numeric).}
+#'   \item{Caulimovirus}{Normalised abundance (numeric).}
+#'   \item{Cavemovirus}{Normalised abundance (numeric).}
+#'   \item{Cervidpoxvirus}{Normalised abundance (numeric).}
+#'   \item{Chlorovirus}{Normalised abundance (numeric).}
+#'   \item{Closterovirus}{Normalised abundance (numeric).}
+#'   \item{Comovirus}{Normalised abundance (numeric).}
+#'   \item{Cp220likevirus}{Normalised abundance (numeric).}
+#'   \item{Crinivirus}{Normalised abundance (numeric).}
+#'   \item{Cripavirus}{Normalised abundance (numeric).}
+#'   \item{Cucumovirus}{Normalised abundance (numeric).}
+#'   \item{Cytomegalovirus}{Normalised abundance (numeric).}
+#'   \item{Deltabaculovirus}{Normalised abundance (numeric).}
+#'   \item{Dicipivirus}{Normalised abundance (numeric).}
+#'   \item{Dyopipapillomavirus}{Normalised abundance (numeric).}
+#'   \item{Emaravirus}{Normalised abundance (numeric).}
+#'   \item{Endornavirus}{Normalised abundance (numeric).}
+#'   \item{Enterovirus}{Normalised abundance (numeric).}
+#'   \item{Fabavirus}{Normalised abundance (numeric).}
+#'   \item{Flavivirus}{Normalised abundance (numeric).}
+#'   \item{Furovirus}{Normalised abundance (numeric).}
+#'   \item{Gammacoronavirus}{Normalised abundance (numeric).}
+#'   \item{Gammapapillomavirus}{Normalised abundance (numeric).}
+#'   \item{Gammaretrovirus}{Normalised abundance (numeric).}
+#'   \item{Gammatorquevirus}{Normalised abundance (numeric).}
+#'   \item{Hepacivirus}{Normalised abundance (numeric).}
+#'   \item{Hepatovirus}{Normalised abundance (numeric).}
+#'   \item{Higrevirus}{Normalised abundance (numeric).}
+#'   \item{Hordeivirus}{Normalised abundance (numeric).}
+#'   \item{Hypovirus}{Normalised abundance (numeric).}
+#'   \item{I3likevirus}{Normalised abundance (numeric).}
+#'   \item{Ichnovirus}{Normalised abundance (numeric).}
+#'   \item{Iflavirus}{Normalised abundance (numeric).}
+#'   \item{Ilarvirus}{Normalised abundance (numeric).}
+#'   \item{Influenzavirus_C}{Normalised abundance (numeric).}
+#'   \item{Isavirus}{Normalised abundance (numeric).}
+#'   \item{Kobuvirus}{Normalised abundance (numeric).}
+#'   \item{L5likevirus}{Normalised abundance (numeric).}
+#'   \item{Lambdalikevirus}{Normalised abundance (numeric).}
+#'   \item{Lambdapapillomavirus}{Normalised abundance (numeric).}
+#'   \item{Lentivirus}{Normalised abundance (numeric).}
+#'   \item{Leporipoxvirus}{Normalised abundance (numeric).}
+#'   \item{Lymphocryptovirus}{Normalised abundance (numeric).}
+#'   \item{Mamastrovirus}{Normalised abundance (numeric).}
+#'   \item{Mardivirus}{Normalised abundance (numeric).}
+#'   \item{Mastadenovirus}{Normalised abundance (numeric).}
+#'   \item{Microvirus}{Normalised abundance (numeric).}
+#'   \item{Mimivirus}{Normalised abundance (numeric).}
+#'   \item{Molluscipoxvirus}{Normalised abundance (numeric).}
+#'   \item{Muromegalovirus}{Normalised abundance (numeric).}
+#'   \item{Muscavirus}{Normalised abundance (numeric).}
+#'   \item{N4likevirus}{Normalised abundance (numeric).}
+#'   \item{Narnavirus}{Normalised abundance (numeric).}
+#'   \item{Nepovirus}{Normalised abundance (numeric).}
+#'   \item{Nyavirus}{Normalised abundance (numeric).}
+#'   \item{Omegapapillomavirus}{Normalised abundance (numeric).}
+#'   \item{Orthobunyavirus}{Normalised abundance (numeric).}
+#'   \item{Orthohepadnavirus}{Normalised abundance (numeric).}
+#'   \item{Orthopoxvirus}{Normalised abundance (numeric).}
+#'   \item{Ostreavirus}{Normalised abundance (numeric).}
+#'   \item{Parapoxvirus}{Normalised abundance (numeric).}
+#'   \item{Pecluvirus}{Normalised abundance (numeric).}
+#'   \item{Pestivirus}{Normalised abundance (numeric).}
+#'   \item{Phi29likevirus}{Normalised abundance (numeric).}
+#'   \item{Phikmvlikevirus}{Normalised abundance (numeric).}
+#'   \item{Phikzlikevirus}{Normalised abundance (numeric).}
+#'   \item{Piscihepevirus}{Normalised abundance (numeric).}
+#'   \item{Pithovirus}{Normalised abundance (numeric).}
+#'   \item{Polyomavirus}{Normalised abundance (numeric).}
+#'   \item{Pomovirus}{Normalised abundance (numeric).}
+#'   \item{Potexvirus}{Normalised abundance (numeric).}
+#'   \item{Potyvirus}{Normalised abundance (numeric).}
+#'   \item{Prasinovirus}{Normalised abundance (numeric).}
+#'   \item{Proboscivirus}{Normalised abundance (numeric).}
+#'   \item{Protoparvovirus}{Normalised abundance (numeric).}
+#'   \item{Prymnesiovirus}{Normalised abundance (numeric).}
+#'   \item{Ranavirus}{Normalised abundance (numeric).}
+#'   \item{Rhadinovirus}{Normalised abundance (numeric).}
+#'   \item{Rubulavirus}{Normalised abundance (numeric).}
+#'   \item{Salivirus}{Normalised abundance (numeric).}
+#'   \item{Sapelovirus}{Normalised abundance (numeric).}
+#'   \item{Sclerodarnavirus}{Normalised abundance (numeric).}
+#'   \item{Senecavirus}{Normalised abundance (numeric).}
+#'   \item{Sfi1unalikevirus}{Normalised abundance (numeric).}
+#'   \item{Sfi21dtunalikevirus}{Normalised abundance (numeric).}
+#'   \item{Sicinivirus}{Normalised abundance (numeric).}
+#'   \item{Simplexvirus}{Normalised abundance (numeric).}
+#'   \item{Skunalikevirus}{Normalised abundance (numeric).}
+#'   \item{Sp6likevirus}{Normalised abundance (numeric).}
+#'   \item{Spo1virus}{Normalised abundance (numeric).}
+#'   \item{Spounalikevirus}{Normalised abundance (numeric).}
+#'   \item{T4likevirus}{Normalised abundance (numeric).}
+#'   \item{T5likevirus}{Normalised abundance (numeric).}
+#'   \item{Taupapillomavirus}{Normalised abundance (numeric).}
+#'   \item{Tenuivirus}{Normalised abundance (numeric).}
+#'   \item{Tobamovirus}{Normalised abundance (numeric).}
+#'   \item{Totivirus}{Normalised abundance (numeric).}
+#'   \item{Trichovirus}{Normalised abundance (numeric).}
+#'   \item{Tritimovirus}{Normalised abundance (numeric).}
+#'   \item{Tunalikevirus}{Normalised abundance (numeric).}
+#'   \item{Tymovirus}{Normalised abundance (numeric).}
+#'   \item{Vesivirus}{Normalised abundance (numeric).}
+#'   \item{Waikavirus}{Normalised abundance (numeric).}
+#'   \item{Whispovirus}{Normalised abundance (numeric).}
+#'   \item{Yatapoxvirus}{Normalised abundance (numeric).}
 #' }
-#' @source The data was sourced, cleaned, and merged from the supplementary
-#'   materials of Smyth et al. (2024) [\url{https://doi.org/10.1002/cam4.70434}],
-#'   originating from the cBioPortal for Cancer Genomics ('TCGA, PanCancer Atlas' study).
-"crc_virome"
+#'
+#' @source Sourced, cleaned, and merged from Smyth et al. (2024)
+#'   [\doi{10.1002/cam4.70434}], originating from cBioPortal
+#'   (TCGA, PanCancer Atlas).
+#'   \url{https://www.cbioportal.org/study/summary?id=
+#'   coadread_tcga_pan_can_atlas_2018}
+#'
+#' @references
+#' Smyth, J., Godet, J., Choudhary, A., Das, A., Gkoutos, G.
+#' V., & Acharjee, A. (2. (2024). Microbiome‐Based
+#' Colon Cancer Patient Stratification and Survival Analysis. *Cancer
+#' Medicine*,13(22), e70434. https://doi.org/10.1002/cam4.70434
+#'
+#' @keywords datasets
+#' @name crc_virome
+NULL
 
 #' Simulated Rapeseed Germination and Growth Data
 #'
-#' A dataset simulating the germination and early growth of rapeseed
-#' (Brassica napus L.) across a range of temperatures. The simulation is based
-#' on parameters published by Haj Sghaier et al. (2022).
+#' Simulated germination and early growth of rapeseed (Brassica napus L.)
+#' across a range of temperatures. Based on parameters from
+#' Haj Sghaier et al. (2022).
+#'
+#' @section srrstats compliance:
+#' .
+#' @srrstats {G1.4} Example data provided.
+#' @srrstats {G1.4a} Fully documented with source, structure, variables.
 #'
 #' @format A data frame with 1040 rows and 5 variables:
 #' \describe{
-#'   \item{temperature}{The experimental temperature in degrees Celsius.}
-#'   \item{replicate}{The experimental replicate number.}
-#'   \item{time}{The day of measurement for each seed.}
-#'   \item{growth}{A simulated measure of seedling growth.}
-#'   \item{germinated}{The germination status: 1 for germinated, 0 for not germinated.}
+#'   \item{temperature}{Experimental temperature (Celsius) (numeric).}
+#'   \item{replicate}{Experimental replicate number (integer).}
+#'   \item{time}{Day of measurement (integer).}
+#'   \item{growth}{Simulated seedling growth (numeric).}
+#'   \item{germinated}{Germination status: 1 = germinated,
+#'     0 = not germinated (integer).}
 #' }
-#' @source This dataset was computationally simulated based on parameters derived from
-#'   Haj Sghaier et al. (2022) [\url{https://doi.org/10.3390/plants11212819}].
-"germination"
+#'
+#' @source Computationally simulated based on parameters derived from
+#'   Haj Sghaier et al. (2022) [\doi{10.3390/plants11212819}].
+#'   \url{https://www.mdpi.com/2223-7747/11/21/2819}
+#'
+#' @references
+#' Haj Sghaier, A., Tarnawa, Á., Khaeim, H., Kovács, G. P.,
+#' Gyuricza, C., & Kende, Z. (2022). The Effects of Temperature and
+#' Water on the Seed Germination and Seedling Development of Rapeseed
+#' (Brassica napus L.). *Plants*,11(21), 2819.
+#' https://doi.org/10.3390/plants11212819
+#'
+#' @keywords datasets
+#' @name germination
+NULL

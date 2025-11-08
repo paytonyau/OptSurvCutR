@@ -3,15 +3,32 @@
 \name{or-operator}
 \alias{or-operator}
 \alias{\%||\%}
-\title{Infix operator for providing a default value for NULL.}
+\title{Infix operator for NULL default}
 \usage{
 a \%||\% b
 }
 \arguments{
 \item{a}{The value to check.}
 
-\item{b}{The default value to use if a is NULL.}
+\item{b}{The default value if `a` is `NULL`.}
+}
+\value{
+`a` if not `NULL`, otherwise `b`.
 }
 \description{
-Infix operator for providing a default value for NULL.
+Infix operator for NULL default
+}
+\section{srrstats compliance}{
+
+.
+}
+
+\examples{
+x <- NULL
+y <- 5
+x \%||\% y # Returns 5
+
+z <- 10
+z \%||\% y # Returns 10
+
 }

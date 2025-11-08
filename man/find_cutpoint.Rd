@@ -40,59 +40,101 @@ find_cutpoint(
 \arguments{
 \item{data}{A data frame containing the analysis variables.}
 
-\item{predictor}{The name of the continuous predictor variable to find cut-points for.}
+\item{predictor}{The continuous predictor variable.}
 
-\item{outcome_time}{The name of the time-to-event variable for survival analysis.}
+\item{outcome_time}{The time-to-event variable.}
 
-\item{outcome_event}{The name of the event status variable for survival analysis.}
+\item{outcome_event}{The event status variable (0 or 1).}
 
 \item{num_cuts}{The number of cut-points to find. Default is 1.}
 
-\item{method}{The algorithm to use: "systematic" or "genetic".}
+\item{method}{Algorithm: `"systematic"` or `"genetic"`.}
 
-\item{criterion}{The statistical criterion to optimize. Options are:
-"logrank" (maximizes the log-rank chi-squared statistic),
-"hazard_ratio" (maximizes the Hazard Ratio from a Cox model), or
-"p_value" (minimizes the p-value from a Cox model).}
+\item{criterion}{The statistic to optimize: `"logrank"` (max),
+`"hazard_ratio"` (max), or `"p_value"` (min).}
 
-\item{covariates}{A character vector of covariate names to include in the model.}
+\item{covariates}{Character vector of covariate names.}
 
-\item{nmin}{The minimum number of observations required in each group created by the cut-points.
-Can be specified as an integer (e.g., 20) or a proportion (e.g., 0.1).}
+\item{nmin}{Min. group size (integer count or proportion).}
 
-\item{seed}{An optional integer for setting the random seed to ensure
-reproducible results when using the "genetic" method.}
+\item{seed}{Optional integer seed for `"genetic"` method.}
 
-\item{maxiter}{The number of generations for the genetic algorithm. Default is 100.}
+\item{maxiter}{Number of generations for genetic algorithm (default 100).}
 
-\item{quiet}{Logical. If TRUE, suppresses the printing of the final result object.}
+\item{quiet}{Logical. If `TRUE`, suppresses final print.}
 
-\item{...}{Additional arguments passed to the genetic algorithm (e.g., `popSize`).}
+\item{...}{Additional arguments passed to `rgenoud` (e.g., `popSize`).}
 
-\item{x}{An object from \code{\link{find_cutpoint}}.}
+\item{x}{An object from [find_cutpoint()].}
 
-\item{object}{An object from \code{\link{find_cutpoint}}.}
+\item{object}{An object from [find_cutpoint()].}
 
-\item{show_model}{Logical. If TRUE, shows the full summary of the final Cox model.}
+\item{show_model}{Logical. Show final Cox model summary?}
 
-\item{show_group_counts}{Logical. If TRUE, shows the number of subjects and events in each group.}
+\item{show_group_counts}{Logical. Show N and event counts by group?}
 
-\item{show_medians}{Logical. If TRUE, shows the median survival for each group.}
+\item{show_medians}{Logical. Show median survival by group?}
 
-\item{show_ph_test}{Logical. If TRUE, shows the proportional hazards assumption test.}
+\item{show_ph_test}{Logical. Show proportional hazards test?}
 
-\item{show_params}{Logical. If TRUE, shows the parameters of the original function call.}
+\item{show_params}{Logical. Show original function parameters?}
 
-\item{type}{The type of plot to generate: "outcome" (a survival plot), "distribution", or "forest".}
+\item{type}{Plot type: `"outcome"`, `"distribution"`, or `"forest"`.}
 
-\item{reference_group}{The reference group for the forest plot (e.g., "G1").}
+\item{reference_group}{Reference group for forest plot (e.g., `"G1"`).}
 }
 \value{
-An object of class \code{find_cutpoint} containing the optimal cut-points,
-  the corresponding statistic, and other parameters used in the analysis.
+An object of class `find_cutpoint` containing the
+  optimal cut-points, statistic, and analysis parameters.
 }
 \description{
-Determines optimal cut-point(s) for a continuous predictor in a time-to-event
-(survival) analysis context. It can use a systematic search for 1-2 cut-points
-or a more flexible genetic algorithm for any number of cut-points.
+Finds optimal cut-point(s) for a continuous predictor in a
+time-to-event (survival) analysis. Uses systematic search (1–2
+cuts) or a genetic algorithm (any number of cuts).
+}
+\details{
+`method = "systematic"`: grid search respecting `nmin`.
+`method = "genetic"`: `rgenoud` global optimization.
+Systematic search is slow for `num_cuts > 2`; use `genetic`.
+}
+\section{srrstats compliance}{
+
+.
+}
+
+\examples{
+data(crc_virome)
+res <- find_cutpoint(
+  data = head(crc_virome, 50),
+  predictor = "Alphapapillomavirus",
+  outcome_time = "time_months",
+  outcome_event = "status",
+  num_cuts = 1,
+  method = "systematic"
+)
+
+}
+\references{
+Altman, D. G., Lausen, B., Sauerbrei, W., &
+Schumacher,
+M. (1994). Dangers of Using “Optimal” Cutpoints in the Evaluation of
+  Prognostic Factors. *JNCI: Journal of the National
+  Cancer Institute*,
+  86(11), 829–835. \doi{10.1093/jnci/86.11.829}
+
+Cox, D. R. (1972). Regression Models and Life-Tables. *Journal
+of the Royal Statistical Society: Series B
+(Methodological)*, 34(2),
+187–202. \doi{10.1111/j.2517-6161.1972.tb00899.x}
+
+Mantel, N. (1966). Evaluation of survival data and two new
+rank order statistics arising in its consideration. *Cancer
+Chemotherapy Reports*, 50(3).
+https://pubmed.ncbi.nlm.nih.gov/5910392/
+
+Mebane Jr, W. R., & Sekhon, J. S. (2011). Genetic
+Optimization Using Derivatives: The rgenoud Package for R.
+*Journal
+of Statistical Software*, 42, 1–26.
+\doi{10.18637/jss.v042.i11}
 }

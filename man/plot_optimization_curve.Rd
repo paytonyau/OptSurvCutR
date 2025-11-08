@@ -2,23 +2,49 @@
 % Please edit documentation in R/plotting_functions.R
 \name{plot_optimization_curve}
 \alias{plot_optimization_curve}
-\title{Plot Optimization Curve from a Systematic Search}
+\title{Plot Optimisation Curve from a Systematic Search}
 \usage{
 plot_optimization_curve(cutpoint_result)
 }
 \arguments{
-\item{cutpoint_result}{An object returned by `find_cutpoint()` where
-`method = "systematic"` and `num_cuts = 1` was used.}
+\item{cutpoint_result}{A `find_cutpoint` object
+(`method = "systematic"`, `num_cuts = 1`).}
 }
 \value{
-A ggplot object showing the metric values across the range of
-  cut-points. The optimal cut-point is marked with a vertical dashed line.
+A `ggplot` object. The optimal cut-point is marked with a
+  vertical dashed line.
 }
 \description{
-Visualizes the optimization process from a `find_cutpoint()` systematic search
-with `num_cuts = 1`. It plots the chosen metric (e.g., Log-Rank statistic,
-Hazard Ratio, or p-value) against all evaluated cut-points.
+Plots the metric from a `find_cutpoint()` systematic search
+(`num_cuts = 1`). It plots the statistic (e.g., Log-Rank, HR,
+p-value) against all evaluated cut-points.
 
-This plot helps to visually confirm the optimal cut-point and assess the
-sensitivity of the metric to the choice of cut-point.
+Helps confirm the optimum and assess sensitivity.
+}
+\section{srrstats compliance}{
+
+.
+}
+
+\examples{
+data(crc_virome)
+fit <- find_cutpoint(
+  data = head(crc_virome, 40),
+  predictor = "Alphapapillomavirus",
+  outcome_time = "time_months",
+  outcome_event = "status",
+  num_cuts = 1,
+  method = "systematic"
+)
+
+if (!any(is.na(fit$optimal_cuts))) {
+  plot_optimization_curve(fit)
+}
+
+}
+\references{
+Altman, D. G., Lausen, B., Sauerbrei, W., & Schumacher,
+M. (1994). Dangers of Using "Optimal" Cutpoints in the Evaluation of
+Prognostic Factors. *JNCI: Journal of the National Cancer Institute*,
+86(11), 829-835. \doi{10.1093/jnci/86.11.829}
 }

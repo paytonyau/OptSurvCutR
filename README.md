@@ -2,10 +2,10 @@
 
   [![R-CMD-check](https://github.com/paytonyau/OptSurvCutR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/paytonyau/OptSurvCutR/actions/workflows/R-CMD-check.yaml)
   [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-  [![Codecov](https://codecov.io/gh/paytonyau/OptSurvCutR/branch/main/graph/badge.svg)](https://codecov.io/gh/paytonyau/OptSurvCutR)
+  [![Codecov](https://codecov.io/gh/paytonyau/OptSurvCutR/branch/main/graph/badge.svg)](https://app.codecov.io/gh/paytonyau/OptSurvCutR/new)
   [![License: GPL-3](https://img.shields.io/badge/License-GPL%203-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
   
-`OptSurvCutR` is an R package for optimising cut-points in survival analysis, designed for biostatisticians analysing time-to-event data with continuous predictors (e.g., virome abundances in TCGA datasets). It provides a robust workflow to determine the optimal number and location of cut-points, moving beyond median splits to capture non-linear relationships (e.g., U-shaped effects).
+`OptSurvCutR` (Optimal Survival Cut-points) is an R package for optimising cut-points in survival analysis, designed for biostatisticians analysing time-to-event data with continuous predictors (e.g., virome abundances in TCGA datasets). It provides a robust workflow to determine the optimal number and location of cut-points, moving beyond median splits to capture non-linear relationships (e.g., U-shaped effects).
 
 ## Why OptSurvCutR?
 - **Beyond Median Splits**: Identifies the optimal number and location of cut-points using AIC, AICc, or BIC, revealing complex predictor effects.
@@ -126,7 +126,7 @@ A JOSS submission is planned post-rOpenSci review.
 ## Support OptSurvCutR
 If you find `OptSurvCutR` helpful in your survival analysis research, please consider supporting its ongoing development/maintenance without any dedicated funding. Your contribution, big or small, directly helps dedicate more time to keeping the project alive and improving.
 
-<a href="https://www.buymeacoffee.com/payton.yau" target="_blank">
+<a href="https://buymeacoffee.com/payton.yau" target="_blank">
  <img src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=payton.yau&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff" alt="Buy Me A Coffee" width="150"></a>
 
 

@@ -31,19 +31,18 @@ validate_cutpoint(
 )
 }
 \arguments{
-\item{cutpoint_result}{An object returned by the \code{\link{find_cutpoint}} function.}
+\item{cutpoint_result}{An object from [find_cutpoint()].}
 
-\item{num_replicates}{The number of bootstrap replicates to perform. Default is 500.}
+\item{num_replicates}{Number of bootstrap replicates. Default is 500.}
 
-\item{use_parallel}{Logical. If TRUE, uses multiple CPU cores for bootstrapping.}
+\item{use_parallel}{Logical. Use multiple CPU cores?}
 
-\item{n_cores}{Number of cores to use for parallel processing; if NULL, defaults to 2.}
+\item{n_cores}{Number of cores for parallel. `NULL` defaults to 2.}
 
-\item{seed}{An optional integer to set the random seed for reproducible results.}
+\item{seed}{Optional integer for reproducible results.}
 
-\item{nmin}{The minimum group size to enforce during bootstrap runs. Defaults
-to 90\% of the `nmin` from the original analysis to reduce failures
-in sparse bootstrap samples.}
+\item{nmin}{Minimum group size for bootstrap runs. Defaults to 90%
+of original `nmin` to reduce failures.}
 
 \item{...}{Unused.}
 
@@ -51,21 +50,55 @@ in sparse bootstrap samples.}
 
 \item{object}{An object of class `validate_cutpoint_result`.}
 
-\item{show_descriptives}{Logical. If TRUE, shows descriptive statistics of the bootstrap distributions.}
+\item{show_descriptives}{Logical. Show descriptive statistics?}
 
-\item{show_ci}{Logical. If TRUE, shows the confidence intervals.}
+\item{show_ci}{Logical. Show confidence intervals?}
 
-\item{show_params}{Logical. If TRUE, shows the parameters of the validation run.}
+\item{show_params}{Logical. Show validation run parameters?}
 
-\item{plot.it}{Logical. If TRUE, displays the density plot of the bootstrap distributions.}
+\item{plot.it}{Logical. Display the density plot?}
 }
 \value{
-An object of class `validate_cutpoint_result` containing the
-  original cut-point(s), their 95\% confidence intervals, bootstrap distribution,
-  and analysis parameters.
+An object of class `validate_cutpoint_result` with
+  original cuts, 95% CIs, bootstrap distribution, and parameters.
 }
 \description{
-Assesses the stability of optimal cut-points found by \code{\link{find_cutpoint}} by
-performing a bootstrap analysis and generating 95\% confidence intervals.
-This version is streamlined for survival (time-to-event) analysis.
+Assesses cut-point stability from [find_cutpoint()] via bootstrap
+analysis, generating 95% confidence intervals. Streamlined for
+survival (time-to-event) analysis.
+}
+\section{srrstats compliance}{
+
+.
+}
+
+\examples{
+# Fast validation on small data (runs in < 2 seconds)
+data(crc_virome)
+
+fit <- find_cutpoint(
+  data = head(crc_virome, 50),
+  predictor = "Alphapapillomavirus",
+  outcome_time = "time_months",
+  outcome_event = "status",
+  num_cuts = 1,
+  method = "systematic"
+)
+
+if (!any(is.na(fit$optimal_cuts))) {
+  val <- validate_cutpoint(fit, num_replicates = 20, seed = 123)
+  summary(val)
+  plot(val)
+}
+
+}
+\references{
+Efron, B. (1979). Bootstrap Methods: Another Look at the
+Jackknife. *The Annals of Statistics*, 7(1), 1–26.
+\doi{10.1214/aos/1176344552}
+
+Rota, M., Antolini, L., & Valsecchi, M. G. (2015).
+Optimal cut-point definition in biomarkers: The case of censored
+failure time outcome. *BMC Medical Research Methodology*, 15(1), 24.
+\doi{10.1186/s12874-015-0009-y}
 }

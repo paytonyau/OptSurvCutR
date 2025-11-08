@@ -1,20 +1,31 @@
-# This file declares global variables to satisfy R CMD check.
-# These are column names created and used within dplyr pipes or ggplot aes().
+# ===================================================================
+#' Global Variable Definitions for NSE
+# ===================================================================
+
+#' @description
+#' Declares variable names used in NSE contexts (e.g., `ggplot2::aes()`)
+#' to suppress `R CMD check` "no visible binding" notes.
+#'
+#' Not exported; internal use only.
+#'
+#' @section srrstats compliance:
+#' .
+#' @srrstats {G2.15} NSE used in plotting/data manipulation.
+#' @srrstats {G1.4a} Internal use only (`@noRd`).
+#'
+#' @noRd
+NULL
+
+# NSE global variable definitions
 utils::globalVariables(c(
-  # From previous versions
+  # --- General / Legacy ---
   "density", "Value", "everything", "c1",
-
-  # New variables from plot_effect_size and plot_waterfall
-  "Cut1", "HR", "HR_low", "HR_up", "OR", "OR_low", "OR_up",
+  # --- Effect size & waterfall plots ---
+  "Cut1", "HR", "HR_low", "HR_up",
+  "OR", "OR_low", "OR_up",
   "classified_group", "is_correct", "outcome", "patient_id",
-
-  # for plotting_functions.R
-  "cut1",
-
-  # --- ADDED FROM DEBUG ---
-  "stat",               # Used in plot_optimization_curve
-  "factor",             # Used in plot.find_cutpoint
-  "original_cut",       # Used in plot.validate_cutpoint
-  "ci_lower",           # Used in plot.validate_cutpoint
-  "ci_upper"            # Used in plot.validate_cutpoint
+  # --- Cut-point plotting ---
+  "cut1", "stat", "factor", "original_cut", "num_cuts",
+  # --- Confidence intervals ---
+  "ci_lower", "ci_upper"
 ))
