@@ -11,3 +11,6 @@
 ^pkgdown$
 ^codecov\.yml$
 ^codemeta\.json$
+^CONTRIBUTING\.md$
+^CONDUCT\.md$
+^cran-comments\.md$

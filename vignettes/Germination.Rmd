@@ -107,8 +107,9 @@ summary_table <- analysis_data %>%
 
 # Display the table using kable for nice formatting
 knitr::kable(summary_table,
-      digits = 2,
-      caption = "Summary of Germination Outcomes by Temperature Group")
+  digits = 2,
+  caption = "Summary of Germination Outcomes by Temperature Group"
+)
 ```
 
 > **Interpretation:** This table confirms our data simulates the expected biological response. The highest germination rates (`Germination_Rate_Pct`) and fastest average germination times (`Avg_Time_to_Germinate_Days`) occur in the intermediate 15-25°C range, with performance dropping off at colder (e.g., 5°C) and hotter (e.g., 35°C) temperatures. This confirms the non-monotonic relationship we expect.
@@ -139,27 +140,26 @@ The function's behaviour is controlled by two key arguments: `method` and `crite
 We will use the `"genetic"` search method (suitable for potentially multiple cuts) and the  `"BIC"` criterion.
 
 ```{r find-number-BIC}
-
 # Set to TRUE if either building the pkgdown site OR running interactively.
 # This will be FALSE only for non-interactive builds (like CRAN).
 run_parallel_locally <- (Sys.getenv("PKGDOWN") == "TRUE") || interactive()
 
 # Step 1: Find the number of cut(s) using BIC
-  number_result_bic <- find_cutpoint_number(
-    data = analysis_data,
-    predictor = "temperature",
-    outcome_time = "time",
-    outcome_event = "germinated",
-    method = "genetic",
-    criterion = "BIC",
-    max_cuts = 5, # Test models with 0, 1, 2, 3, or 4 cuts
-    nmin = 0.1,   # Ensure groups have at least 10% of seeds
-    maxiter = 10, # REDUCED for vignette speed; use >= 100 for real analysis
-    use_parallel = run_parallel_locally, # Set FALSE for CRAN only
-    n_cores = 6,
-    # covariates = "replicate", # Example: Adjust for experimental replicate
-    seed = 42
-  )
+number_result_bic <- find_cutpoint_number(
+  data = analysis_data,
+  predictor = "temperature",
+  outcome_time = "time",
+  outcome_event = "germinated",
+  method = "genetic",
+  criterion = "BIC",
+  max_cuts = 5, # Test models with 0, 1, 2, 3, or 4 cuts
+  nmin = 0.1, # Ensure groups have at least 10% of seeds
+  maxiter = 10, # REDUCED for vignette speed; use >= 100 for real analysis
+  use_parallel = run_parallel_locally, # Set FALSE for CRAN only
+  n_cores = 6,
+  # covariates = "replicate", # Example: Adjust for experimental replicate
+  seed = 42
+)
 
 summary(number_result_bic)
 ```
@@ -187,16 +187,16 @@ Now that we know we need three cut-points, we use `find_cutpoint()` to discover 
 ```{r find-cutpoint}
 # Step 2: Finding optimal cut-point values...
 multi_cut_result <- find_cutpoint(
-    data = analysis_data,
-    predictor = "temperature",
-    outcome_time = "time",
-    outcome_event = "germinated",
-    method = "genetic",
-    criterion = "logrank",
-    num_cuts = 3, # Based on Step 1
-    nmin = 0.1,   # Ensure groups have at least 10% of seeds
-    maxiter = 50, # REDUCED for vignette speed; use >= 100-500 for real analysis
-    seed = 123
+  data = analysis_data,
+  predictor = "temperature",
+  outcome_time = "time",
+  outcome_event = "germinated",
+  method = "genetic",
+  criterion = "logrank",
+  num_cuts = 3, # Based on Step 1
+  nmin = 0.1, # Ensure groups have at least 10% of seeds
+  maxiter = 50, # REDUCED for vignette speed; use >= 100-500 for real analysis
+  seed = 123
 )
 
 summary(multi_cut_result)
@@ -222,13 +222,13 @@ A key question is whether these cut-points are stable or just an artefact of our
 # Step 3: Validating cut-point stability with bootstrapping...
 
 validation_result <- validate_cutpoint(
-    cutpoint_result = multi_cut_result,
-    num_replicates = 50,  # REDUCED for vignette speed; use >= 500 for publication
-    use_parallel = run_parallel_locally, # Set FALSE for CRAN only
-    n_cores = 6,
-    seed = 456,
-    maxiter = 10          # REDUCED; matches maxiter used in find_cutpoint
-  )
+  cutpoint_result = multi_cut_result,
+  num_replicates = 50, # REDUCED for vignette speed; use >= 500 for publication
+  use_parallel = run_parallel_locally, # Set FALSE for CRAN only
+  n_cores = 6,
+  seed = 456,
+  maxiter = 10 # REDUCED; matches maxiter used in find_cutpoint
+)
 
 summary(validation_result)
 ```
@@ -278,7 +278,6 @@ knitr::kable(composition_table, caption = "Composition of Temperature Groups")
 This plot shows the time-to-germination for the four groups. Note that in germination studies, the "event" is successful germination, so a dropping curve is a positive outcome (faster germination).
 
 ```{r plot-km-individual, fig.width=8, fig.height=6.5, fig.cap="Kaplan-Meier survival curve for germination by temperature group."}
-
 group_levels <- levels(analysis_data$Temp_Group)
 
 # Custom palette for 4 groups
@@ -291,14 +290,14 @@ km_fit_final <- survfit(Surv(time, germinated) ~ Temp_Group, data = analysis_dat
 
 # Or use ggsurvplot for a publication-ready version
 ggsurvplot(
-  km_fit_final, 
-  data = analysis_data, 
-  pval = TRUE, 
+  km_fit_final,
+  data = analysis_data,
+  pval = TRUE,
   risk.table = TRUE,
-  title = "Germination by Optimal Temperature Strata",  
-  xlab = "Time (Days)", 
-  ylab = "Proportion Ungerminated",  
-  legend.title = "Temp Group",  
+  title = "Germination by Optimal Temperature Strata",
+  xlab = "Time (Days)",
+  ylab = "Proportion Ungerminated",
+  legend.title = "Temp Group",
   legend.labs = group_levels,
   palette = palette
 )
@@ -318,9 +317,10 @@ cox_model <- coxph(Surv(time, germinated) ~ Temp_Group, data = analysis_data)
 # plot(multi_cut_result, type = "forest", reference_group = "Optimal")
 
 # Or use ggsurvplot for a publication-ready version
-ggforest(cox_model, 
-         data = analysis_data, 
-         main = "Hazard Ratios Relative to Optimal Temperature")
+ggforest(cox_model,
+  data = analysis_data,
+  main = "Hazard Ratios Relative to Optimal Temperature"
+)
 ```
 
 > **Forest Plot Interpretation:** This plot shows the rate of germination for each group compared to the "Optimal" group. An HR **less than 1** (like for the "Cool" and "Warm" groups) means a significantly lower rate of germination. An HR **greater than 1** would mean a higher rate. Since all confidence intervals are far from crossing the vertical line at 1.0, all groups have a germination rate that is significantly different from the optimal group.
@@ -331,14 +331,14 @@ This diagnostic plot helps visually check the proportional hazards assumption of
 
 ```{r plot-cumhaz, fig.width=7, fig.height=5.5, fig.cap="Cumulative hazard plot for germination by temperature group, used to check the proportional hazards assumption."}
 ggsurvplot(
-  km_fit_final, 
-  data = analysis_data, 
-  fun = "cumhaz", 
+  km_fit_final,
+  data = analysis_data,
+  fun = "cumhaz",
   pval = TRUE,
-  title = "Cumulative Hazard of Germination",  
-  xlab = "Time (Days)", 
-  ylab = "Cumulative Hazard",  
-  legend.title = "Temp Group",  
+  title = "Cumulative Hazard of Germination",
+  xlab = "Time (Days)",
+  ylab = "Cumulative Hazard",
+  legend.title = "Temp Group",
   legend.labs = group_levels,
   palette = palette
 )
@@ -355,7 +355,7 @@ his vignette has demonstrated the three-step workflow for cut-point analysis usi
 We encourage you to try `OptSurvCutR` with your own data.
 
 -   **Install the package** from GitHub: `remotes::install_github("paytonyau/OptSurvCutR")`
--   **Report issues or suggest features** on our [GitHub page](https://github.com/paytonyau/OptSurvCutR).
+-   **Report issues or suggest features** on our https://github.com/paytonyau/OptSurvCutR.
 -   **Star the repository** if you find it useful.
 - Cite the package: Please cite the accompanying paper if you use OptSurvCutR in your research: Yau, Payton T. O. “OptSurvCutR: Validated Cut-point Selection for Survival Analysis.” bioRxiv preprint, posted October 18, 2025. https://doi.org/10.1101/2025.10.08.681246.
 - If you find OptSurvCutR useful for your research, please consider supporting its ongoing development and maintenance. Your contribution helps keep the project alive and improving!

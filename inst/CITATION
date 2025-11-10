@@ -1,0 +1,29 @@
+# inst/CITATION
+citHeader("To cite OptSurvCutR in publications use:")
+
+payton_yau <- person(
+  given  = "Payton T. O.",
+  family = "Yau",
+  role   = c("aut", "cre", "cph"),
+  email  = "tungon@gmail.com",
+  comment = c(ORCID = "0000-0002-3283-0370")
+)
+
+bibentry(
+  bibtype = "Manual",
+  title   = "OptSurvCutR: Validated Cut-Point Selection for Survival Analysis",
+  author  = payton_yau,
+  year    = "2025",
+  note    = "R package version {packageVersion('OptSurvCutR')}",
+  url     = "https://github.com/paytonyau/OptSurvCutR"
+)
+
+bibentry(
+  bibtype = "Article",
+  title   = "OptSurvCutR: Validated Cut-point Selection for Survival Analysis",
+  author  = payton_yau,
+  journal = "bioRxiv",
+  year    = "2025",
+  doi     = "10.1101/2025.10.08.681246",
+  url     = "https://doi.org/10.1101/2025.10.08.681246"
+)

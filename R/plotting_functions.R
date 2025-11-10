@@ -74,10 +74,10 @@ plot_optimization_curve <- function(cutpoint_result) {
   }
 
   if (is.null(cutpoint_result$all_stats) ||
-      !is.data.frame(cutpoint_result$all_stats)) {
+    !is.data.frame(cutpoint_result$all_stats)) {
     cli::cli_abort(
       "`cutpoint_result` must have a valid `all_stats` data frame."
-      )
+    )
   }
   if (nrow(cutpoint_result$all_stats) == 0) {
     cli::cli_abort("`all_stats` is empty; no cuts evaluated.")
@@ -87,10 +87,10 @@ plot_optimization_curve <- function(cutpoint_result) {
   optimal_cut <- cutpoint_result$optimal_cuts[1]
   criterion <- params$criterion
   y_label <- switch(criterion,
-                    "logrank" = "Log-Rank Statistic",
-                    "hazard_ratio" = "Hazard Ratio (HR)",
-                    "p_value" = "P-value",
-                    tools::toTitleCase(criterion)
+    "logrank" = "Log-Rank Statistic",
+    "hazard_ratio" = "Hazard Ratio (HR)",
+    "p_value" = "P-value",
+    tools::toTitleCase(criterion)
   )
   plot_title <- paste(y_label, "vs. Cut-point")
   subtitle_text <- if (!is.na(optimal_cut)) {
@@ -127,7 +127,7 @@ plot_optimization_curve <- function(cutpoint_result) {
 }
 
 # ===================================================================
-#' Diagnostic Plot of Schoenfeld Residuals
+#' Cox Proportional Hazards Diagnostic Plot
 # ===================================================================
 #'
 #' @description
@@ -137,7 +137,7 @@ plot_optimization_curve <- function(cutpoint_result) {
 #' @section srrstats compliance:
 #' .
 #' @srrstats {G3.1a} Provides diagnostic residual plot (Schoenfeld)
-#'   for Cox PH assumption.
+#' for Cox PH assumption.
 #' @srrstats {G5.2} Graceful handling when no valid cut-points exist.
 #' @srrstats {G5.2b} Non-fatal informative message when Cox model fails.
 #' @srrstats {G2.0} Input object class validated with `inherits()`.
@@ -161,7 +161,7 @@ plot_optimization_curve <- function(cutpoint_result) {
 #' )
 #'
 #' if (!any(is.na(fit$optimal_cuts))) {
-#'   plot_diagnostics(fit)
+#'   plot_cox_diagnostics(fit)
 #' }
 #'
 #' @references
@@ -174,7 +174,7 @@ plot_optimization_curve <- function(cutpoint_result) {
 #' @importFrom cli cli_inform cli_abort
 #' @importFrom stats as.formula
 #' @export
-plot_diagnostics <- function(x, ...) {
+plot_cox_diagnostics <- function(x, ...) {
   if (!inherits(x, "find_cutpoint")) {
     cli::cli_abort("Input must be a {.cls find_cutpoint} object.")
   }
@@ -182,21 +182,19 @@ plot_diagnostics <- function(x, ...) {
     cli::cli_inform("No valid cut-points; skipping diagnostics.")
     return(invisible(NULL))
   }
-
   data <- x$userdata
   cuts <- x$optimal_cuts
   data$group <- cut(data$factor,
-                    breaks = c(-Inf, cuts, Inf),
-                    labels = paste0("G", 1:(length(cuts) + 1))
+    breaks = c(-Inf, cuts, Inf),
+    labels = paste0("G", 1:(length(cuts) + 1))
   )
-
   formula_str <- "survival::Surv(time, event) ~ group"
   if (!is.null(x$parameters$covariates)) {
-    formula_str <- paste(formula_str, "+",
-                         paste(x$parameters$covariates, collapse = " + ")
+    formula_str <- paste(
+      formula_str, "+",
+      paste(x$parameters$covariates, collapse = " + ")
     )
   }
-
   fit <- tryCatch(
     survival::coxph(stats::as.formula(formula_str), data = data),
     error = function(e) NULL
@@ -205,10 +203,8 @@ plot_diagnostics <- function(x, ...) {
     cli::cli_inform("Cox model failed; cannot generate diagnostics.")
     return(invisible(NULL))
   }
-
   zph <- survival::cox.zph(fit)
   p <- survminer::ggcoxzph(zph, ...)
-
   p <- lapply(p, function(g) {
     g + ggplot2::labs(title = if (is.null(g$labels$title)) {
       "Schoenfeld Residuals"
@@ -216,10 +212,8 @@ plot_diagnostics <- function(x, ...) {
       g$labels$title
     })
   })
-
   global_p <- round(zph$table[nrow(zph$table), "p"], 4)
   p[[length(p)]] <- p[[length(p)]] +
     ggplot2::labs(subtitle = paste0("Global chi-squared p-value = ", global_p))
-
   return(p)
 }

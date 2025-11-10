@@ -1,33 +1,26 @@
 Package: OptSurvCutR
 Type: Package
-Title: Optimal Survival Cut-Point Discovery for Time-to-Event Analysis
+Title: OptSurvCutR: Validated Cut-Point Selection for Survival Analysis
 Version: 0.1.8
-Authors@R: 
-    person(
-        given = "Payton",
-        family = "Yau",
-        email = "tungon@gmail.com",
-        role = c("aut", "cre", "cph"),
-        comment = c(ORCID = "0000-0002-3283-0370") 
-    )
-Description:
-    Provides a robust 3-step workflow for optimal cut-point analysis in
+Authors@R: person(given = "Payton", family = "Yau", email = "tungon@gmail.com", role = c("aut", "cre", "cph"), comment = c(ORCID = "0000-0002-3283-0370"))
+Description: Provides a robust 3-step workflow for optimal cut-point analysis in
     time-to-event (survival) data. Functions determine the optimal number
-    of cut-points ('find_cutpoint_number()'), find their precise locations
-    ('find_cutpoint()') using systematic or genetic algorithms (via 'rgenoud'),
-    and validate stability via bootstrapping ('validate_cutpoint()'). Analyses
-    can be adjusted for covariates using standard 'survival' package models.
-    Ideal for biomarker analysis and patient stratification, where non-linear
-    relationships may exist. Methods described in Yau, P.T.O. (2025)
-    <doi:10.1101/2025.10.08.681246>.
+    of cut-points ('find_cutpoint_number()'), locate them using systematic or
+    genetic algorithms (via 'rgenoud'), and validate stability via bootstrapping
+    ('validate_cutpoint()'). Analyses can be adjusted for covariates using
+    'survival' package models. Ideal for biomarker analysis and patient
+    stratification where non-linear relationships may exist. Methods described
+    in Yau, P.T.O. (2025) <doi:10.1101/2025.10.08.681246>.
 License: GPL-3 + file LICENSE
-URL: https://github.com/paytonyau/OptSurvCutR, 
+URL: https://github.com/paytonyau/OptSurvCutR,
      https://paytonyau.github.io/OptSurvCutR/
+BugReports: https://github.com/paytonyau/OptSurvCutR/issues
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3
 VignetteBuilder: knitr
-Imports: 
+Depends: R (>= 3.5)
+Imports:
     cli,
     doParallel,
     foreach,
@@ -53,7 +46,4 @@ Suggests:
     tibble,
     withr
 Config/testthat/edition: 3
-Depends:
-    R (>= 3.5)
 Language: en-GB
-BugReports: https://github.com/paytonyau/OptSurvCutR/issues

@@ -47,8 +47,8 @@
     return(-Inf)
   }
   cut_design <- factor(cut(target,
-                           breaks = c(-Inf, sort(cutoff), Inf),
-                           labels = FALSE, include.lowest = TRUE
+    breaks = c(-Inf, sort(cutoff), Inf),
+    labels = FALSE, include.lowest = TRUE
   ))
   if (length(table(cut_design)) != (numcut + 1)) {
     return(-Inf)
@@ -67,26 +67,26 @@
   }
   formula_str <- "survival::Surv(time, censor) ~ cut_design"
   if (!is.null(confound) && ncol(confound) > 0) {
-    formula_str <- paste(formula_str, "+",
-                         paste(colnames(confound), collapse = " + ")
+    formula_str <- paste(
+      formula_str, "+",
+      paste(colnames(confound), collapse = " + ")
     )
   }
   fit_formula <- as.formula(formula_str)
 
-  stat_value <- switch(
-    criterion,
+  stat_value <- switch(criterion,
     "logrank" = {
       fit <- tryCatch(survival::survdiff(fit_formula, data = data_for_fit),
-                      error = function(e) NULL
+        error = function(e) NULL
       )
       if (is.null(fit)) -Inf else fit$chisq
     },
     "hazard_ratio" = {
       fit <- tryCatch(survival::coxph(fit_formula, data = data_for_fit),
-                      error = function(e) NULL
+        error = function(e) NULL
       )
       if (is.null(fit) || is.null(fit$coefficients) ||
-          !("cut_design2" %in% names(fit$coefficients))) {
+        !("cut_design2" %in% names(fit$coefficients))) {
         -Inf
       } else {
         exp(fit$coefficients["cut_design2"])
@@ -94,7 +94,7 @@
     },
     "p_value" = {
       fit <- tryCatch(survival::coxph(fit_formula, data = data_for_fit),
-                      error = function(e) NULL
+        error = function(e) NULL
       )
       if (is.null(fit) || is.null(fit$loglik)) {
         return(-Inf)
@@ -118,8 +118,8 @@
       beta_init <- params[(numcut + 1):length(params)]
       fit <- tryCatch(
         survival::coxph(fit_formula,
-                        data = data_for_fit,
-                        init = beta_init, iter.max = 0
+          data = data_for_fit,
+          init = beta_init, iter.max = 0
         ),
         error = function(e) NULL
       )
@@ -171,7 +171,7 @@
   }
 
   domain_cuts <- matrix(rep(range(target, na.rm = TRUE), numcut),
-                        ncol = 2, byrow = TRUE
+    ncol = 2, byrow = TRUE
   )
   if (any(is.infinite(domain_cuts))) {
     return(NULL)
@@ -179,8 +179,8 @@
 
   domain <- if (optimizing_betas) {
     domain_betas <- matrix(rep(c(-5, 5), nvars - numcut),
-                           ncol = 2,
-                           byrow = TRUE
+      ncol = 2,
+      byrow = TRUE
     )
     rbind(domain_cuts, domain_betas)
   } else {
@@ -188,8 +188,8 @@
   }
 
   initial_cuts <- stats::quantile(target,
-                                  probs = seq(0, 1, length.out = numcut + 2),
-                                  na.rm = TRUE
+    probs = seq(0, 1, length.out = numcut + 2),
+    na.rm = TRUE
   )[2:(numcut + 1)]
   initial_values <- if (optimizing_betas) {
     initial_betas <- rep(0, nvars - numcut)
@@ -203,7 +203,7 @@
 
   if (is.null(gap)) {
     gap <- stats::quantile(sort(diff(sort(unique(na.omit(target))))),
-                           probs = 0.5, na.rm = TRUE
+      probs = 0.5, na.rm = TRUE
     )
     if (is.na(gap) || gap == 0) gap <- 1e-4
   }
@@ -216,10 +216,11 @@
       confound_null <- confound
       colnames(confound_null) <- make.names(colnames(confound_null))
       data_for_null_fit <- cbind(data_for_null_fit, confound_null)
-      null_formula_str <- paste(null_formula_str, "+",
-                                paste(colnames(confound_null),
-                                      collapse = " + "
-                                )
+      null_formula_str <- paste(
+        null_formula_str, "+",
+        paste(colnames(confound_null),
+          collapse = " + "
+        )
       )
     }
     null_fit <- tryCatch(
@@ -343,14 +344,14 @@
                                            criterion, covariates) {
   method <- match.arg(method, choices = c("systematic", "genetic"))
   criterion <- match.arg(criterion,
-                         choices = c("logrank", "hazard_ratio", "p_value")
+    choices = c("logrank", "hazard_ratio", "p_value")
   )
   if (!is.numeric(num_cuts) || num_cuts < 0 || num_cuts != round(num_cuts)) {
     stop("num_cuts must be a non-negative integer.", call. = FALSE)
   }
   if (criterion == "hazard_ratio" && num_cuts > 1) {
     stop("'hazard_ratio' is only supported for num_cuts = 1.",
-         call. = FALSE
+      call. = FALSE
     )
   }
 
@@ -365,7 +366,7 @@
   }
   if (method == "systematic" && !num_cuts %in% c(1, 2)) {
     stop("Systematic search only supports num_cuts = 1 or 2.",
-         call. = FALSE
+      call. = FALSE
     )
   }
 
@@ -374,7 +375,7 @@
   }
   if (is.null(outcome_time) || is.null(outcome_event)) {
     stop("Both 'outcome_time' and 'outcome_event' are required.",
-         call. = FALSE
+      call. = FALSE
     )
   }
 
@@ -523,5 +524,5 @@
 #' @srrstats {G2.1} Type checking.
 #'
 #' @name or-operator
-#' @export
+#' @noRd
 `%||%` <- function(a, b) if (is.null(a)) b else a
