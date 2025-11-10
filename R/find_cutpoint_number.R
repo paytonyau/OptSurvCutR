@@ -284,10 +284,15 @@ find_cutpoint_number <- function(data, predictor,
   results[[weight_col_name]] <- exp_delta / sum(exp_delta, na.rm = TRUE)
 
   results$Evidence <- vapply(results[[delta_col_name]], function(d) {
-    if (is.na(d)) NA_character_
-    else if (d <= 2) "Substantial"
-    else if (d <= 7) "Moderate"
-    else "Minimal"
+    if (is.na(d)) {
+      NA_character_
+    } else if (d <= 2) {
+      "Substantial"
+    } else if (d <= 7) {
+      "Moderate"
+    } else {
+      "Minimal"
+    }
   }, FUN.VALUE = character(1))
 
   # --- Compute optimal_num_cuts and optimal_cuts ---
@@ -357,8 +362,8 @@ find_cutpoint_number <- function(data, predictor,
     {
       fit0 <- survival::coxph(as.formula(base_formula_str), data = userdata)
       .calc_ic(fit0,
-               k = 1 + length(covariates), n = n,
-               criterion = criterion
+        k = 1 + length(covariates), n = n,
+        criterion = criterion
       )
     },
     error = function(e) {
@@ -395,7 +400,7 @@ find_cutpoint_number <- function(data, predictor,
       ) %do% {
         factor_status <- factor(ifelse(userdata$factor <= c1, 0, 1))
         if (min(table(factor_status)) < nmin ||
-            nlevels(factor_status) < 2) {
+          nlevels(factor_status) < 2) {
           return(NULL)
         }
 
@@ -443,20 +448,26 @@ find_cutpoint_number <- function(data, predictor,
         best_inner_res <- list(ic = Inf, c2 = NA)
 
         start_idx_g2 <- which(userdata$factor > c1)[nmin]
-        if (is.na(start_idx_g2)) return(NULL)
+        if (is.na(start_idx_g2)) {
+          return(NULL)
+        }
         grid2_end_idx <- n - nmin
-        if (start_idx_g2 >= grid2_end_idx) return(NULL)
+        if (start_idx_g2 >= grid2_end_idx) {
+          return(NULL)
+        }
 
         grid2 <- unique(userdata$factor[start_idx_g2:grid2_end_idx])
-        if (length(grid2) == 0) return(NULL)
+        if (length(grid2) == 0) {
+          return(NULL)
+        }
 
         for (c2 in grid2) {
           if (is.na(c2) || c2 <= c1) next
           factor_status <- as.factor(cut(userdata$factor,
-                                         breaks = c(-Inf, c1, c2, Inf)
+            breaks = c(-Inf, c1, c2, Inf)
           ))
           if (min(table(factor_status)) < nmin ||
-              nlevels(factor_status) < 3) {
+            nlevels(factor_status) < 3) {
             next
           }
 
@@ -532,7 +543,7 @@ find_cutpoint_number <- function(data, predictor,
     {
       fit0 <- survival::coxph(as.formula(base_formula_str), data = userdata)
       .calc_ic(fit0,
-               k = 1 + num_cov, n = n, criterion = criterion
+        k = 1 + num_cov, n = n, criterion = criterion
       )
     },
     error = function(e) {
@@ -581,7 +592,7 @@ find_cutpoint_number <- function(data, predictor,
     cuts_val <- list(NULL)
 
     if (!is.null(ga_result) && is.finite(ga_result$value) &&
-        ga_result$value > -.Machine$double.xmax) {
+      ga_result$value > -.Machine$double.xmax) {
       max_logL <- ga_result$value
       k_params <- k_cuts + num_cov
       ic_val <- .calc_ic(
@@ -621,7 +632,9 @@ find_cutpoint_number <- function(data, predictor,
       return(NULL)
     }
   )
-  if (is.null(fit)) return(Inf)
+  if (is.null(fit)) {
+    return(Inf)
+  }
 
   k_params <- k_cuts + num_cov
   .calc_ic(fit, k_params, n, criterion)
@@ -655,7 +668,7 @@ print.find_cutpoint_number_result <- function(x, ...) {
   }
 
   if (is.null(x$results) || nrow(x$results) == 0 ||
-      all(is.na(x$results[[criterion_text]]))) {
+    all(is.na(x$results[[criterion_text]]))) {
     cli::cli_inform("No optimal model could be determined.")
     return(invisible(x))
   }
@@ -716,10 +729,11 @@ print.find_cutpoint_number_result <- function(x, ...) {
 #' @rdname find_cutpoint_number
 #' @export
 summary.find_cutpoint_number_result <- function(
-    object, show_comparison_table = TRUE,
-    show_best_model_details = TRUE,
-    show_group_counts = TRUE, show_medians = TRUE,
-    plot.it = FALSE, ...) {
+  object, show_comparison_table = TRUE,
+  show_best_model_details = TRUE,
+  show_group_counts = TRUE, show_medians = TRUE,
+  plot.it = FALSE, ...
+) {
   criterion_text <- if (!is.null(object$parameters$criterion)) {
     object$parameters$criterion
   } else {
@@ -732,8 +746,8 @@ summary.find_cutpoint_number_result <- function(
   ))
 
   if (is.null(object) || is.null(object$results) ||
-      nrow(object$results) == 0 ||
-      all(is.na(object$results[[criterion_text]]))) {
+    nrow(object$results) == 0 ||
+    all(is.na(object$results[[criterion_text]]))) {
     cli::cli_inform("Cannot summarize: no valid model was found.")
     return(invisible(object))
   }
@@ -769,8 +783,8 @@ summary.find_cutpoint_number_result <- function(
 
     if (num_cuts > 0) {
       data$group <- cut(data$factor,
-                        breaks = c(-Inf, best_cuts_vals, Inf),
-                        labels = paste0("G", 1:(num_cuts + 1))
+        breaks = c(-Inf, best_cuts_vals, Inf),
+        labels = paste0("G", 1:(num_cuts + 1))
       )
 
       if (show_group_counts) {
@@ -785,7 +799,7 @@ summary.find_cutpoint_number_result <- function(
       if (show_medians) {
         cli::cli_h2("Median Survival by Group")
         fit_km <- survival::survfit(survival::Surv(time, event) ~ group,
-                                    data = data
+          data = data
         )
         print(fit_km)
       }
@@ -850,7 +864,7 @@ plot.find_cutpoint_number_result <- function(x, y, ...) {
   }
 
   if (is.null(results) || nrow(results) == 0 ||
-      all(is.na(results[[criterion_text]]))) {
+    all(is.na(results[[criterion_text]]))) {
     cli::cli_inform("Cannot generate plot: no valid IC values found.")
     return(invisible(NULL))
   }

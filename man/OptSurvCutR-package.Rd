@@ -4,9 +4,9 @@
 \name{OptSurvCutR-package}
 \alias{OptSurvCutR}
 \alias{OptSurvCutR-package}
-\title{OptSurvCutR: Optimal Survival Cut-Point Discovery for Time-to-Event Analysis}
+\title{OptSurvCutR: OptSurvCutR: Validated Cut-Point Selection for Survival Analysis}
 \description{
-Provides a robust 3-step workflow for optimal cut-point analysis in time-to-event (survival) data. Functions determine the optimal number of cut-points ('find_cutpoint_number()'), find their precise locations ('find_cutpoint()') using systematic or genetic algorithms (via 'rgenoud'), and validate stability via bootstrapping ('validate_cutpoint()'). Analyses can be adjusted for covariates using standard 'survival' package models. Ideal for biomarker analysis and patient stratification, where non-linear relationships may exist. Methods described in Yau, P.T.O. (2025) \doi{10.1101/2025.10.08.681246}.
+Provides a robust 3-step workflow for optimal cut-point analysis in time-to-event (survival) data. Functions determine the optimal number of cut-points ('find_cutpoint_number()'), locate them using systematic or genetic algorithms (via 'rgenoud'), and validate stability via bootstrapping ('validate_cutpoint()'). Analyses can be adjusted for covariates using 'survival' package models. Ideal for biomarker analysis and patient stratification where non-linear relationships may exist. Methods described in Yau, P.T.O. (2025) \doi{10.1101/2025.10.08.681246}.
 }
 \seealso{
 Useful links:
