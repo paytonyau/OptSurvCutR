@@ -1,11 +1,11 @@
 # OptSurvCutR: Validated Cut-point Selection for Survival Analysis
 
-  <!-- badges: start -->
   [![R-CMD-check](https://github.com/paytonyau/OptSurvCutR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/paytonyau/OptSurvCutR/actions/workflows/R-CMD-check.yaml)
   [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
   [![Codecov](https://codecov.io/gh/paytonyau/OptSurvCutR/branch/main/graph/badge.svg)](https://app.codecov.io/gh/paytonyau/OptSurvCutR/new)
-  [![License: GPL-3](https://img.shields.io/badge/License-GPL%203-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
-    <!-- badges: end -->
+  [![License: GPL-3](https://img.shields.io/badge/License-GPL%203-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+<a href="https://www.buymeacoffee.com/payton.yau" target="_blank">
+ <img src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=payton.yau&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff" alt="Buy Me A Coffee" width="95"></a>
   
 `OptSurvCutR` (Optimal Survival Cut-points) is an R package for optimising cut-points in survival analysis, designed for biostatisticians analysing time-to-event data with continuous predictors (e.g., virome abundances in TCGA datasets). It provides a robust workflow to determine the optimal number and location of cut-points, moving beyond median splits to capture non-linear relationships (e.g., U-shaped effects).
 

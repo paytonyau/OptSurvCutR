@@ -9,7 +9,8 @@ A data frame with patient data in rows and variables in columns:
   \item{sample_id}{Unique TCGA patient identifier (character).}
   \item{time_months}{Overall survival time (months), censored at
     60 mos. (numeric).}
-  \item{status}{Overall survival status: 1 = deceased, 0 = alive (integer).}
+  \item{status}{Overall survival status: 1 = deceased, 0 = alive
+    (integer).}
   \item{age}{Age at diagnosis (numeric).}
   \item{sex}{Sex of the patient (character).}
   \item{race}{Race of the patient (character).}
@@ -157,9 +158,10 @@ A data frame with patient data in rows and variables in columns:
 }
 \source{
 Sourced, cleaned, and merged from Smyth et al. (2024)
- [\doi{10.1002/cam4.70434}], originating from cBioPortal
- (TCGA, PanCancer Atlas).
- \url{https://www.cbioportal.org/study/summary?id=coadread_tcga_pan_can_atlas_2018}
+  [\doi{10.1002/cam4.70434}], originating from cBioPortal
+  (TCGA, PanCancer Atlas).
+  \url{https://www.cbioportal.org/study/summary?id=
+  coadread_tcga_pan_can_atlas_2018}
 }
 \description{
 Cleaned clinical, survival, and virome abundance data for patients
@@ -174,7 +176,6 @@ with colon and rectal adenocarcinoma (TCGA PanCancer Atlas).
 Smyth, J., Godet, J., Choudhary, A., Das, A., Gkoutos, G.
 V., & Acharjee, A. (2. (2024). Microbiome‐Based
 Colon Cancer Patient Stratification and Survival Analysis. *Cancer
-Medicine*,13(22), e70434.
-https://doi.org/10.1002/cam4.70434
+Medicine*,13(22), e70434. https://doi.org/10.1002/cam4.70434
 }
 \keyword{datasets}

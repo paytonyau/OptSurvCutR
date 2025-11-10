@@ -111,7 +111,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     cli::cli_abort("Input must be a `find_cutpoint` object.")
   }
   if (!is.numeric(num_replicates) || num_replicates < 1 ||
-    num_replicates != round(num_replicates)) {
+      num_replicates != round(num_replicates)) {
     cli::cli_abort("`num_replicates` must be a positive integer.")
   }
   if (num_replicates < 20) {
@@ -250,7 +250,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     )
 
     if (is.null(res) || any(is.na(res$optimal_cuts)) ||
-      length(res$optimal_cuts) != num_cuts) {
+        length(res$optimal_cuts) != num_cuts) {
       return(rep(NA, num_cuts))
     }
     res$optimal_cuts
@@ -259,8 +259,8 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   # --- 5. Process Results and Calculate CIs ---
   if (!is.matrix(bootstrap_results)) {
     bootstrap_matrix <- matrix(bootstrap_results,
-      nrow = num_replicates,
-      ncol = num_cuts, byrow = TRUE
+                               nrow = num_replicates,
+                               ncol = num_cuts, byrow = TRUE
     )
   } else {
     bootstrap_matrix <- bootstrap_results
@@ -294,7 +294,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
 
   bootstrap_matrix_clean <- na.omit(bootstrap_matrix)
   ci <- apply(bootstrap_matrix_clean, 2, stats::quantile,
-    probs = c(0.025, 0.975), na.rm = TRUE
+              probs = c(0.025, 0.975), na.rm = TRUE
   )
   if (is.vector(ci)) {
     ci_df <- data.frame(Lower = ci[1], Upper = ci[2])
@@ -361,7 +361,7 @@ print.validate_cutpoint_result <- function(x, ...) {
     "Successful Replicates:", x$parameters$successful_reps, "/",
     x$parameters$num_replicates,
     "(", round(100 * x$parameters$successful_reps /
-      x$parameters$num_replicates, 1), "%)\n"
+                 x$parameters$num_replicates, 1), "%)\n"
   )
   cat("Failed Replicates:", x$parameters$failed_reps, "\n\n")
 
@@ -506,7 +506,7 @@ summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE,
       "Successful Replicates:", object$parameters$successful_reps, "/",
       object$parameters$num_replicates,
       "(", round(100 * object$parameters$successful_reps /
-        object$parameters$num_replicates, 1), "%)\n"
+                   object$parameters$num_replicates, 1), "%)\n"
     )
     cat("Failed Replicates:", object$parameters$failed_reps, "\n")
     cat(
@@ -517,7 +517,7 @@ summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE,
     cat(
       "Seed:",
       ifelse(is.null(object$parameters$seed), "Not set",
-        object$parameters$seed
+             object$parameters$seed
       ), "\n"
     )
     cat("Minimum Group Size (nmin):", object$parameters$nmin, "\n")
@@ -526,7 +526,7 @@ summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE,
     cat(
       "Covariates:",
       ifelse(is.null(object$parameters$covariates), "None",
-        paste(object$parameters$covariates, collapse = ", ")
+             paste(object$parameters$covariates, collapse = ", ")
       ), "\n"
     )
     cat("\n")
