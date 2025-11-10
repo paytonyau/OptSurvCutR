@@ -4,7 +4,7 @@ url: https://paytonyau.github.io/OptSurvCutR/
 template:
   bootstrap: 5
   bootswatch: "litera" # Choose a Bootswatch themea
-  light-switch: true # Enable light/dark mode
+  light-switch: true # Enable light/dark mode 
   theme: gruvbox-light
   theme-dark: gruvbox-dark
   highlight: default # Using a light code highlighting theme
@@ -39,9 +39,9 @@ navbar:
       text: Changelog
       href: news/index.html
     manuscript:
-      text: Manuscript
-      href: https://doi.org/10.1101/2025.10.08.681246
-      target: _blank
+       text: Manuscript
+       href: https://doi.org/10.1101/2025.10.08.681246
+       target: _blank
     github:
       icon: fab fa-github fa-lg
       href: https://github.com/paytonyau/OptSurvCutR/
@@ -64,13 +64,9 @@ reference:
     contents:
       - crc_virome
       - germination
-#
-# --- THIS SECTION WAS REMOVED ---
-#  - title: "Utilities"
-#    contents:
-#      - '`%||%`'
-# --------------------------------
-#
+  - title: "Utilities"
+    contents:
+      - '`%||%`'
 
 footer:
   left: "Developed by Payton Yau."
@@ -110,3 +106,4 @@ sidebar:
         href: contributing.html # Assumes CONTRIBUTING.md exists
 
 # Ensure a blank line at the end of the file
+

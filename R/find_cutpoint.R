@@ -193,10 +193,8 @@ find_cutpoint <- function(data, predictor, outcome_time,
     if (!quiet) {
       cli::cli_inform("No complete cases found after removing NAs.")
     }
-    return(na_result(
-      userdata, num_cuts, method,
-      criterion, quiet
-    ))
+    return(na_result(userdata, num_cuts, method,
+                     criterion, quiet))
   }
 
   # --- 5. Validate Data Conditions ---
@@ -211,10 +209,8 @@ find_cutpoint <- function(data, predictor, outcome_time,
   )
 
   if (!validation_result$valid) {
-    return(na_result(
-      userdata, num_cuts, method,
-      criterion, quiet
-    ))
+    return(na_result(userdata, num_cuts, method,
+                     criterion, quiet))
   }
 
   # Get the calculated absolute nmin from the validation helper
@@ -264,15 +260,13 @@ find_cutpoint <- function(data, predictor, outcome_time,
 
     # Check for the failure signal from .obj
     if (is.null(ga_result) ||
-      !is.finite(ga_result$value) ||
-      ga_result$value <= -.Machine$double.xmax) {
+        !is.finite(ga_result$value) ||
+        ga_result$value <= -.Machine$double.xmax) {
       if (!quiet) {
         cli::cli_inform("Genetic algorithm found no valid solution.")
       }
-      return(na_result(
-        userdata, num_cuts, method,
-        criterion, quiet
-      ))
+      return(na_result(userdata, num_cuts, method,
+                       criterion, quiet))
     }
 
     optimal_cuts <- sort(ga_result$par[1:num_cuts])
@@ -389,12 +383,12 @@ find_cutpoint <- function(data, predictor, outcome_time,
       ))
     }
     stats_per_cut <- vapply(search_grid, .get_stat,
-      num_cuts = 1,
-      data_in = userdata,
-      criterion = criterion,
-      cov_formula = cov_part, nmin = nmin,
-      fit_null = fit_null_model, # Pass null model
-      FUN.VALUE = numeric(1)
+                            num_cuts = 1,
+                            data_in = userdata,
+                            criterion = criterion,
+                            cov_formula = cov_part, nmin = nmin,
+                            fit_null = fit_null_model, # Pass null model
+                            FUN.VALUE = numeric(1)
     )
 
     if (all(is.na(stats_per_cut))) {
@@ -424,7 +418,7 @@ find_cutpoint <- function(data, predictor, outcome_time,
     best_cut_val <- search_grid[best_idx]
     best_stat <- stats_per_cut[best_idx]
     all_stats_df <- data.frame(cut1 = search_grid, stat = stats_per_cut)
-  } else {
+  } else { # num_cuts == 2
     if (!quiet) {
       cli::cli_alert_info("Searching for 2 cuts is slow...")
     }
@@ -481,8 +475,8 @@ find_cutpoint <- function(data, predictor, outcome_time,
 
       for (c2 in grid2_values) {
         stat <- .get_stat(c(c1, c2), 2, userdata, criterion,
-          cov_part, nmin,
-          fit_null = fit_null_model
+                          cov_part, nmin,
+                          fit_null = fit_null_model
         ) # Pass null model
         if (is.na(stat)) next
 
@@ -492,14 +486,12 @@ find_cutpoint <- function(data, predictor, outcome_time,
           (stat > best_local_stat)
         }
         if (is_better &&
-          !is.infinite(stat)) {
+            !is.infinite(stat)) {
           best_local_stat <- stat
           best_local_c2 <- c2
         }
       }
-      if (is.na(best_local_c2)) {
-        return(NULL)
-      }
+      if (is.na(best_local_c2)) return(NULL)
       data.frame(stat = best_local_stat, c1 = c1, c2 = c2)
     }
 
@@ -567,12 +559,12 @@ find_cutpoint <- function(data, predictor, outcome_time,
   breaks <- sort(unique(c(-Inf, cuts, Inf)))
   num_intervals <- length(breaks) - 1
   data_in$group <- factor(cut(data_in$factor,
-    breaks = breaks,
-    labels = 1:num_intervals
+                              breaks = breaks,
+                              labels = 1:num_intervals
   ))
 
   if (any(table(data_in$group) < nmin) ||
-    nlevels(data_in$group) != (num_cuts + 1)) {
+      nlevels(data_in$group) != (num_cuts + 1)) {
     return(NA)
   }
 
@@ -585,9 +577,7 @@ find_cutpoint <- function(data, predictor, outcome_time,
         survival::survdiff(as.formula(formula_str), data = data_in),
         error = function(e) NULL
       )
-      if (is.null(fit)) {
-        return(NA)
-      }
+      if (is.null(fit)) return(NA)
       return(fit$chisq)
     } else {
       # Use Cox score test (log-rank with covariates)
@@ -596,9 +586,7 @@ find_cutpoint <- function(data, predictor, outcome_time,
         error = function(e) NULL
       )
       if (is.null(fit) ||
-        is.null(fit$score)) {
-        return(NA)
-      }
+          is.null(fit$score)) return(NA)
       return(fit$score)
     }
   } else { # Cox-based criteria
@@ -606,25 +594,17 @@ find_cutpoint <- function(data, predictor, outcome_time,
       survival::coxph(as.formula(formula_str), data = data_in),
       error = function(e) NULL
     )
-    if (is.null(fit)) {
-      return(NA)
-    }
+    if (is.null(fit)) return(NA)
 
     if (criterion == "hazard_ratio") {
-      if (is.null(fit$coefficients)) {
-        return(NA)
-      }
+      if (is.null(fit$coefficients)) return(NA)
       # Get coef directly, don't use summary()
       coef_name <- paste0("group", num_cuts + 1)
-      if (!coef_name %in% names(fit$coefficients)) {
-        return(NA)
-      }
+      if (!coef_name %in% names(fit$coefficients)) return(NA)
       return(exp(fit$coefficients[coef_name]))
     } else if (criterion == "p_value") {
       # Use Likelihood Ratio Test
-      if (is.null(fit_null) || is.null(fit$loglik)) {
-        return(NA)
-      }
+      if (is.null(fit_null) || is.null(fit$loglik)) return(NA)
       loglik0 <- fit_null$loglik[2] # Null model
       loglik1 <- fit$loglik[2] # Full model
       lrt_stat <- 2 * (loglik1 - loglik0)
@@ -642,7 +622,7 @@ find_cutpoint <- function(data, predictor, outcome_time,
 #' @export
 print.find_cutpoint <- function(x, ...) {
   if (is.null(x) ||
-    any(is.na(x$optimal_cuts))) {
+      any(is.na(x$optimal_cuts))) {
     cli::cli_inform("No optimal cut-point determined.")
     return(invisible(x))
   }
@@ -654,9 +634,9 @@ print.find_cutpoint <- function(x, ...) {
   ))
 
   stat_label <- switch(x$parameters$criterion,
-    "logrank" = "Optimal Log-Rank Statistic",
-    "hazard_ratio" = "Optimal Hazard Ratio",
-    "p_value" = "Optimal P-value"
+                       "logrank" = "Optimal Log-Rank Statistic",
+                       "hazard_ratio" = "Optimal Hazard Ratio",
+                       "p_value" = "Optimal P-value"
   )
 
   stat_val <- x$optimal_stat
@@ -664,7 +644,7 @@ print.find_cutpoint <- function(x, ...) {
 
   # For genetic p_value, the stat is the LRT statistic.
   if (x$parameters$criterion == "p_value" &&
-    x$parameters$method == "genetic") {
+      x$parameters$method == "genetic") {
     stat_label <- "Optimal LRT Statistic"
   }
 
@@ -692,7 +672,7 @@ summary.find_cutpoint <- function(object,
   ))
 
   if (is.null(object) ||
-    any(is.na(object$optimal_cuts))) {
+      any(is.na(object$optimal_cuts))) {
     cli::cli_inform("No valid optimal cut-point found.")
     return(invisible(object))
   }
@@ -702,8 +682,8 @@ summary.find_cutpoint <- function(object,
   num_cuts <- object$parameters$num_cuts
 
   data$group <- factor(cut(data$factor,
-    breaks = c(-Inf, cuts, Inf),
-    labels = paste0("G", 1:(num_cuts + 1))
+                           breaks = c(-Inf, cuts, Inf),
+                           labels = paste0("G", 1:(num_cuts + 1))
   ))
 
   if (show_group_counts) {
@@ -718,18 +698,17 @@ summary.find_cutpoint <- function(object,
   if (show_medians) {
     cli::cli_h2("Median Survival by Group")
     fit_km <- survival::survfit(survival::Surv(time, event) ~ group,
-      data = data
+                                data = data
     )
     print(fit_km)
   }
 
   formula_str <- "survival::Surv(time, event) ~ group"
   if (!is.null(object$parameters$covariates)) {
-    formula_str <- paste(
-      formula_str, "+",
-      paste(object$parameters$covariates,
-        collapse = " + "
-      )
+    formula_str <- paste(formula_str, "+",
+                         paste(object$parameters$covariates,
+                               collapse = " + "
+                         )
     )
   }
   fit_cox <- tryCatch(
@@ -787,8 +766,8 @@ plot.find_cutpoint <- function(x, type = "outcome",
   data <- x$userdata
   num_cuts <- length(cuts)
   data$group <- factor(cut(data$factor,
-    breaks = c(-Inf, cuts, Inf),
-    labels = paste0("G", 1:(num_cuts + 1))
+                           breaks = c(-Inf, cuts, Inf),
+                           labels = paste0("G", 1:(num_cuts + 1))
   ))
 
   if (type == "distribution") {
@@ -812,12 +791,12 @@ plot.find_cutpoint <- function(x, type = "outcome",
   } else if (type == "outcome") {
     fit <- survival::survfit(Surv(time, event) ~ group, data = data)
     p <- survminer::ggsurvplot(fit,
-      data = data,
-      pval = TRUE,
-      risk.table = TRUE,
-      legend.title = "Groups",
-      palette = "jco",
-      ggtheme = ggplot2::theme_minimal()
+                               data = data,
+                               pval = TRUE,
+                               risk.table = TRUE,
+                               legend.title = "Groups",
+                               palette = "jco",
+                               ggtheme = ggplot2::theme_minimal()
     )
     p$plot <- p$plot + ggplot2::labs(
       title = paste("Survival Curves by", x$parameters$predictor, "Group")
@@ -826,7 +805,7 @@ plot.find_cutpoint <- function(x, type = "outcome",
   } else if (type == "forest") {
     if (!requireNamespace("broom", quietly = TRUE)) {
       stop("Package 'broom' is required for the forest plot.",
-        call. = FALSE
+           call. = FALSE
       )
     }
 
@@ -846,11 +825,10 @@ plot.find_cutpoint <- function(x, type = "outcome",
 
     formula_str <- "survival::Surv(time, event) ~ group"
     if (!is.null(x$parameters$covariates)) {
-      formula_str <- paste(
-        formula_str, "+",
-        paste(x$parameters$covariates,
-          collapse = " + "
-        )
+      formula_str <- paste(formula_str, "+",
+                           paste(x$parameters$covariates,
+                                 collapse = " + "
+                           )
       )
     }
     fit_cox <- tryCatch(

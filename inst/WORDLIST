@@ -32,7 +32,7 @@ PLOS
 PanCancer
 Picornaviridae
 ROpenSci
-Roxygen
+Reflowed
 SRR
 Sauerbrei
 Schoenfeld
@@ -41,7 +41,6 @@ Sekhon
 Sghaier
 TCGA
 Tarnawa
-Tidyverse
 Valsecchi
 Virome
 aa
@@ -63,7 +62,6 @@ com
 crc
 cutoff
 cyclomatic
-dataset's
 db
 dcaa
 dd
@@ -74,6 +72,7 @@ ec
 ee
 eef
 ef
+encoursex
 fb
 fc
 fda
@@ -99,6 +98,7 @@ overfit
 paytonyau
 pkgdown
 popSize
+psex
 pubmed
 rOpenSci
 rgenoud
@@ -107,4 +107,5 @@ survminer
 unadj
 userdata
 virome
+vsupply
 Á

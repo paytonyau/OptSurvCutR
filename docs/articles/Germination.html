@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Analysing Rapeseed Germination Data with OptSurvCutR • OptSurvCutR</title>
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -16,11 +16,11 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top " aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">OptSurvCutR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.8</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -29,21 +29,23 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
+<li class="nav-item"><a class="nav-link" href="../index.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/CRC_Virome.html">Stratifying Colorectal Cancer Patients by Gut Enterovirus Abundance</a></li>
-    <li><a class="dropdown-item" href="../articles/Germination.html">Analysing Rapeseed Germination Data with OptSurvCutR</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes">
+<li><a class="dropdown-item" href="../articles/CRC_Virome.html">CRC Virome Workflow</a></li>
+    <li><a class="dropdown-item" href="../articles/Germination.html">Rapeseed Germination Workflow</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://doi.org/10.1101/2025.10.08.681246" target="_blank">Manuscript</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/paytonyau/OptSurvCutR/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/paytonyau/OptSurvCutR/" aria-label="GitHub repository"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -63,7 +65,7 @@ Discovering and Validating an Optimal Temperature Threshold for
 Time-To-Event Data</h3>
                         <h4 data-toc-skip class="author">Payton Yau</h4>
             
-            <h4 data-toc-skip class="date">2025-10-26</h4>
+            <h4 data-toc-skip class="date">2025-11-10</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/paytonyau/OptSurvCutR/blob/HEAD/vignettes/Germination.Rmd" class="external-link"><code>vignettes/Germination.Rmd</code></a></small>
       <div class="d-none name"><code>Germination.Rmd</code></div>
@@ -207,8 +209,9 @@ groups included in the simulation.</p>
 <span></span>
 <span><span class="co"># Display the table using kable for nice formatting</span></span>
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">summary_table</span>,</span>
-<span>      digits <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>      caption <span class="op">=</span> <span class="st">"Summary of Germination Outcomes by Temperature Group"</span><span class="op">)</span></span></code></pre></div>
+<span>  digits <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  caption <span class="op">=</span> <span class="st">"Summary of Germination Outcomes by Temperature Group"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <table style="width:100%;" class="table">
 <caption>Summary of Germination Outcomes by Temperature Group</caption>
 <colgroup>
@@ -432,27 +435,26 @@ favour simpler models.</td>
 <p>We will use the <code>"genetic"</code> search method (suitable for
 potentially multiple cuts) and the <code>"BIC"</code> criterion.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="co"># Set to TRUE if either building the pkgdown site OR running interactively.</span></span>
+<code class="sourceCode R"><span><span class="co"># Set to TRUE if either building the pkgdown site OR running interactively.</span></span>
 <span><span class="co"># This will be FALSE only for non-interactive builds (like CRAN).</span></span>
 <span><span class="va">run_parallel_locally</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"PKGDOWN"</span><span class="op">)</span> <span class="op">==</span> <span class="st">"TRUE"</span><span class="op">)</span> <span class="op">||</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Step 1: Find the number of cut(s) using BIC</span></span>
-<span>  <span class="va">number_result_bic</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_cutpoint_number.html">find_cutpoint_number</a></span><span class="op">(</span></span>
-<span>    data <span class="op">=</span> <span class="va">analysis_data</span>,</span>
-<span>    predictor <span class="op">=</span> <span class="st">"temperature"</span>,</span>
-<span>    outcome_time <span class="op">=</span> <span class="st">"time"</span>,</span>
-<span>    outcome_event <span class="op">=</span> <span class="st">"germinated"</span>,</span>
-<span>    method <span class="op">=</span> <span class="st">"genetic"</span>,</span>
-<span>    criterion <span class="op">=</span> <span class="st">"BIC"</span>,</span>
-<span>    max_cuts <span class="op">=</span> <span class="fl">5</span>, <span class="co"># Test models with 0, 1, 2, 3, or 4 cuts</span></span>
-<span>    nmin <span class="op">=</span> <span class="fl">0.1</span>,   <span class="co"># Ensure groups have at least 10% of seeds</span></span>
-<span>    maxiter <span class="op">=</span> <span class="fl">10</span>, <span class="co"># REDUCED for vignette speed; use &gt;= 100 for real analysis</span></span>
-<span>    use_parallel <span class="op">=</span> <span class="va">run_parallel_locally</span>, <span class="co"># Set FALSE for CRAN only</span></span>
-<span>    n_cores <span class="op">=</span> <span class="fl">6</span>,</span>
-<span>    <span class="co"># covariates = "replicate", # Example: Adjust for experimental replicate</span></span>
-<span>    seed <span class="op">=</span> <span class="fl">42</span></span>
-<span>  <span class="op">)</span></span>
+<span><span class="va">number_result_bic</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_cutpoint_number.html">find_cutpoint_number</a></span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="va">analysis_data</span>,</span>
+<span>  predictor <span class="op">=</span> <span class="st">"temperature"</span>,</span>
+<span>  outcome_time <span class="op">=</span> <span class="st">"time"</span>,</span>
+<span>  outcome_event <span class="op">=</span> <span class="st">"germinated"</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"genetic"</span>,</span>
+<span>  criterion <span class="op">=</span> <span class="st">"BIC"</span>,</span>
+<span>  max_cuts <span class="op">=</span> <span class="fl">5</span>, <span class="co"># Test models with 0, 1, 2, 3, or 4 cuts</span></span>
+<span>  nmin <span class="op">=</span> <span class="fl">0.1</span>, <span class="co"># Ensure groups have at least 10% of seeds</span></span>
+<span>  maxiter <span class="op">=</span> <span class="fl">10</span>, <span class="co"># REDUCED for vignette speed; use &gt;= 100 for real analysis</span></span>
+<span>  use_parallel <span class="op">=</span> <span class="va">run_parallel_locally</span>, <span class="co"># Set FALSE for CRAN only</span></span>
+<span>  n_cores <span class="op">=</span> <span class="fl">6</span>,</span>
+<span>  <span class="co"># covariates = "replicate", # Example: Adjust for experimental replicate</span></span>
+<span>  seed <span class="op">=</span> <span class="fl">42</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co">#&gt;  num_cuts      BIC Delta_BIC BIC_Weight    Evidence</span></span>
 <span><span class="co">#&gt;         0 10878.79    421.52         0%     Minimal</span></span>
 <span><span class="co">#&gt;         1 10687.53    230.25         0%     Minimal</span></span>
@@ -521,7 +523,7 @@ indicates the optimal number of cuts.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">number_result_bic</span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<img src="Germination_files/figure-html/plot_number_result_bic-1.png" alt="Information criterion (BIC) scores by number of cut-points. The lowest score indicates the optimal number." width="672"><p class="caption">
+<img src="Germination_files/figure-html/plot_number_result_bic-1.png" class="r-plt" alt="Information criterion (BIC) scores by number of cut-points. The lowest score indicates the optimal number." width="672"><p class="caption">
 Information criterion (BIC) scores by number of cut-points. The lowest
 score indicates the optimal number.
 </p>
@@ -599,16 +601,16 @@ testing.</td>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Step 2: Finding optimal cut-point values...</span></span>
 <span><span class="va">multi_cut_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_cutpoint.html">find_cutpoint</a></span><span class="op">(</span></span>
-<span>    data <span class="op">=</span> <span class="va">analysis_data</span>,</span>
-<span>    predictor <span class="op">=</span> <span class="st">"temperature"</span>,</span>
-<span>    outcome_time <span class="op">=</span> <span class="st">"time"</span>,</span>
-<span>    outcome_event <span class="op">=</span> <span class="st">"germinated"</span>,</span>
-<span>    method <span class="op">=</span> <span class="st">"genetic"</span>,</span>
-<span>    criterion <span class="op">=</span> <span class="st">"logrank"</span>,</span>
-<span>    num_cuts <span class="op">=</span> <span class="fl">3</span>, <span class="co"># Based on Step 1</span></span>
-<span>    nmin <span class="op">=</span> <span class="fl">0.1</span>,   <span class="co"># Ensure groups have at least 10% of seeds</span></span>
-<span>    maxiter <span class="op">=</span> <span class="fl">50</span>, <span class="co"># REDUCED for vignette speed; use &gt;= 100-500 for real analysis</span></span>
-<span>    seed <span class="op">=</span> <span class="fl">123</span></span>
+<span>  data <span class="op">=</span> <span class="va">analysis_data</span>,</span>
+<span>  predictor <span class="op">=</span> <span class="st">"temperature"</span>,</span>
+<span>  outcome_time <span class="op">=</span> <span class="st">"time"</span>,</span>
+<span>  outcome_event <span class="op">=</span> <span class="st">"germinated"</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"genetic"</span>,</span>
+<span>  criterion <span class="op">=</span> <span class="st">"logrank"</span>,</span>
+<span>  num_cuts <span class="op">=</span> <span class="fl">3</span>, <span class="co"># Based on Step 1</span></span>
+<span>  nmin <span class="op">=</span> <span class="fl">0.1</span>, <span class="co"># Ensure groups have at least 10% of seeds</span></span>
+<span>  maxiter <span class="op">=</span> <span class="fl">50</span>, <span class="co"># REDUCED for vignette speed; use &gt;= 100-500 for real analysis</span></span>
+<span>  seed <span class="op">=</span> <span class="fl">123</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">multi_cut_result</span><span class="op">)</span></span>
@@ -655,7 +657,7 @@ overlaid gives us a clear visual confirmation.</p>
 <span><span class="co"># is a built-in wrapper for this visualization.</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">multi_cut_result</span>, type <span class="op">=</span> <span class="st">"distribution"</span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<img src="Germination_files/figure-html/plot_find-cutpoint-1.png" alt="Distribution of the predictor variable with optimal cut-points overlaid." width="672"><p class="caption">
+<img src="Germination_files/figure-html/plot_find-cutpoint-1.png" class="r-plt" alt="Distribution of the predictor variable with optimal cut-points overlaid." width="672"><p class="caption">
 Distribution of the predictor variable with optimal cut-points overlaid.
 </p>
 </div>
@@ -681,13 +683,13 @@ intervals.</p>
 <code class="sourceCode R"><span><span class="co"># Step 3: Validating cut-point stability with bootstrapping...</span></span>
 <span></span>
 <span><span class="va">validation_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/validate_cutpoint.html">validate_cutpoint</a></span><span class="op">(</span></span>
-<span>    cutpoint_result <span class="op">=</span> <span class="va">multi_cut_result</span>,</span>
-<span>    num_replicates <span class="op">=</span> <span class="fl">50</span>,  <span class="co"># REDUCED for vignette speed; use &gt;= 500 for publication</span></span>
-<span>    use_parallel <span class="op">=</span> <span class="va">run_parallel_locally</span>, <span class="co"># Set FALSE for CRAN only</span></span>
-<span>    n_cores <span class="op">=</span> <span class="fl">6</span>,</span>
-<span>    seed <span class="op">=</span> <span class="fl">456</span>,</span>
-<span>    maxiter <span class="op">=</span> <span class="fl">10</span>          <span class="co"># REDUCED; matches maxiter used in find_cutpoint</span></span>
-<span>  <span class="op">)</span></span>
+<span>  cutpoint_result <span class="op">=</span> <span class="va">multi_cut_result</span>,</span>
+<span>  num_replicates <span class="op">=</span> <span class="fl">50</span>, <span class="co"># REDUCED for vignette speed; use &gt;= 500 for publication</span></span>
+<span>  use_parallel <span class="op">=</span> <span class="va">run_parallel_locally</span>, <span class="co"># Set FALSE for CRAN only</span></span>
+<span>  n_cores <span class="op">=</span> <span class="fl">6</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">456</span>,</span>
+<span>  maxiter <span class="op">=</span> <span class="fl">10</span> <span class="co"># REDUCED; matches maxiter used in find_cutpoint</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co">#&gt; Cut-point Stability Analysis (Bootstrap)</span></span>
 <span><span class="co">#&gt; ----------------------------------------</span></span>
 <span><span class="co">#&gt; Original Optimal Cut-point(s): 8.703, 12.804, 31.826 </span></span>
@@ -708,7 +710,7 @@ intervals.</p>
 <span><span class="co">#&gt; 25%1 Cut2 14.580 1.390 14.487 13.499 15.279</span></span>
 <span><span class="co">#&gt; 25%2 Cut3 30.926 0.811 30.834 30.315 31.429</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Hint: Use `summary()` for detailed statistics or `plot()` to visualize stability.</span></span>
+<span><span class="co">#&gt; Hint: Use `summary()` or `plot()` to visualize stability.</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">validation_result</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Cut-point Stability Analysis (Bootstrap)</span></span>
@@ -732,7 +734,7 @@ intervals.</p>
 <span><span class="co">#&gt; Validation Parameters</span></span>
 <span><span class="co">#&gt; ---------------------</span></span>
 <span><span class="co">#&gt; Replicates Requested: 50 </span></span>
-<span><span class="co">#&gt; Successful Replicates: 50 ( 100 %)</span></span>
+<span><span class="co">#&gt; Successful Replicates: 50 / 50 ( 100 %)</span></span>
 <span><span class="co">#&gt; Failed Replicates: 0 </span></span>
 <span><span class="co">#&gt; Parallel Processing: Disabled </span></span>
 <span><span class="co">#&gt; Cores Used: 1 </span></span>
@@ -747,7 +749,7 @@ cut-point.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">validation_result</span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<img src="Germination_files/figure-html/plot_validate_cutpoint-1.png" alt="Bootstrap distribution of the three optimal cut-points. The solid red line represents the original cut-point." width="672"><p class="caption">
+<img src="Germination_files/figure-html/plot_validate_cutpoint-1.png" class="r-plt" alt="Bootstrap distribution of the three optimal cut-points. The solid red line represents the original cut-point." width="672"><p class="caption">
 Bootstrap distribution of the three optimal cut-points. The solid red
 line represents the original cut-point.
 </p>
@@ -826,8 +828,7 @@ four statistically-derived groups.</p>
 that in germination studies, the “event” is successful germination, so a
 dropping curve is a positive outcome (faster germination).</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span></span>
-<span><span class="va">group_levels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">analysis_data</span><span class="op">$</span><span class="va">Temp_Group</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">group_levels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/levels.html" class="external-link">levels</a></span><span class="op">(</span><span class="va">analysis_data</span><span class="op">$</span><span class="va">Temp_Group</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Custom palette for 4 groups</span></span>
 <span><span class="va">palette</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#2E9FDF"</span>, <span class="st">"#E7B800"</span>, <span class="st">"#4CAF50"</span>, <span class="st">"#FC4E07"</span><span class="op">)</span></span>
@@ -839,19 +840,19 @@ dropping curve is a positive outcome (faster germination).</p>
 <span></span>
 <span><span class="co"># Or use ggsurvplot for a publication-ready version</span></span>
 <span><span class="fu"><a href="https://rdrr.io/pkg/survminer/man/ggsurvplot.html" class="external-link">ggsurvplot</a></span><span class="op">(</span></span>
-<span>  <span class="va">km_fit_final</span>, </span>
-<span>  data <span class="op">=</span> <span class="va">analysis_data</span>, </span>
-<span>  pval <span class="op">=</span> <span class="cn">TRUE</span>, </span>
+<span>  <span class="va">km_fit_final</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">analysis_data</span>,</span>
+<span>  pval <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  risk.table <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  title <span class="op">=</span> <span class="st">"Germination by Optimal Temperature Strata"</span>,  </span>
-<span>  xlab <span class="op">=</span> <span class="st">"Time (Days)"</span>, </span>
-<span>  ylab <span class="op">=</span> <span class="st">"Proportion Ungerminated"</span>,  </span>
-<span>  legend.title <span class="op">=</span> <span class="st">"Temp Group"</span>,  </span>
+<span>  title <span class="op">=</span> <span class="st">"Germination by Optimal Temperature Strata"</span>,</span>
+<span>  xlab <span class="op">=</span> <span class="st">"Time (Days)"</span>,</span>
+<span>  ylab <span class="op">=</span> <span class="st">"Proportion Ungerminated"</span>,</span>
+<span>  legend.title <span class="op">=</span> <span class="st">"Temp Group"</span>,</span>
 <span>  legend.labs <span class="op">=</span> <span class="va">group_levels</span>,</span>
 <span>  palette <span class="op">=</span> <span class="va">palette</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<img src="Germination_files/figure-html/plot-km-individual-1.png" alt="Kaplan-Meier survival curve for germination by temperature group." width="768"><p class="caption">
+<img src="Germination_files/figure-html/plot-km-individual-1.png" class="r-plt" alt="Kaplan-Meier survival curve for germination by temperature group." width="768"><p class="caption">
 Kaplan-Meier survival curve for germination by temperature group.
 </p>
 </div>
@@ -880,11 +881,12 @@ for each group relative to the “Optimal” group. Remember, here the
 <span><span class="co"># plot(multi_cut_result, type = "forest", reference_group = "Optimal")</span></span>
 <span></span>
 <span><span class="co"># Or use ggsurvplot for a publication-ready version</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/survminer/man/ggforest.html" class="external-link">ggforest</a></span><span class="op">(</span><span class="va">cox_model</span>, </span>
-<span>         data <span class="op">=</span> <span class="va">analysis_data</span>, </span>
-<span>         main <span class="op">=</span> <span class="st">"Hazard Ratios Relative to Optimal Temperature"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/pkg/survminer/man/ggforest.html" class="external-link">ggforest</a></span><span class="op">(</span><span class="va">cox_model</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">analysis_data</span>,</span>
+<span>  main <span class="op">=</span> <span class="st">"Hazard Ratios Relative to Optimal Temperature"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<img src="Germination_files/figure-html/plot-forest-1.png" alt="Forest plot of Hazard Ratios for each temperature group relative to the optimal group." width="672"><p class="caption">
+<img src="Germination_files/figure-html/plot-forest-1.png" class="r-plt" alt="Forest plot of Hazard Ratios for each temperature group relative to the optimal group." width="672"><p class="caption">
 Forest plot of Hazard Ratios for each temperature group relative to the
 optimal group.
 </p>
@@ -908,19 +910,19 @@ assumption of the Cox model (that the HRs are constant over time).
 Parallel, non-crossing lines support the assumption.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/pkg/survminer/man/ggsurvplot.html" class="external-link">ggsurvplot</a></span><span class="op">(</span></span>
-<span>  <span class="va">km_fit_final</span>, </span>
-<span>  data <span class="op">=</span> <span class="va">analysis_data</span>, </span>
-<span>  fun <span class="op">=</span> <span class="st">"cumhaz"</span>, </span>
+<span>  <span class="va">km_fit_final</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">analysis_data</span>,</span>
+<span>  fun <span class="op">=</span> <span class="st">"cumhaz"</span>,</span>
 <span>  pval <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  title <span class="op">=</span> <span class="st">"Cumulative Hazard of Germination"</span>,  </span>
-<span>  xlab <span class="op">=</span> <span class="st">"Time (Days)"</span>, </span>
-<span>  ylab <span class="op">=</span> <span class="st">"Cumulative Hazard"</span>,  </span>
-<span>  legend.title <span class="op">=</span> <span class="st">"Temp Group"</span>,  </span>
+<span>  title <span class="op">=</span> <span class="st">"Cumulative Hazard of Germination"</span>,</span>
+<span>  xlab <span class="op">=</span> <span class="st">"Time (Days)"</span>,</span>
+<span>  ylab <span class="op">=</span> <span class="st">"Cumulative Hazard"</span>,</span>
+<span>  legend.title <span class="op">=</span> <span class="st">"Temp Group"</span>,</span>
 <span>  legend.labs <span class="op">=</span> <span class="va">group_levels</span>,</span>
 <span>  palette <span class="op">=</span> <span class="va">palette</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <div class="figure" style="text-align: center">
-<img src="Germination_files/figure-html/plot-cumhaz-1.png" alt="Cumulative hazard plot for germination by temperature group, used to check the proportional hazards assumption." width="672"><p class="caption">
+<img src="Germination_files/figure-html/plot-cumhaz-1.png" class="r-plt" alt="Cumulative hazard plot for germination by temperature group, used to check the proportional hazards assumption." width="672"><p class="caption">
 Cumulative hazard plot for germination by temperature group, used to
 check the proportional hazards assumption.
 </p>
@@ -950,7 +952,7 @@ data.</p>
 <code>remotes::install_github("paytonyau/OptSurvCutR")</code>
 </li>
 <li>
-<strong>Report issues or suggest features</strong> on our <a href="https://github.com/paytonyau/OptSurvCutR" class="external-link">GitHub page</a>.</li>
+<strong>Report issues or suggest features</strong> on our <a href="https://github.com/paytonyau/OptSurvCutR" class="external-link uri">https://github.com/paytonyau/OptSurvCutR</a>.</li>
 <li>
 <strong>Star the repository</strong> if you find it useful.</li>
 <li>Cite the package: Please cite the accompanying paper if you use
@@ -969,7 +971,7 @@ helps keep the project alive and improving!</li>
 version and all attached packages used to run this analysis.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; R version 4.5.1 (2025-06-13 ucrt)</span></span>
+<span><span class="co">#&gt; R version 4.5.2 (2025-10-31 ucrt)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-w64-mingw32/x64</span></span>
 <span><span class="co">#&gt; Running under: Windows 11 x64 (build 26200)</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -991,29 +993,29 @@ version and all attached packages used to run this analysis.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
 <span><span class="co">#&gt; [1] cli_3.6.5         knitr_1.50        dplyr_1.1.4       survminer_0.5.1  </span></span>
-<span><span class="co">#&gt; [5] ggpubr_0.6.2      ggplot2_4.0.0     survival_3.8-3    OptSurvCutR_0.1.7</span></span>
+<span><span class="co">#&gt; [5] ggpubr_0.6.2      ggplot2_4.0.0     survival_3.8-3    OptSurvCutR_0.1.8</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] gtable_0.3.6       xfun_0.53          bslib_0.9.0        htmlwidgets_1.6.4 </span></span>
-<span><span class="co">#&gt;  [5] rstatix_0.7.3      lattice_0.22-7     vctrs_0.6.5        tools_4.5.1       </span></span>
-<span><span class="co">#&gt;  [9] generics_0.1.4     parallel_4.5.1     tibble_3.3.0       pkgconfig_2.0.3   </span></span>
-<span><span class="co">#&gt; [13] Matrix_1.7-3       data.table_1.17.8  RColorBrewer_1.1-3 S7_0.2.0          </span></span>
-<span><span class="co">#&gt; [17] desc_1.4.3         lifecycle_1.0.4    stringr_1.5.2      compiler_4.5.1    </span></span>
-<span><span class="co">#&gt; [21] farver_2.1.2       textshaping_1.0.1  codetools_0.2-20   carData_3.0-5     </span></span>
-<span><span class="co">#&gt; [25] litedown_0.7       htmltools_0.5.8.1  sass_0.4.10        yaml_2.3.10       </span></span>
-<span><span class="co">#&gt; [29] Formula_1.2-5      pillar_1.11.1      pkgdown_2.1.3      car_3.1-3         </span></span>
-<span><span class="co">#&gt; [33] jquerylib_0.1.4    tidyr_1.3.1        cachem_1.1.0       iterators_1.0.14  </span></span>
-<span><span class="co">#&gt; [37] rgenoud_5.9-0.11   abind_1.4-8        foreach_1.5.2      km.ci_0.5-6       </span></span>
-<span><span class="co">#&gt; [41] commonmark_2.0.0   tidyselect_1.2.1   digest_0.6.37      stringi_1.8.7     </span></span>
-<span><span class="co">#&gt; [45] purrr_1.1.0        labeling_0.4.3     splines_4.5.1      cowplot_1.2.0     </span></span>
-<span><span class="co">#&gt; [49] fastmap_1.2.0      grid_4.5.1         magrittr_2.0.4     broom_1.0.10      </span></span>
-<span><span class="co">#&gt; [53] withr_3.0.2        scales_1.4.0       backports_1.5.0    rmarkdown_2.30    </span></span>
-<span><span class="co">#&gt; [57] ggtext_0.1.2       gridExtra_2.3      ggsignif_0.6.4     ragg_1.4.0        </span></span>
-<span><span class="co">#&gt; [61] zoo_1.8-14         evaluate_1.0.5     KMsurv_0.1-6       doParallel_1.0.17 </span></span>
-<span><span class="co">#&gt; [65] markdown_2.0       survMisc_0.5.6     rlang_1.1.6        Rcpp_1.1.0        </span></span>
-<span><span class="co">#&gt; [69] gridtext_0.1.5     xtable_1.8-4       glue_1.8.0         xml2_1.4.0        </span></span>
-<span><span class="co">#&gt; [73] rstudioapi_0.17.1  jsonlite_2.0.0     R6_2.6.1           systemfonts_1.2.3 </span></span>
-<span><span class="co">#&gt; [77] fs_1.6.6</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] tidyselect_1.2.1   farver_2.1.2       S7_0.2.0           fastmap_1.2.0     </span></span>
+<span><span class="co">#&gt;  [5] srr_0.1.4.009      digest_0.6.37      lifecycle_1.0.4    magrittr_2.0.4    </span></span>
+<span><span class="co">#&gt;  [9] compiler_4.5.2     rlang_1.1.6        sass_0.4.10        tools_4.5.2       </span></span>
+<span><span class="co">#&gt; [13] yaml_2.3.10        data.table_1.17.8  ggsignif_0.6.4     labeling_0.4.3    </span></span>
+<span><span class="co">#&gt; [17] htmlwidgets_1.6.4  xml2_1.4.1         RColorBrewer_1.1-3 abind_1.4-8       </span></span>
+<span><span class="co">#&gt; [21] withr_3.0.2        purrr_1.2.0        desc_1.4.3         grid_4.5.2        </span></span>
+<span><span class="co">#&gt; [25] rgenoud_5.9-0.11   roxygen2_7.3.3     xtable_1.8-4       scales_1.4.0      </span></span>
+<span><span class="co">#&gt; [29] iterators_1.0.14   rmarkdown_2.30     ragg_1.5.0         generics_0.1.4    </span></span>
+<span><span class="co">#&gt; [33] rstudioapi_0.17.1  km.ci_0.5-6        commonmark_2.0.0   cachem_1.1.0      </span></span>
+<span><span class="co">#&gt; [37] stringr_1.6.0      splines_4.5.2      parallel_4.5.2     survMisc_0.5.6    </span></span>
+<span><span class="co">#&gt; [41] vctrs_0.6.5        Matrix_1.7-4       jsonlite_2.0.0     carData_3.0-5     </span></span>
+<span><span class="co">#&gt; [45] car_3.1-3          litedown_0.8       rstatix_0.7.3      Formula_1.2-5     </span></span>
+<span><span class="co">#&gt; [49] systemfonts_1.3.1  foreach_1.5.2      tidyr_1.3.1        jquerylib_0.1.4   </span></span>
+<span><span class="co">#&gt; [53] glue_1.8.0         pkgdown_2.2.0      codetools_0.2-20   ggtext_0.1.2      </span></span>
+<span><span class="co">#&gt; [57] cowplot_1.2.0      stringi_1.8.7      gtable_0.3.6       tibble_3.3.0      </span></span>
+<span><span class="co">#&gt; [61] pillar_1.11.1      htmltools_0.5.8.1  R6_2.6.1           KMsurv_0.1-6      </span></span>
+<span><span class="co">#&gt; [65] textshaping_1.0.4  doParallel_1.0.17  evaluate_1.0.5     lattice_0.22-7    </span></span>
+<span><span class="co">#&gt; [69] markdown_2.0       backports_1.5.0    gridtext_0.1.5     broom_1.0.10      </span></span>
+<span><span class="co">#&gt; [73] bslib_0.9.0        Rcpp_1.1.0         gridExtra_2.3      xfun_0.54         </span></span>
+<span><span class="co">#&gt; [77] fs_1.6.6           zoo_1.8-14         pkgconfig_2.0.3</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -1027,7 +1029,7 @@ version and all attached packages used to run this analysis.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>
