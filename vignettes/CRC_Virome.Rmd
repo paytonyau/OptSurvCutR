@@ -72,7 +72,7 @@ library(survminer) # For ggsurvplot, ggforest, ggcoxzph
 library(patchwork) # For combining plots
 library(ggplot2)
 library(knitr) # For kable()
-library(cli)   # For enhanced messsexs
+library(cli) # For enhanced messsexs
 ```
 
 ### Defining Parameters
@@ -89,7 +89,6 @@ covariates_to_adjust_for <- c("sex")
 # Set to TRUE if either building the pkgdown site OR running interactively.
 # This will be FALSE only for non-interactive builds (like CRAN).
 run_parallel_locally <- (Sys.getenv("PKGDOWN") == "TRUE") || interactive()
-  
 ```
 
 ------------------------------------------------------------------------
@@ -116,10 +115,10 @@ analysis_data <- crc_virome %>%
   mutate(
     # 1. Parse numeric status (0/1) from the character string
     status_numeric = as.numeric(substr(status_char, 1, 1)),
-    
+
     # 2. Apply censoring: events after 60 months are set to 'censored' (0)
     status_final = ifelse(time_months > 60, 0, status_numeric),
-    
+
     # 3. Cap all follow-up times at 60 months
     time_final = pmin(time_months, 60)
   ) %>%
@@ -136,7 +135,6 @@ analysis_data <- crc_virome %>%
 
 # Display the head of the final processed data
 head(analysis_data)
-
 ```
 
 ------------------------------------------------------------------------
@@ -158,8 +156,8 @@ number_result_unadj <- find_cutpoint_number(
   outcome_event = "status",
   method = "genetic",
   criterion = "BIC",
-  max_cuts = 4,    # Test 0-3 cuts
-  nmin = 0.15,     # Min 15% per group
+  max_cuts = 4, # Test 0-3 cuts
+  nmin = 0.15, # Min 15% per group
   use_parallel = run_parallel_locally, # Set FALSE for CRAN only
   n_cores = 6,
   seed = 42
@@ -175,7 +173,7 @@ number_result_adj <- find_cutpoint_number(
   outcome_event = "status",
   method = "genetic",
   criterion = "BIC",
-  max_cuts = 4,    # Test 0-3 cuts
+  max_cuts = 4, # Test 0-3 cuts
   nmin = 0.15,
   covariates = covariates_to_adjust_for, # ADDED COVARIATES
   use_parallel = run_parallel_locally, # Set FALSE for CRAN only
@@ -185,13 +183,15 @@ number_result_adj <- find_cutpoint_number(
 ```
 
 ```{r find-number-plots}
-plot_num_unadj <- plot(number_result_unadj) + 
-  ggtitle("BIC vs Cuts (Unadj.)") + 
+plot_num_unadj <- plot(number_result_unadj) +
+  ggtitle("BIC vs Cuts (Unadj.)") +
   theme(plot.title = element_text(size = 14))
 
-plot_num_adj <- plot(number_result_adj) + 
-  ggtitle(paste0("BIC vs Cuts (Adj. for ", 
-                 paste(covariates_to_adjust_for, collapse=", "), ")")) +
+plot_num_adj <- plot(number_result_adj) +
+  ggtitle(paste0(
+    "BIC vs Cuts (Adj. for ",
+    paste(covariates_to_adjust_for, collapse = ", "), ")"
+  )) +
   theme(plot.title = element_text(size = 14))
 
 # Show plots side-by-side
@@ -250,14 +250,18 @@ optimal_cuts_adj_values <- cutpoint_result_adj$optimal_cuts
 
 ```{r find-cuts-plot}
 # Plot comparison
-plot_dist_unadj <- plot(cutpoint_result_unadj, 
-                        type = "distribution") + 
+plot_dist_unadj <- plot(cutpoint_result_unadj,
+  type = "distribution"
+) +
   ggtitle("Unadj. Cut-points")
 
-plot_dist_adj <- plot(cutpoint_result_adj, 
-                      type = "distribution") + 
-  ggtitle(paste("Adj. Cut-points (for", 
-                paste(covariates_to_adjust_for, collapse=", "), ")"))
+plot_dist_adj <- plot(cutpoint_result_adj,
+  type = "distribution"
+) +
+  ggtitle(paste(
+    "Adj. Cut-points (for",
+    paste(covariates_to_adjust_for, collapse = ", "), ")"
+  ))
 
 print(plot_dist_unadj + plot_dist_adj)
 ```
@@ -277,7 +281,7 @@ run_parallel_locally <- (Sys.getenv("PKGDOWN") == "TRUE") || interactive()
 
 validation_result_adj <- validate_cutpoint(
   cutpoint_result = cutpoint_result_adj, # Use ADJUSTED result
-  num_replicates = 25,  # REDUCED for vignette speed; use >= 500
+  num_replicates = 25, # REDUCED for vignette speed; use >= 500
   use_parallel = run_parallel_locally, # Set FALSE for CRAN only
   n_core = 6,
   seed = 456
@@ -286,7 +290,7 @@ validation_result_adj <- validate_cutpoint(
 ```
 
 ```{r validate-cuts-plot}
-bootstrap_plot_adj <- plot(validation_result_adj) + 
+bootstrap_plot_adj <- plot(validation_result_adj) +
   ggtitle("Bootstrap Stability of Adjusted Cut-points")
 print(bootstrap_plot_adj)
 ```
@@ -307,13 +311,15 @@ analysis_data_categorised <- analysis_data %>%
     labels = c("Low", "Medium", "High"),
     right = FALSE
   )) %>%
-  mutate(abundance_group_adj = factor(abundance_group_adj, 
-                                      levels = c("Low", "Medium", "High")))
+  mutate(abundance_group_adj = factor(abundance_group_adj,
+    levels = c("Low", "Medium", "High")
+  ))
 
 # Set "Medium" abundance as the reference group for the Cox model
 analysis_data_categorised$abundance_group_adj <- relevel(
-  analysis_data_categorised$abundance_group_adj, 
-  ref = "Medium")
+  analysis_data_categorised$abundance_group_adj,
+  ref = "Medium"
+)
 ```
 
 ### Fit Final Adjusted Models
@@ -321,18 +327,21 @@ We fit the final Kaplan-Meier and Cox models, including the covariates in the Co
 
 ```{r plot-km2}
 # Fit Kaplan-Meier model (usually plotted without covariate adjustment)
-km_fit_adj <- survfit(Surv(time, status) ~ abundance_group_adj, 
-                      data = analysis_data_categorised)
+km_fit_adj <- survfit(Surv(time, status) ~ abundance_group_adj,
+  data = analysis_data_categorised
+)
 
 # Fit the final ADJUSTED Cox Proportional-Hazards model
 covariate_formula_part <- paste(covariates_to_adjust_for, collapse = " + ")
 # Create the formula as a string
-formula_string <- paste("Surv(time, status) ~ abundance_group_adj +", 
-                        covariate_formula_part)
+formula_string <- paste(
+  "Surv(time, status) ~ abundance_group_adj +",
+  covariate_formula_part
+)
 # Pass the string to as.formula() *inside* the coxph call
-cox_model_adj <- coxph(as.formula(formula_string), 
-                       data = analysis_data_categorised)
-
+cox_model_adj <- coxph(as.formula(formula_string),
+  data = analysis_data_categorised
+)
 ```
 
 ### Plot A: Kaplan-Meier Curve
@@ -341,9 +350,9 @@ A Kaplan-Meier curve shows the probability of survival over time for different p
 
 ```{r plot-km, fig.width=8, fig.height=6}
 km_plot_adj <- ggsurvplot(
-  km_fit_adj, 
-  data = analysis_data_categorised, 
-  pval = TRUE, 
+  km_fit_adj,
+  data = analysis_data_categorised,
+  pval = TRUE,
   risk.table = TRUE,
   legend.title = paste(microbe_name_to_analyze, "(Adj. Groups)"),
   legend.labs = c("Medium", "Low", "High"), # Assumes Medium is ref level
@@ -367,10 +376,14 @@ This forest plot shows the Hazard Ratios (HR) for the Low and High abundance gro
 
 ```{r plot-forest, fig.width=8.5, fig.height=4.5}
 forest_plot_adj <- ggforest(
-  cox_model_adj, data = analysis_data_categorised,
-  main = paste("Adjusted HRs for", 
-               microbe_name_to_analyze, 
-               "Groups (Ref: Medium)"))
+  cox_model_adj,
+  data = analysis_data_categorised,
+  main = paste(
+    "Adjusted HRs for",
+    microbe_name_to_analyze,
+    "Groups (Ref: Medium)"
+  )
+)
 
 print(forest_plot_adj)
 ```
@@ -389,27 +402,39 @@ print(forest_plot_adj)
 This box plot confirms how the `find_cutpoint()` function has partitioned the patients based on their abundance levels.
 
 ```{r plot-boxplot, fig.width=8, fig.height=5}
-dist_plot_adj <- ggplot(analysis_data_categorised, 
-                        aes(x = abundance_group_adj, 
-                            y = abundance, 
-                            fill = abundance_group_adj)) +
-  geom_boxplot(show.legend = FALSE, 
-               outlier.shape = NA) +
-  geom_jitter(width = 0.2, 
-              alpha = 0.3, 
-              size = 1, 
-              show.legend = FALSE) +
+dist_plot_adj <- ggplot(
+  analysis_data_categorised,
+  aes(
+    x = abundance_group_adj,
+    y = abundance,
+    fill = abundance_group_adj
+  )
+) +
+  geom_boxplot(
+    show.legend = FALSE,
+    outlier.shape = NA
+  ) +
+  geom_jitter(
+    width = 0.2,
+    alpha = 0.3,
+    size = 1,
+    show.legend = FALSE
+  ) +
   labs(
-    title = paste("Distribution of", 
-                  microbe_name_to_analyze, 
-                  "Abundance by Adjusted Risk Group"),
+    title = paste(
+      "Distribution of",
+      microbe_name_to_analyze,
+      "Abundance by Adjusted Risk Group"
+    ),
     x = "Adjusted Prognostic Group",
     y = "Relative Abundance" # Check if log scale needed
   ) +
-  scale_fill_manual(values = c("#E7B800", "#2E9FDF", "#FC4E07")) + 
+  scale_fill_manual(values = c("#E7B800", "#2E9FDF", "#FC4E07")) +
   theme_minimal(base_size = 12) +
-  coord_cartesian(ylim = quantile(analysis_data_categorised$abundance, 
-                                  c(0.01, 0.99), na.rm=TRUE)) # Zoom axis
+  coord_cartesian(ylim = quantile(analysis_data_categorised$abundance,
+    c(0.01, 0.99),
+    na.rm = TRUE
+  )) # Zoom axis
 
 print(dist_plot_adj)
 ```

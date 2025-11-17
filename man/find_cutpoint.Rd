@@ -51,7 +51,9 @@ find_cutpoint(
 \item{method}{Algorithm: `"systematic"` or `"genetic"`.}
 
 \item{criterion}{The statistic to optimize: `"logrank"` (max),
-`"hazard_ratio"` (max), or `"p_value"` (min).}
+`"hazard_ratio"` (max), or `"p_value"` (min).
+Note: When covariates are provided, the `"logrank"` criterion
+is automatically generalized to the Cox score test.}
 
 \item{covariates}{Character vector of covariate names.}
 

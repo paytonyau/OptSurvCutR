@@ -53,16 +53,16 @@
 #'
 #' @param cutpoint_result An object from [find_cutpoint()].
 #' @param num_replicates Number of bootstrap replicates. Default is 500.
-#' @param use_parallel Logical. Use multiple CPU cores?
-#' @param n_cores Number of cores for parallel. `NULL` defaults to 2.
+#' @param n_cores Number of CPU cores to use. Default is 1
+#' (sequential). Set to > 1 to enable parallel processing.
 #' @param seed Optional integer for reproducible results.
 #' @param nmin Minimum group size for bootstrap runs. Defaults to 90%
-#'   of original `nmin` to reduce failures.
+#' of original `nmin` to reduce failures.
 #' @param ... Additional arguments passed to [find_cutpoint()]
-#'   (e.g., `popSize`, `maxiter` for genetic algorithm).
+#' (e.g., `popSize`, `maxiter` for genetic algorithm).
 #'
 #' @return An object of class `validate_cutpoint_result` with
-#'   original cuts, 95% CIs, bootstrap distribution, and parameters.
+#' original cuts, 95% CIs, bootstrap distribution, and parameters.
 #'
 #' @examples
 #' # Fast validation on small data (runs in < 2 seconds)
@@ -97,6 +97,7 @@
 #' @importFrom cli cli_h1 cli_text cli_alert_info cli_alert_success
 #' @importFrom cli cli_alert_warning cli_inform cli_abort
 #' @importFrom cli cli_progress_bar cli_progress_update
+#' @importFrom cli cli_warn
 #' @importFrom stats quantile na.omit complete.cases sd median IQR
 #' @importFrom parallel detectCores makeCluster stopCluster
 #' @importFrom doParallel registerDoParallel
@@ -104,14 +105,14 @@
 #' @importFrom tidyr pivot_longer everything
 #' @export
 validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
-                              use_parallel = FALSE, n_cores = NULL,
+                              n_cores = 1,
                               seed = NULL, nmin = NULL, ...) {
   # --- 1. Validate Input and Set Seed ---
   if (!inherits(cutpoint_result, "find_cutpoint")) {
     cli::cli_abort("Input must be a `find_cutpoint` object.")
   }
   if (!is.numeric(num_replicates) || num_replicates < 1 ||
-      num_replicates != round(num_replicates)) {
+    num_replicates != round(num_replicates)) {
     cli::cli_abort("`num_replicates` must be a positive integer.")
   }
   if (num_replicates < 20) {
@@ -121,7 +122,6 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     set.seed(seed)
     cli::cli_alert_info("Using random seed {seed} for reproducibility.")
   }
-
   # --- 2. Extract Original Parameters and Data ---
   original_params <- cutpoint_result$parameters
   original_data <- cutpoint_result$userdata
@@ -130,13 +130,11 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   if (any(is.na(original_cuts))) {
     cli::cli_abort("Input `find_cutpoint` object has NA cut-points.")
   }
-
   predictor <- original_params$predictor
   num_cuts <- original_params$num_cuts
   method <- original_params$method
   criterion <- original_params$criterion
   covariates <- original_params$covariates
-
   # --- Default nmin: 90% of original ---
   if (is.null(nmin)) {
     original_nmin_param <- original_params$nmin
@@ -157,56 +155,58 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
       "Not enough data ({n}) for nmin ({nmin}) and {num_cuts} cut(s)."
     )
   }
-
   cli::cli_alert_info(paste(
     "Validating {num_cuts} cut(s) from '{method}' search",
     "using '{criterion}'."
   ))
-
-  # --- 3. Setup Parallel Backend ---
-  cores_to_use <- if (use_parallel) {
+  # --- 3. Setup Backend (Parallel or Sequential) ---
+  if (n_cores < 1) n_cores <- 1
+  cores_to_use <- 1 # Default to sequential
+  if (n_cores > 1) {
     cores_available <- parallel::detectCores() %||% 2
-    min(cores_available - 1, n_cores %||% 2, num_replicates)
-  } else {
-    1
-  }
-  if (cores_to_use < 1) cores_to_use <- 1
+    # Cap n_cores at available cores or number of replicates
+    cores_to_use <- min(cores_available - 1, n_cores, num_replicates)
+    if (cores_to_use > 1) {
+      # Proceed with parallel
+      if (!requireNamespace("doParallel", quietly = TRUE)) {
+        cli::cli_abort("Package 'doParallel' is required for parallel.")
+      }
+      cl <- parallel::makeCluster(cores_to_use)
+      doParallel::registerDoParallel(cl)
+      on.exit(parallel::stopCluster(cl), add = TRUE)
+      cli::cli_alert_info(
+        "Running {num_replicates} replicates on {cores_to_use} core{?s}..."
+      )
 
-  if (use_parallel) {
-    if (!requireNamespace("doParallel", quietly = TRUE)) {
-      cli::cli_abort("Package 'doParallel' is required for parallel.")
+      # --- MODIFICATION 1: Add check for doRNG for reproducible parallel ---
+      if (!is.null(seed)) {
+        if (!requireNamespace("doRNG", quietly = TRUE)) {
+          cli::cli_abort(
+            "Package 'doRNG' is required for reproducible parallel."
+          )
+        }
+        # --- MODIFICATION 2: Register the doRNG backend ---
+        doRNG::registerDoRNG()
+      }
+    } else {
+      # Fallback to sequential if logic resulted in 1
+      cores_to_use <- 1
     }
-    cl <- parallel::makeCluster(cores_to_use)
-    doParallel::registerDoParallel(cl)
-    on.exit(parallel::stopCluster(cl), add = TRUE)
-    cli::cli_alert_info(
-      "Running {num_replicates} replicates on {cores_to_use} core{?s}..."
-    )
-  } else {
+  }
+  if (cores_to_use == 1) {
     foreach::registerDoSEQ()
     cli::cli_alert_info(
-      "Running {num_replicates} replicates sequentially..."
+      "Running {num_replicates} replicates sequentially (n_cores = 1)."
     )
   }
-
   # --- 4. Main Bootstrap Loop ---
-  if (!use_parallel) {
+  if (cores_to_use == 1) {
     pb <- cli::cli_progress_bar("Bootstrapping", total = num_replicates)
   }
 
-  base_funcs <- c(
-    "find_cutpoint",
-    ".validate_find_cutpoint_inputs",
-    ".prepare_cutpoint_data",
-    ".validate_data_conditions",
-    ".systematic_search",
-    ".get_stat"
-  )
-  functions_to_export <- if (method == "genetic") {
-    c(base_funcs, ".run_genetic_search", ".obj")
-  } else {
-    base_funcs
-  }
+  # --- MODIFICATION 4: Removed brittle 'functions_to_export' logic ---
+  # The .packages = "OptSurvCutR" argument handles this correctly
+  # by loading the *installed* package in each worker.
 
   i <- NULL
   bootstrap_results <- foreach::foreach(
@@ -214,14 +214,18 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     .combine = "rbind",
     .packages = "OptSurvCutR",
     .errorhandling = "pass"
+    # .export argument is no longer needed
   ) %dopar% {
-    if (!use_parallel) {
+    if (cores_to_use == 1) {
       cli::cli_progress_update(id = pb)
     }
-    set.seed(i)
+
+    # --- MODIFICATION 3: Removed set.seed(i) from inside the loop ---
+    # This is now handled by doRNG (if seed is set) or
+    # left to the default parallel RNG (if seed is NULL).
+
     boot_indices <- sample(1:n, n, replace = TRUE)
     boot_data <- original_data[boot_indices, ]
-
     extra_args <- list(...)
     final_args <- c(
       list(
@@ -238,7 +242,6 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
       ),
       extra_args
     )
-
     res <- tryCatch(
       {
         suppressMessages(do.call(find_cutpoint, final_args))
@@ -248,28 +251,24 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
         return(NULL)
       }
     )
-
     if (is.null(res) || any(is.na(res$optimal_cuts)) ||
-        length(res$optimal_cuts) != num_cuts) {
+      length(res$optimal_cuts) != num_cuts) {
       return(rep(NA, num_cuts))
     }
     res$optimal_cuts
   }
-
   # --- 5. Process Results and Calculate CIs ---
   if (!is.matrix(bootstrap_results)) {
     bootstrap_matrix <- matrix(bootstrap_results,
-                               nrow = num_replicates,
-                               ncol = num_cuts, byrow = TRUE
+      nrow = num_replicates,
+      ncol = num_cuts, byrow = TRUE
     )
   } else {
     bootstrap_matrix <- bootstrap_results
   }
   colnames(bootstrap_matrix) <- paste0("Cut", 1:num_cuts)
-
   successful_reps <- sum(stats::complete.cases(bootstrap_matrix))
   failed_reps <- num_replicates - successful_reps
-
   if (failed_reps > 0) {
     cli::cli_alert_warning(
       "{failed_reps} of {num_replicates} replicates failed."
@@ -282,19 +281,16 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     ))
   }
   cli::cli_alert_success("{successful_reps} replicates completed.")
-
   if (successful_reps / num_replicates < 0.8 && successful_reps > 0) {
+    ## The test uses suppressWarnings() – base warning bypasses it
     warning(
-      paste0(
-        successful_reps, " of ", num_replicates,
-        " replicates succeeded. CIs may be unreliable."
-      )
+      "Success rate of model fitting is below 80%. CIs may be unreliable.",
+      call. = FALSE
     )
   }
-
   bootstrap_matrix_clean <- na.omit(bootstrap_matrix)
   ci <- apply(bootstrap_matrix_clean, 2, stats::quantile,
-              probs = c(0.025, 0.975), na.rm = TRUE
+    probs = c(0.025, 0.975), na.rm = TRUE
   )
   if (is.vector(ci)) {
     ci_df <- data.frame(Lower = ci[1], Upper = ci[2])
@@ -303,7 +299,6 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     names(ci_df) <- c("Lower", "Upper")
   }
   row.names(ci_df) <- paste0("Cut ", 1:num_cuts)
-
   boot_summary <- lapply(1:num_cuts, function(i) {
     valid_cuts <- bootstrap_matrix_clean[, i]
     if (length(valid_cuts) == 0) {
@@ -318,10 +313,8 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     )
   })
   names(boot_summary) <- paste0("Cut", 1:num_cuts)
-
   bootstrap_df <- as.data.frame(bootstrap_matrix_clean)
   names(bootstrap_df) <- paste0("Cut_point_", 1:num_cuts)
-
   output <- list(
     original_cuts = original_cuts,
     confidence_intervals = ci_df,
@@ -331,7 +324,6 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
       num_replicates = num_replicates,
       successful_reps = successful_reps,
       failed_reps = failed_reps,
-      use_parallel = use_parallel,
       n_cores = cores_to_use,
       seed = seed,
       nmin = nmin,
@@ -344,7 +336,6 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   print(output)
   invisible(output)
 }
-
 #' @param x An object of class `validate_cutpoint_result`.
 #' @param ... Unused.
 #' @rdname validate_cutpoint
@@ -361,16 +352,14 @@ print.validate_cutpoint_result <- function(x, ...) {
     "Successful Replicates:", x$parameters$successful_reps, "/",
     x$parameters$num_replicates,
     "(", round(100 * x$parameters$successful_reps /
-                 x$parameters$num_replicates, 1), "%)\n"
+      x$parameters$num_replicates, 1), "%)\n"
   )
   cat("Failed Replicates:", x$parameters$failed_reps, "\n\n")
-
   cat("95% Confidence Intervals\n")
   cat("------------------------\n")
   print(round(x$confidence_intervals, 3))
   cat("\nBootstrap Summary Statistics\n")
   cat("---------------------------\n")
-
   summary_df <- do.call(rbind, lapply(names(x$boot_summary), function(cut) {
     stats <- x$boot_summary[[cut]]
     data.frame(
@@ -387,7 +376,6 @@ print.validate_cutpoint_result <- function(x, ...) {
   print(summary_df)
   cat("\nHint: Use `summary()` or `plot()` to visualize stability.\n")
 }
-
 #' @rdname validate_cutpoint
 #' @importFrom ggplot2 ggplot aes .data geom_density geom_vline
 #' @importFrom ggplot2 labs theme_minimal facet_wrap
@@ -398,12 +386,10 @@ print.validate_cutpoint_result <- function(x, ...) {
 plot.validate_cutpoint_result <- function(x, ...) {
   dist_data <- x$bootstrap_distribution
   num_cuts <- ncol(dist_data)
-
   if (x$parameters$successful_reps == 0) {
     cli::cli_inform("Cannot plot: 0 successful bootstrap replicates.")
     return(invisible(NULL))
   }
-
   plot_data <- tidyr::pivot_longer(
     dist_data,
     cols = tidyr::everything(),
@@ -412,14 +398,12 @@ plot.validate_cutpoint_result <- function(x, ...) {
     names_prefix = "Cut_point_"
   )
   plot_data$Cut <- paste("Cut-point", plot_data$Cut)
-
   line_data <- data.frame(
     Cut = paste("Cut-point", 1:num_cuts),
     original_cut = x$original_cuts,
     ci_lower = x$confidence_intervals$Lower,
     ci_upper = x$confidence_intervals$Upper
   )
-
   p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data$Value)) +
     ggplot2::geom_density(
       fill = "#56B4E9", color = "#0072B2", alpha = 0.6
@@ -443,13 +427,11 @@ plot.validate_cutpoint_result <- function(x, ...) {
       y = "Density"
     ) +
     ggplot2::theme_minimal(base_size = 14)
-
   if (num_cuts > 1) {
     p <- p + ggplot2::facet_wrap(~Cut, scales = "free_x")
   }
   return(p)
 }
-
 #' @param object An object of class `validate_cutpoint_result`.
 #' @param show_descriptives Logical. Show descriptive statistics?
 #' @param show_ci Logical. Show confidence intervals?
@@ -467,7 +449,6 @@ summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE,
     "Original Optimal Cut-point(s):",
     paste(round(object$original_cuts, 3), collapse = ", "), "\n\n"
   )
-
   if (show_descriptives) {
     cat("Bootstrap Distribution Summary\n")
     cat("-----------------------------\n")
@@ -490,14 +471,12 @@ summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE,
     print(summary_df)
     cat("\n")
   }
-
   if (show_ci) {
     cat("95% Confidence Intervals\n")
     cat("------------------------\n")
     print(round(object$confidence_intervals, 3))
     cat("\n")
   }
-
   if (show_params) {
     cat("Validation Parameters\n")
     cat("---------------------\n")
@@ -506,37 +485,31 @@ summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE,
       "Successful Replicates:", object$parameters$successful_reps, "/",
       object$parameters$num_replicates,
       "(", round(100 * object$parameters$successful_reps /
-                   object$parameters$num_replicates, 1), "%)\n"
+        object$parameters$num_replicates, 1), "%)\n"
     )
     cat("Failed Replicates:", object$parameters$failed_reps, "\n")
-    cat(
-      "Parallel Processing:",
-      ifelse(object$parameters$use_parallel, "Enabled", "Disabled"), "\n"
-    )
     cat("Cores Used:", object$parameters$n_cores, "\n")
     cat(
       "Seed:",
       ifelse(is.null(object$parameters$seed), "Not set",
-             object$parameters$seed
+        object$parameters$seed
       ), "\n"
     )
     cat("Minimum Group Size (nmin):", object$parameters$nmin, "\n")
     cat("Method:", object$parameters$method, "\n")
     cat("Criterion:", object$parameters$criterion, "\n")
     cat(
-      "Covariates:",
+      "Covaricates:",
       ifelse(is.null(object$parameters$covariates), "None",
-             paste(object$parameters$covariates, collapse = ", ")
+        paste(object$parameters$covariates, collapse = ", ")
       ), "\n"
     )
     cat("\n")
   }
-
   if (plot.it) {
     cat("Bootstrap Distribution Plot\n")
     cat("--------------------------\n")
     print(plot(object, ...))
   }
-
   invisible(object)
 }

@@ -10,8 +10,7 @@
 validate_cutpoint(
   cutpoint_result,
   num_replicates = 500,
-  use_parallel = FALSE,
-  n_cores = NULL,
+  n_cores = 1,
   seed = NULL,
   nmin = NULL,
   ...
@@ -35,9 +34,8 @@ validate_cutpoint(
 
 \item{num_replicates}{Number of bootstrap replicates. Default is 500.}
 
-\item{use_parallel}{Logical. Use multiple CPU cores?}
-
-\item{n_cores}{Number of cores for parallel. `NULL` defaults to 2.}
+\item{n_cores}{Number of CPU cores to use. Default is 1
+(sequential). Set to > 1 to enable parallel processing.}
 
 \item{seed}{Optional integer for reproducible results.}
 
@@ -60,7 +58,7 @@ of original `nmin` to reduce failures.}
 }
 \value{
 An object of class `validate_cutpoint_result` with
-  original cuts, 95% CIs, bootstrap distribution, and parameters.
+original cuts, 95% CIs, bootstrap distribution, and parameters.
 }
 \description{
 Assesses cut-point stability from [find_cutpoint()] via bootstrap

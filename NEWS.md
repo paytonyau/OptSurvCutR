@@ -1,3 +1,25 @@
+# OptSurvCutR 0.1.9
+
+## REFACTORING & MAINTENANCE
+
+* **Simplified Parallel Interface:** The `use_parallel` argument was removed from `validate_cutpoint()`. Parallel execution is now controlled **exclusively** by the `n_cores` argument (`n_cores = 1` for sequential, `n_cores > 1` for parallel).
+* **Consolidated Validation Logic:** A new internal helper `.validate_event_column()` was created in `R/utils-helpers.R` to centralise the logic for checking that an event column is numeric and contains only 0s and 1s. Both `find_cutpoint_number()` and the internal helper `.validate_data_conditions()` (also in `R/utils-helpers.R`) were updated to call this function, eliminating duplicated code.
+* **Simplified Parallel Code:** In `validate_cutpoint()`, the brittle `functions_to_export` block was removed. The function now correctly relies on the `.packages = "OptSurvCutR"` argument in the `foreach` loop, making it easier to maintain.
+
+## BUG FIXES
+
+* **Fixed Parallel Reproducibility:** A bug in `validate_cutpoint()` that prevented true reproducibility for parallel runs (`n_cores > 1`) was fixed. The function now checks for and registers the `{doRNG}` package when a `seed` is provided, ensuring results are identical regardless of the number of cores used. The incorrect `set.seed(i)` call inside the `foreach` loop was removed.
+* **Improved S3 Method Robustness:** The `summary.find_cutpoint_number_result()` S3 method was updated to robustly handle `NULL` values in the `object$parameters` list (e.g., `method = NULL`). This prevents potential errors if a result object is created manually or improperly and aligns its behavior with the `print()` method.
+
+## DOCUMENTATION
+
+* **Clarified Log-Rank Test:** The documentation for `find_cutpoint()` was updated to clarify that when `covariates` are provided, the `"logrank"` criterion is automatically generalized to the more appropriate **Cox score test**.
+
+## IMPROVEMENTS
+* **Test Coverage:** Increased test coverage to **88.5%** with new unit tests for parallel reproducibility, S3 method edge cases, and internal validation helpers.
+- Planned:  A ROpenSci submission is planned for review.
+- Planned:  A JOSS submission is planned post-rOpenSci review.
+
 # OptSurvCutR 0.1.8
 
 ## CRITICAL BUG FIXES

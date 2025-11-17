@@ -2,6 +2,7 @@
 # DATA DOCUMENTATION SCRIPT
 # Documentation for all package datasets.
 # ===================================================================
+
 #' Colon and Rectal Cancer Clinical and Virome Data
 #'
 #' Cleaned clinical, survival, and virome abundance data for patients
@@ -15,10 +16,8 @@
 #' @format A data frame with patient data in rows and variables in columns:
 #' \describe{
 #'   \item{sample_id}{Unique TCGA patient identifier (character).}
-#'   \item{time_months}{Overall survival time (months), censored at
-#'     60 mos. (numeric).}
-#'   \item{status}{Overall survival status: 1 = deceased, 0 = alive
-#'     (integer).}
+#'   \item{time_months}{Overall survival time (months), censored at 60 mos. (numeric).}
+#'   \item{status}{Overall survival status: 1 = deceased, 0 = alive (integer).}
 #'   \item{age}{Age at diagnosis (numeric).}
 #'   \item{sex}{Sex of the patient (character).}
 #'   \item{race}{Race of the patient (character).}
@@ -167,12 +166,11 @@
 #' @source Sourced, cleaned, and merged from Smyth et al. (2024)
 #'   [\doi{10.1002/cam4.70434}], originating from cBioPortal
 #'   (TCGA, PanCancer Atlas).
-#'   \url{https://www.cbioportal.org/study/summary?id=
-#'   coadread_tcga_pan_can_atlas_2018}
+#'   \url{https://www.cbioportal.org/study/summary?id=coadread_tcga_pan_can_atlas_2018}
 #'
 #' @references
 #' Smyth, J., Godet, J., Choudhary, A., Das, A., Gkoutos, G.
-#' V., & Acharjee, A. (2. (2024). Microbiome‐Based
+#' V., & Acharjee, A. (2024). Microbiome-Based
 #' Colon Cancer Patient Stratification and Survival Analysis. *Cancer
 #' Medicine*,13(22), e70434. https://doi.org/10.1002/cam4.70434
 #'

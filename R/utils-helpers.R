@@ -2,7 +2,6 @@
 # INTERNAL HELPER FUNCTIONS
 # Support for `find_cutpoint()` and `find_cutpoint_number()`.
 # ===================================================================
-
 #' Objective Function for Genetic Algorithm
 #'
 #' @description
@@ -11,7 +10,7 @@
 #' `rgenoud` always maximises, so all criteria are framed as such.
 #'
 #' @param params Numeric vector. First `numcut` are cut-points;
-#'   remaining (if `criterion = "loglik"`) are initial betas.
+#' remaining (if `criterion = "loglik"`) are initial betas.
 #' @param time,censor,target,confound Survival data and predictor.
 #' @param numcut Number of cut-points.
 #' @param gap Minimum distance between cut-points.
@@ -32,11 +31,11 @@
 #'
 #' @section srrstats compliance:
 #' .
-#' @srrstats {G2.3}  `na.rm = TRUE` in `quantile`.
+#' @srrstats {G2.3} `na.rm = TRUE` in `quantile`.
 #' @srrstats {G2.4a} `make.names()` sanitises covariate names.
 #' @srrstats {G2.13} Invalid gaps return `-Inf`.
-#' @srrstats {G5.0}  Edge cases (zero gap, infinite domain) return `-Inf`.
-#' @srrstats {G5.1}  Failure modes documented.
+#' @srrstats {G5.0} Edge cases (zero gap, infinite domain) return `-Inf`.
+#' @srrstats {G5.1} Failure modes documented.
 #' @srrstats {G1.4a} Internal use only (`@noRd`).
 #'
 #' @noRd
@@ -47,8 +46,8 @@
     return(-Inf)
   }
   cut_design <- factor(cut(target,
-                           breaks = c(-Inf, sort(cutoff), Inf),
-                           labels = FALSE, include.lowest = TRUE
+    breaks = c(-Inf, sort(cutoff), Inf),
+    labels = FALSE, include.lowest = TRUE
   ))
   if (length(table(cut_design)) != (numcut + 1)) {
     return(-Inf)
@@ -56,7 +55,6 @@
   if (min(table(cut_design)) < nmin) {
     return(-Inf)
   }
-
   data_for_fit <- data.frame(
     time = time, censor = censor,
     cut_design = cut_design
@@ -67,34 +65,37 @@
   }
   formula_str <- "survival::Surv(time, censor) ~ cut_design"
   if (!is.null(confound) && ncol(confound) > 0) {
-    formula_str <- paste(formula_str, "+",
-                         paste(colnames(confound), collapse = " + ")
+    formula_str <- paste(
+      formula_str, "+",
+      paste(colnames(confound), collapse = " + ")
     )
   }
   fit_formula <- as.formula(formula_str)
-
-  stat_value <- switch(
-    criterion,
+  stat_value <- switch(criterion,
     "logrank" = {
       fit <- tryCatch(survival::survdiff(fit_formula, data = data_for_fit),
-                      error = function(e) NULL
+        error = function(e) NULL
       )
       if (is.null(fit)) -Inf else fit$chisq
     },
     "hazard_ratio" = {
       fit <- tryCatch(survival::coxph(fit_formula, data = data_for_fit),
-                      error = function(e) NULL
+        error = function(e) NULL
       )
-      if (is.null(fit) || is.null(fit$coefficients) ||
-          !("cut_design2" %in% names(fit$coefficients))) {
-        -Inf
-      } else {
-        exp(fit$coefficients["cut_design2"])
+      if (is.null(fit)) {
+        return(-Inf)
+      } # <-- REQUIRED FIX (early exit)
+      coefs <- fit$coefficients
+      target_coef <- paste0("cut_design", numcut + 1) # e.g. "cut_design2"
+      if (is.null(coefs) || !(target_coef %in% names(coefs)) ||
+        is.na(coefs[target_coef])) {
+        return(-Inf) # <-- REQUIRED FIX
       }
+      exp(coefs[target_coef])
     },
     "p_value" = {
       fit <- tryCatch(survival::coxph(fit_formula, data = data_for_fit),
-                      error = function(e) NULL
+        error = function(e) NULL
       )
       if (is.null(fit) || is.null(fit$loglik)) {
         return(-Inf)
@@ -118,8 +119,8 @@
       beta_init <- params[(numcut + 1):length(params)]
       fit <- tryCatch(
         survival::coxph(fit_formula,
-                        data = data_for_fit,
-                        init = beta_init, iter.max = 0
+          data = data_for_fit,
+          init = beta_init, iter.max = 0
         ),
         error = function(e) NULL
       )
@@ -129,7 +130,6 @@
   )
   return(stat_value)
 }
-
 #' Wrapper for the rgenoud Genetic Algorithm
 #'
 #' @description
@@ -150,8 +150,8 @@
 #' @section srrstats compliance:
 #' .
 #' @srrstats {G2.13} `requireNamespace("rgenoud")` check.
-#' @srrstats {G5.0}  Edge cases (zero gap, infinite range) return `NULL`.
-#' @srrstats {G5.1}  Failure modes documented.
+#' @srrstats {G5.0} Edge cases (zero gap, infinite range) return `NULL`.
+#' @srrstats {G5.1} Failure modes documented.
 #' @srrstats {G1.4a} Internal use only (`@noRd`).
 #'
 #' @noRd
@@ -169,27 +169,24 @@
   } else {
     numcut
   }
-
   domain_cuts <- matrix(rep(range(target, na.rm = TRUE), numcut),
-                        ncol = 2, byrow = TRUE
+    ncol = 2, byrow = TRUE
   )
   if (any(is.infinite(domain_cuts))) {
     return(NULL)
   }
-
   domain <- if (optimizing_betas) {
     domain_betas <- matrix(rep(c(-5, 5), nvars - numcut),
-                           ncol = 2,
-                           byrow = TRUE
+      ncol = 2,
+      byrow = TRUE
     )
     rbind(domain_cuts, domain_betas)
   } else {
     domain_cuts
   }
-
   initial_cuts <- stats::quantile(target,
-                                  probs = seq(0, 1, length.out = numcut + 2),
-                                  na.rm = TRUE
+    probs = seq(0, 1, length.out = numcut + 2),
+    na.rm = TRUE
   )[2:(numcut + 1)]
   initial_values <- if (optimizing_betas) {
     initial_betas <- rep(0, nvars - numcut)
@@ -200,14 +197,12 @@
   if (any(is.na(initial_values))) {
     return(NULL)
   }
-
   if (is.null(gap)) {
     gap <- stats::quantile(sort(diff(sort(unique(na.omit(target))))),
-                           probs = 0.5, na.rm = TRUE
+      probs = 0.5, na.rm = TRUE
     )
     if (is.na(gap) || gap == 0) gap <- 1e-4
   }
-
   loglik0 <- NA_real_
   if (criterion == "p_value") {
     null_formula_str <- "survival::Surv(time, censor) ~ 1"
@@ -216,10 +211,11 @@
       confound_null <- confound
       colnames(confound_null) <- make.names(colnames(confound_null))
       data_for_null_fit <- cbind(data_for_null_fit, confound_null)
-      null_formula_str <- paste(null_formula_str, "+",
-                                paste(colnames(confound_null),
-                                      collapse = " + "
-                                )
+      null_formula_str <- paste(
+        null_formula_str, "+",
+        paste(colnames(confound_null),
+          collapse = " + "
+        )
       )
     }
     null_fit <- tryCatch(
@@ -230,11 +226,9 @@
       loglik0 <- null_fit$loglik[length(null_fit$loglik)]
     }
   }
-
   if (!requireNamespace("rgenoud", quietly = TRUE)) {
     stop("The 'rgenoud' package is required. Please install it.", call. = FALSE)
   }
-
   optim_result <- tryCatch(rgenoud::genoud(
     fn = .obj,
     nvars = nvars,
@@ -256,10 +250,8 @@
     criterion = criterion,
     loglik0 = loglik0
   ), error = function(e) NULL)
-
   return(optim_result)
 }
-
 #' Calculate Information Criterion (AIC, AICc, or BIC)
 #'
 #' @description
@@ -292,11 +284,16 @@
 #'
 #' @noRd
 .calc_ic <- function(model, k, n, criterion) {
-  if (is.null(model) || !is.list(model)) {
+  ## Return NA for any case where the IC cannot be computed
+  if (is.null(model) || !is.list(model) || is.null(model$loglik)) {
     return(NA_real_)
   }
   logL <- model$loglik[2]
-  if (is.null(logL) || is.na(logL)) {
+  if (is.na(logL)) {
+    return(NA_real_)
+  }
+  # BIC requires a valid sample size
+  if (criterion == "BIC" && (is.na(n) || n <= 0)) {
     return(NA_real_)
   }
   if (criterion == "BIC") {
@@ -312,28 +309,26 @@
     return(-2 * logL + 2 * k)
   }
 }
-
 # ===================================================================
 # Validation & Prep Helpers for find_cutpoint()
 # ===================================================================
-
 #' Validate inputs for find_cutpoint()
 #'
 #' @description
 #' Centralised validation for `find_cutpoint()` arguments.
 #'
 #' @param method,criterion,num_cuts,covariates,predictor,outcome_time,
-#'   outcome_event,data Arguments from `find_cutpoint()`.
+#' outcome_event,data Arguments from `find_cutpoint()`.
 #'
 #' @return `invisible(TRUE)` on success; aborts on failure.
 #'
 #' @section srrstats compliance:
 #' .
-#' @srrstats {G2.0}  Validates `method`, `criterion`, `num_cuts`.
-#' @srrstats {G2.1}  Type checks.
+#' @srrstats {G2.0} Validates `method`, `criterion`, `num_cuts`.
+#' @srrstats {G2.1} Type checks.
 #' @srrstats {G2.4b} `match.arg()` for controlled vocabularies.
 #' @srrstats {G2.4c} `requireNamespace()` for optional `rgenoud`.
-#' @srrstats {G2.9}  Column-name existence.
+#' @srrstats {G2.9} Column-name existence.
 #' @srrstats {G2.13} `cli_abort()` for invalid inputs.
 #' @srrstats {G1.4a} Internal use only (`@noRd`).
 #'
@@ -343,17 +338,16 @@
                                            criterion, covariates) {
   method <- match.arg(method, choices = c("systematic", "genetic"))
   criterion <- match.arg(criterion,
-                         choices = c("logrank", "hazard_ratio", "p_value")
+    choices = c("logrank", "hazard_ratio", "p_value")
   )
   if (!is.numeric(num_cuts) || num_cuts < 0 || num_cuts != round(num_cuts)) {
     stop("num_cuts must be a non-negative integer.", call. = FALSE)
   }
   if (criterion == "hazard_ratio" && num_cuts > 1) {
     stop("'hazard_ratio' is only supported for num_cuts = 1.",
-         call. = FALSE
+      call. = FALSE
     )
   }
-
   if (method == "genetic" && !requireNamespace("rgenoud", quietly = TRUE)) {
     cli::cli_abort(
       c(
@@ -365,19 +359,17 @@
   }
   if (method == "systematic" && !num_cuts %in% c(1, 2)) {
     stop("Systematic search only supports num_cuts = 1 or 2.",
-         call. = FALSE
+      call. = FALSE
     )
   }
-
   if (is.null(predictor)) {
     stop("A 'predictor' variable must be specified.", call. = FALSE)
   }
   if (is.null(outcome_time) || is.null(outcome_event)) {
     stop("Both 'outcome_time' and 'outcome_event' are required.",
-         call. = FALSE
+      call. = FALSE
     )
   }
-
   required_vars <- c(predictor, outcome_time, outcome_event, covariates)
   missing_vars <- setdiff(required_vars, names(data))
   if (length(missing_vars) > 0) {
@@ -391,20 +383,19 @@
   }
   invisible(TRUE)
 }
-
 #' Prepare data for cut-point analysis
 #'
 #' @description
 #' Subsets, removes incomplete cases, and renames columns.
 #'
 #' @param data,predictor,outcome_time,outcome_event,covariates Arguments
-#'   from `find_cutpoint()`.
+#' from `find_cutpoint()`.
 #'
 #' @return Cleaned `userdata` data.frame.
 #'
 #' @section srrstats compliance:
 #' .
-#' @srrstats {G2.3}  `na.omit()` with explicit `NA` handling.
+#' @srrstats {G2.3} `na.omit()` with explicit `NA` handling.
 #' @srrstats {G2.3a} Removes incomplete cases.
 #' @srrstats {G1.4a} Internal use only (`@noRd`).
 #'
@@ -419,35 +410,22 @@
   names(userdata)[names(userdata) == outcome_event] <- "event"
   return(userdata)
 }
-
-#' Validate data conditions for cut-point analysis
+#' Validate event column (0/1)
 #'
 #' @description
-#' Checks post-cleaning: non-negative time, valid 0/1 event,
-#' sufficient data, non-constant predictor.
+#' Checks that the event column is numeric and contains only 0 and 1.
 #'
-#' @param userdata Cleaned data from `.prepare_cutpoint_data()`.
-#' @param nmin,num_cuts,quiet,outcome_event Args from `find_cutpoint()`.
+#' @param event_col The event vector (e.g., `userdata$event`).
+#' @param outcome_event The original name of the event column (for errors).
 #'
-#' @return List with `valid` (logical) and `nmin_abs` (int).
+#' @return `invisible(TRUE)` on success; aborts on failure.
 #'
-#' @section srrstats compliance:
-#' .
-#' @srrstats {G2.1}  Event column must be numeric 0/1.
+#' @srrstats {G2.1} Event column must be numeric 0/1.
 #' @srrstats {G2.13} `cli_abort()` for invalid event data.
-#' @srrstats {G5.0}  Edge cases (constant predictor, insufficient data).
-#' @srrstats {G5.4a} Checks `n < nmin * (num_cuts + 1)`.
-#' @srrstats {G5.4b} Checks `unique(factor) <= num_cuts`.
 #' @srrstats {G1.4a} Internal use only (`@noRd`).
 #'
 #' @noRd
-.validate_data_conditions <- function(userdata, nmin, num_cuts,
-                                      outcome_event, quiet) {
-  if (any(userdata$time < 0, na.rm = TRUE)) {
-    stop("Time variable must be non-negative.", call. = FALSE)
-  }
-
-  event_col <- userdata$event
+.validate_event_column <- function(event_col, outcome_event) {
   if (!is.numeric(event_col)) {
     cli::cli_abort(c(
       "Event column ({.arg {outcome_event}}) must be numeric.",
@@ -463,6 +441,38 @@
       "i" = "Found invalid value(s): {.val {invalid_vals}}"
     ))
   }
+  invisible(TRUE)
+}
+#' Validate data conditions for cut-point analysis
+#'
+#' @description
+#' Checks post-cleaning: non-negative time, valid 0/1 event,
+#' sufficient data, non-constant predictor.
+#'
+#' @param userdata Cleaned data from `.prepare_cutpoint_data()`.
+#' @param nmin,num_cuts,quiet,outcome_event Args from `find_cutpoint()`.
+#'
+#' @return List with `valid` (logical) and `nmin_abs` (int).
+#'
+#' @section srrstats compliance:
+#' .
+#' @srrstats {G2.1} Event column must be numeric 0/1.
+#' @srrstats {G2.13} `cli_abort()` for invalid event data.
+#' @srrstats {G5.0} Edge cases (constant predictor, insufficient data).
+#' @srrstats {G5.4a} Checks `n < nmin * (num_cuts + 1)`.
+#' @srrstats {G5.4b} Checks `unique(factor) <= num_cuts`.
+#' @srrstats {G1.4a} Internal use only (`@noRd`).
+#'
+#' @noRd
+.validate_data_conditions <- function(userdata, nmin, num_cuts,
+                                      outcome_event, quiet) {
+  if (any(userdata$time < 0, na.rm = TRUE)) {
+    stop("Time variable must be non-negative.", call. = FALSE)
+  }
+
+  # --- MODIFICATION: Replaced duplicated code with call to new helper ---
+  .validate_event_column(userdata$event, outcome_event)
+  # --- END MODIFICATION ---
 
   if (nmin > 0 && nmin < 1) {
     nmin_abs <- floor(nmin * nrow(userdata))
@@ -477,7 +487,6 @@
   } else {
     stop("'nmin' must be a non-negative number.", call. = FALSE)
   }
-
   if (nrow(userdata) < nmin_abs * (num_cuts + 1)) {
     if (!quiet) {
       cli::cli_inform(paste(
@@ -487,7 +496,6 @@
     }
     return(list(valid = FALSE, nmin_abs = nmin_abs))
   }
-
   if (length(unique(userdata$factor)) <= num_cuts) {
     if (!quiet) {
       cli::cli_inform(paste(
@@ -498,10 +506,8 @@
     }
     return(list(valid = FALSE, nmin_abs = nmin_abs))
   }
-
   return(list(valid = TRUE, nmin_abs = nmin_abs))
 }
-
 #' Infix operator for NULL default
 #'
 #' @param a The value to check.

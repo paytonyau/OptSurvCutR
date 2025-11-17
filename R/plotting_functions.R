@@ -74,10 +74,10 @@ plot_optimization_curve <- function(cutpoint_result) {
   }
 
   if (is.null(cutpoint_result$all_stats) ||
-      !is.data.frame(cutpoint_result$all_stats)) {
+    !is.data.frame(cutpoint_result$all_stats)) {
     cli::cli_abort(
       "`cutpoint_result` must have a valid `all_stats` data frame."
-      )
+    )
   }
   if (nrow(cutpoint_result$all_stats) == 0) {
     cli::cli_abort("`all_stats` is empty; no cuts evaluated.")
@@ -87,10 +87,10 @@ plot_optimization_curve <- function(cutpoint_result) {
   optimal_cut <- cutpoint_result$optimal_cuts[1]
   criterion <- params$criterion
   y_label <- switch(criterion,
-                    "logrank" = "Log-Rank Statistic",
-                    "hazard_ratio" = "Hazard Ratio (HR)",
-                    "p_value" = "P-value",
-                    tools::toTitleCase(criterion)
+    "logrank" = "Log-Rank Statistic",
+    "hazard_ratio" = "Hazard Ratio (HR)",
+    "p_value" = "P-value",
+    tools::toTitleCase(criterion)
   )
   plot_title <- paste(y_label, "vs. Cut-point")
   subtitle_text <- if (!is.na(optimal_cut)) {
@@ -142,6 +142,8 @@ plot_optimization_curve <- function(cutpoint_result) {
 #' @srrstats {G5.2b} Non-fatal informative message when Cox model fails.
 #' @srrstats {G2.0} Input object class validated with `inherits()`.
 #' @srrstats {G2.13} Uses `cli_inform()` for non-error user feedback.
+#' @srrstats {RE3.1} Provides a visual check of statistical assumptions
+#' (Schoenfeld residuals) for the Cox model.
 #' @srrstats {RE6.1} Includes global Schoenfeld test p-value in plot.
 #'
 #' @param x A `find_cutpoint` result object.
@@ -186,14 +188,15 @@ plot_diagnostics <- function(x, ...) {
   data <- x$userdata
   cuts <- x$optimal_cuts
   data$group <- cut(data$factor,
-                    breaks = c(-Inf, cuts, Inf),
-                    labels = paste0("G", 1:(length(cuts) + 1))
+    breaks = c(-Inf, cuts, Inf),
+    labels = paste0("G", 1:(length(cuts) + 1))
   )
 
   formula_str <- "survival::Surv(time, event) ~ group"
   if (!is.null(x$parameters$covariates)) {
-    formula_str <- paste(formula_str, "+",
-                         paste(x$parameters$covariates, collapse = " + ")
+    formula_str <- paste(
+      formula_str, "+",
+      paste(x$parameters$covariates, collapse = " + ")
     )
   }
 

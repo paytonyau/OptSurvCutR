@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Stratifying Colorectal Cancer Patients by Gut Enterovirus Abundance • OptSurvCutR</title>
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
@@ -16,11 +16,11 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top " aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">OptSurvCutR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.7</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.9</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -29,21 +29,23 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
+<li class="nav-item"><a class="nav-link" href="../index.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="active nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/CRC_Virome.html">Stratifying Colorectal Cancer Patients by Gut Enterovirus Abundance</a></li>
-    <li><a class="dropdown-item" href="../articles/Germination.html">Analysing Rapeseed Germination Data with OptSurvCutR</a></li>
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes">
+<li><a class="dropdown-item" href="../articles/CRC_Virome.html">CRC Virome Workflow</a></li>
+    <li><a class="dropdown-item" href="../articles/Germination.html">Rapeseed Germination Workflow</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://doi.org/10.1101/2025.10.08.681246" target="_blank">Manuscript</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/paytonyau/OptSurvCutR/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/paytonyau/OptSurvCutR/" aria-label="GitHub repository"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -62,7 +64,7 @@
 Workflow with OptSurvCutR Demonstrating Covariate Adjustment</h3>
                         <h4 data-toc-skip class="author">Payton Yau</h4>
             
-            <h4 data-toc-skip class="date">2025-10-26</h4>
+            <h4 data-toc-skip class="date">2025-11-16</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/paytonyau/OptSurvCutR/blob/HEAD/vignettes/CRC_Virome.Rmd" class="external-link"><code>vignettes/CRC_Virome.Rmd</code></a></small>
       <div class="d-none name"><code>CRC_Virome.Rmd</code></div>
@@ -174,7 +176,7 @@ survival model.</li>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span> <span class="co"># For combining plots</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://yihui.org/knitr/" class="external-link">knitr</a></span><span class="op">)</span> <span class="co"># For kable()</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cli.r-lib.org" class="external-link">cli</a></span><span class="op">)</span>   <span class="co"># For enhanced messsexs</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cli.r-lib.org" class="external-link">cli</a></span><span class="op">)</span> <span class="co"># For enhanced messsexs</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="defining-parameters">Defining Parameters<a class="anchor" aria-label="anchor" href="#defining-parameters"></a>
@@ -192,8 +194,7 @@ included the covariates in the adjusted analysis.</p>
 <span></span>
 <span><span class="co"># Set to TRUE if either building the pkgdown site OR running interactively.</span></span>
 <span><span class="co"># This will be FALSE only for non-interactive builds (like CRAN).</span></span>
-<span><span class="va">run_parallel_locally</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"PKGDOWN"</span><span class="op">)</span> <span class="op">==</span> <span class="st">"TRUE"</span><span class="op">)</span> <span class="op">||</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span></span>
-<span>  </span></code></pre></div>
+<span><span class="va">run_parallel_locally</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"PKGDOWN"</span><span class="op">)</span> <span class="op">==</span> <span class="st">"TRUE"</span><span class="op">)</span> <span class="op">||</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <hr>
 </div>
 </div>
@@ -223,10 +224,10 @@ months) for this analysis.</p>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
 <span>    <span class="co"># 1. Parse numeric status (0/1) from the character string</span></span>
 <span>    status_numeric <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/substr.html" class="external-link">substr</a></span><span class="op">(</span><span class="va">status_char</span>, <span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>    </span>
+<span></span>
 <span>    <span class="co"># 2. Apply censoring: events after 60 months are set to 'censored' (0)</span></span>
 <span>    status_final <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">time_months</span> <span class="op">&gt;</span> <span class="fl">60</span>, <span class="fl">0</span>, <span class="va">status_numeric</span><span class="op">)</span>,</span>
-<span>    </span>
+<span></span>
 <span>    <span class="co"># 3. Cap all follow-up times at 60 months</span></span>
 <span>    time_final <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmin</a></span><span class="op">(</span><span class="va">time_months</span>, <span class="fl">60</span><span class="op">)</span></span>
 <span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
@@ -275,14 +276,14 @@ of groups. We use BIC and the genetic algorithm (checking if
 <span>  outcome_event <span class="op">=</span> <span class="st">"status"</span>,</span>
 <span>  method <span class="op">=</span> <span class="st">"genetic"</span>,</span>
 <span>  criterion <span class="op">=</span> <span class="st">"BIC"</span>,</span>
-<span>  max_cuts <span class="op">=</span> <span class="fl">4</span>,    <span class="co"># Test 0-3 cuts</span></span>
-<span>  nmin <span class="op">=</span> <span class="fl">0.15</span>,     <span class="co"># Min 15% per group</span></span>
+<span>  max_cuts <span class="op">=</span> <span class="fl">4</span>, <span class="co"># Test 0-3 cuts</span></span>
+<span>  nmin <span class="op">=</span> <span class="fl">0.15</span>, <span class="co"># Min 15% per group</span></span>
 <span>  use_parallel <span class="op">=</span> <span class="va">run_parallel_locally</span>, <span class="co"># Set FALSE for CRAN only</span></span>
 <span>  n_cores <span class="op">=</span> <span class="fl">6</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">42</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Interpreting nmin = 0.15 as a proportion. Minimum group size set to 88.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Finding optimal number of cuts: method = <span style="font-weight: bold;">genetic</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> nmin 0.15 is a proportion. Min. group size set to 88.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Finding optimal cut number: method = <span style="font-weight: bold;">genetic</span></span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Running genetic algorithm for 1 cut-point(s)...</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Running genetic algorithm for 2 cut-point(s)...</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Running genetic algorithm for 3 cut-point(s)...</span></span>
@@ -302,10 +303,9 @@ of groups. We use BIC and the genetic algorithm (checking if
 <span><span class="co">#&gt;         2 1244.53      0.00      88.9% Substantial       1.86, 2.36</span></span>
 <span><span class="co">#&gt;         3 1249.18      4.65       8.7%    Moderate 1.61, 1.86, 2.36</span></span>
 <span><span class="co">#&gt;         4      NA        NA        NA%        &lt;NA&gt;               NA</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Conclusion: The model with 2 cut-point(s) is the most plausible based on BIC.</span></span>
-<span><span class="co">#&gt; └─ Optimal cuts found at: <span style="font-weight: bold;">1.86, 2.36</span></span></span>
-<span><span class="co">#&gt; Hint: Use `summary()` for full model details and `plot()` to visualize this</span></span>
-<span><span class="co">#&gt; table.</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Conclusion: 2 cut-point(s) is best based on BIC.</span></span>
+<span><span class="co">#&gt; Optimal cuts at: <span style="font-weight: bold;">1.86</span> and <span style="font-weight: bold;">2.36</span></span></span>
+<span><span class="co">#&gt; Hint: Use `summary()` for details, `plot()` to visualize.</span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># --- Adjusted Analysis ---</span></span>
 <span><span class="va">number_result_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_cutpoint_number.html">find_cutpoint_number</a></span><span class="op">(</span></span>
@@ -315,15 +315,15 @@ of groups. We use BIC and the genetic algorithm (checking if
 <span>  outcome_event <span class="op">=</span> <span class="st">"status"</span>,</span>
 <span>  method <span class="op">=</span> <span class="st">"genetic"</span>,</span>
 <span>  criterion <span class="op">=</span> <span class="st">"BIC"</span>,</span>
-<span>  max_cuts <span class="op">=</span> <span class="fl">4</span>,    <span class="co"># Test 0-3 cuts</span></span>
+<span>  max_cuts <span class="op">=</span> <span class="fl">4</span>, <span class="co"># Test 0-3 cuts</span></span>
 <span>  nmin <span class="op">=</span> <span class="fl">0.15</span>,</span>
 <span>  covariates <span class="op">=</span> <span class="va">covariates_to_adjust_for</span>, <span class="co"># ADDED COVARIATES</span></span>
 <span>  use_parallel <span class="op">=</span> <span class="va">run_parallel_locally</span>, <span class="co"># Set FALSE for CRAN only</span></span>
 <span>  n_cores <span class="op">=</span> <span class="fl">6</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">43</span> <span class="co"># Use a different seed</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Interpreting nmin = 0.15 as a proportion. Minimum group size set to 88.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Finding optimal number of cuts: method = <span style="font-weight: bold;">genetic</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> nmin 0.15 is a proportion. Min. group size set to 88.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Finding optimal cut number: method = <span style="font-weight: bold;">genetic</span></span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Running genetic algorithm for 1 cut-point(s)...</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Running genetic algorithm for 2 cut-point(s)...</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Running genetic algorithm for 3 cut-point(s)...</span></span>
@@ -345,23 +345,24 @@ of groups. We use BIC and the genetic algorithm (checking if
 <span><span class="co">#&gt;         2 1250.80      0.00        88% Substantial       1.86, 2.36</span></span>
 <span><span class="co">#&gt;         3 1255.21      4.41       9.7%    Moderate 1.42, 1.86, 2.36</span></span>
 <span><span class="co">#&gt;         4      NA        NA        NA%        &lt;NA&gt;               NA</span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Conclusion: The model with 2 cut-point(s) is the most plausible based on BIC.</span></span>
-<span><span class="co">#&gt; └─ Optimal cuts found at: <span style="font-weight: bold;">1.86, 2.36</span></span></span>
-<span><span class="co">#&gt; Hint: Use `summary()` for full model details and `plot()` to visualize this</span></span>
-<span><span class="co">#&gt; table.</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Conclusion: 2 cut-point(s) is best based on BIC.</span></span>
+<span><span class="co">#&gt; Optimal cuts at: <span style="font-weight: bold;">1.86</span> and <span style="font-weight: bold;">2.36</span></span></span>
+<span><span class="co">#&gt; Hint: Use `summary()` for details, `plot()` to visualize.</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">plot_num_unadj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">number_result_unadj</span><span class="op">)</span> <span class="op">+</span> </span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"BIC vs Cuts (Unadj.)"</span><span class="op">)</span> <span class="op">+</span> </span>
+<code class="sourceCode R"><span><span class="va">plot_num_unadj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">number_result_unadj</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"BIC vs Cuts (Unadj.)"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">14</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">plot_num_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">number_result_adj</span><span class="op">)</span> <span class="op">+</span> </span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"BIC vs Cuts (Adj. for "</span>, </span>
-<span>                 <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">covariates_to_adjust_for</span>, collapse<span class="op">=</span><span class="st">", "</span><span class="op">)</span>, <span class="st">")"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span><span class="va">plot_num_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">number_result_adj</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span>
+<span>    <span class="st">"BIC vs Cuts (Adj. for "</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">covariates_to_adjust_for</span>, collapse <span class="op">=</span> <span class="st">", "</span><span class="op">)</span>, <span class="st">")"</span></span>
+<span>  <span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>size <span class="op">=</span> <span class="fl">14</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Show plots side-by-side</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">plot_num_unadj</span> <span class="op">+</span> <span class="va">plot_num_adj</span><span class="op">)</span></span></code></pre></div>
-<p><img src="CRC_Virome_files/figure-html/find-number-plots-1.png" width="672" style="display: block; margin: auto;">
+<p><img src="CRC_Virome_files/figure-html/find-number-plots-1.png" class="r-plt" width="672" style="display: block; margin: auto;">
 &gt; <strong>Interpretation:</strong> We compare the BIC plots and
 optimal number of cuts from both the unadjusted and adjusted analyses.
 In this example, both might suggest 2 cut-points (3 groups) remain
@@ -392,14 +393,14 @@ the log-rank statistic.</p>
 <span>  nmin <span class="op">=</span> <span class="fl">0.15</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">123</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Interpreting nmin = 0.15 as a proportion. Minimum group size set to 87.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting genetic algorithm for 2 cut-point(s) using 'logrank' criterion...</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> nmin 0.15 is a proportion. Min. group size set to 87.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting genetic search for 2 cut(s) using 'logrank' criterion...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Optimal Cut-point Analysis for Survival Data (Genetic)</span> <span style="color: #00BBBB;">──────────────────────</span></span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Predictor: <span style="font-weight: bold;">abundance</span></span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Criterion: <span style="font-weight: bold;">logrank</span></span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Optimal Log-Rank Statistic: <span style="font-weight: bold;">19.7009</span></span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Recommended Cut-point(s): <span style="font-weight: bold;">1.868, 2.355</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Recommended Cut-point(s): <span style="font-weight: bold;">1.868</span> and <span style="font-weight: bold;">2.355</span></span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">cutpoint_result_unadj</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -446,13 +447,13 @@ the log-rank statistic.</p>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Search Method: Genetic</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Predictor: abundance</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Number of cuts: 2</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Minimum group size (nmin): 87</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Minimum group size (nmin): 0.15</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Optimal Cut-point Analysis for Survival Data (Genetic)</span> <span style="color: #00BBBB;">──────────────────────</span></span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Predictor: <span style="font-weight: bold;">abundance</span></span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Criterion: <span style="font-weight: bold;">logrank</span></span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Optimal Log-Rank Statistic: <span style="font-weight: bold;">19.7009</span></span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Recommended Cut-point(s): <span style="font-weight: bold;">1.868, 2.355</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Recommended Cut-point(s): <span style="font-weight: bold;">1.868</span> and <span style="font-weight: bold;">2.355</span></span></span>
 <span></span>
 <span><span class="va">optimal_cuts_unadj_values</span> <span class="op">&lt;-</span> <span class="va">cutpoint_result_unadj</span><span class="op">$</span><span class="va">optimal_cuts</span></span></code></pre></div>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
@@ -472,14 +473,14 @@ the log-rank statistic.</p>
 <span>  covariates <span class="op">=</span> <span class="va">covariates_to_adjust_for</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">124</span> <span class="co"># Different seed</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Interpreting nmin = 0.15 as a proportion. Minimum group size set to 87.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting genetic algorithm for 2 cut-point(s) using 'logrank' criterion...</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> nmin 0.15 is a proportion. Min. group size set to 87.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Starting genetic search for 2 cut(s) using 'logrank' criterion...</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Optimal Cut-point Analysis for Survival Data (Genetic)</span> <span style="color: #00BBBB;">──────────────────────</span></span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Predictor: <span style="font-weight: bold;">abundance</span></span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Criterion: <span style="font-weight: bold;">logrank</span></span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Optimal Log-Rank Statistic: <span style="font-weight: bold;">23.7805</span></span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Recommended Cut-point(s): <span style="font-weight: bold;">1.864, 2.357</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Recommended Cut-point(s): <span style="font-weight: bold;">1.864</span> and <span style="font-weight: bold;">2.357</span></span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">cutpoint_result_adj</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -529,29 +530,33 @@ the log-rank statistic.</p>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Search Method: Genetic</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Predictor: abundance</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Number of cuts: 2</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Minimum group size (nmin): 87</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Minimum group size (nmin): 0.15</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Covariates: sex</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Optimal Cut-point Analysis for Survival Data (Genetic)</span> <span style="color: #00BBBB;">──────────────────────</span></span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Predictor: <span style="font-weight: bold;">abundance</span></span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Criterion: <span style="font-weight: bold;">logrank</span></span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> Optimal Log-Rank Statistic: <span style="font-weight: bold;">23.7805</span></span></span>
-<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Recommended Cut-point(s): <span style="font-weight: bold;">1.864, 2.357</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Recommended Cut-point(s): <span style="font-weight: bold;">1.864</span> and <span style="font-weight: bold;">2.357</span></span></span>
 <span></span>
 <span><span class="va">optimal_cuts_adj_values</span> <span class="op">&lt;-</span> <span class="va">cutpoint_result_adj</span><span class="op">$</span><span class="va">optimal_cuts</span></span></code></pre></div>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Plot comparison</span></span>
-<span><span class="va">plot_dist_unadj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cutpoint_result_unadj</span>, </span>
-<span>                        type <span class="op">=</span> <span class="st">"distribution"</span><span class="op">)</span> <span class="op">+</span> </span>
+<span><span class="va">plot_dist_unadj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cutpoint_result_unadj</span>,</span>
+<span>  type <span class="op">=</span> <span class="st">"distribution"</span></span>
+<span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Unadj. Cut-points"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">plot_dist_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cutpoint_result_adj</span>, </span>
-<span>                      type <span class="op">=</span> <span class="st">"distribution"</span><span class="op">)</span> <span class="op">+</span> </span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"Adj. Cut-points (for"</span>, </span>
-<span>                <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">covariates_to_adjust_for</span>, collapse<span class="op">=</span><span class="st">", "</span><span class="op">)</span>, <span class="st">")"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">plot_dist_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cutpoint_result_adj</span>,</span>
+<span>  type <span class="op">=</span> <span class="st">"distribution"</span></span>
+<span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Adj. Cut-points (for"</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">covariates_to_adjust_for</span>, collapse <span class="op">=</span> <span class="st">", "</span><span class="op">)</span>, <span class="st">")"</span></span>
+<span>  <span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">plot_dist_unadj</span> <span class="op">+</span> <span class="va">plot_dist_adj</span><span class="op">)</span></span></code></pre></div>
-<p><img src="CRC_Virome_files/figure-html/find-cuts-plot-1.png" width="672" style="display: block; margin: auto;"></p>
+<p><img src="CRC_Virome_files/figure-html/find-cuts-plot-1.png" class="r-plt" width="672" style="display: block; margin: auto;"></p>
 <blockquote>
 <p><strong>Interpretation</strong>: We compare the optimal cut-point
 locations found with and without covariate adjustment. If the cut-points
@@ -579,41 +584,42 @@ see how much the optimal cut-points vary.</p>
 <span></span>
 <span><span class="va">validation_result_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/validate_cutpoint.html">validate_cutpoint</a></span><span class="op">(</span></span>
 <span>  cutpoint_result <span class="op">=</span> <span class="va">cutpoint_result_adj</span>, <span class="co"># Use ADJUSTED result</span></span>
-<span>  num_replicates <span class="op">=</span> <span class="fl">25</span>,  <span class="co"># REDUCED for vignette speed; use &gt;= 500</span></span>
+<span>  num_replicates <span class="op">=</span> <span class="fl">25</span>, <span class="co"># REDUCED for vignette speed; use &gt;= 500</span></span>
 <span>  use_parallel <span class="op">=</span> <span class="va">run_parallel_locally</span>, <span class="co"># Set FALSE for CRAN only</span></span>
 <span>  n_core <span class="op">=</span> <span class="fl">6</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">456</span></span>
 <span>  <span class="co"># Note: validate_cutpoint implicitly uses the covariates from cutpoint_result_adj</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Using random seed: 456 for reproducible bootstrapping.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> `nmin` for bootstrap not specified, defaulting to 90% of original: 78</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Validating 2 cut-point(s) from 'genetic' search using 'logrank' criterion.</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Running 25 bootstrap replicates sequentially...</span></span>
-<span><span class="co">#&gt; Bootstrapping <span style="color: #00BB00;">■■■                             </span>   8% | ETA: 44sBootstrapping <span style="color: #00BB00;">■■■■■                           </span>  12% | ETA:  2mBootstrapping <span style="color: #00BB00;">■■■■■■                          </span>  16% | ETA:  2mBootstrapping <span style="color: #00BB00;">■■■■■■■                         </span>  20% | ETA:  2mBootstrapping <span style="color: #00BB00;">■■■■■■■■                        </span>  24% | ETA:  2mBootstrapping <span style="color: #00BB00;">■■■■■■■■■                       </span>  28% | ETA:  2mBootstrapping <span style="color: #00BB00;">■■■■■■■■■■■                     </span>  32% | ETA:  2mBootstrapping <span style="color: #00BB00;">■■■■■■■■■■■■                    </span>  36% | ETA:  2mBootstrapping <span style="color: #00BB00;">■■■■■■■■■■■■■                   </span>  40% | ETA:  2mBootstrapping <span style="color: #00BB00;">■■■■■■■■■■■■■■                  </span>  44% | ETA:  2mBootstrapping <span style="color: #00BB00;">■■■■■■■■■■■■■■■                 </span>  48% | ETA:  2mBootstrapping <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■               </span>  52% | ETA:  2mBootstrapping <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■              </span>  56% | ETA:  2mBootstrapping <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■             </span>  60% | ETA:  1mBootstrapping <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■            </span>  64% | ETA:  1mBootstrapping <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■           </span>  68% | ETA:  1mBootstrapping <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■         </span>  72% | ETA:  1mBootstrapping <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■        </span>  76% | ETA:  1mBootstrapping <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■       </span>  80% | ETA: 45sBootstrapping <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■      </span>  84% | ETA: 36sBootstrapping <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■     </span>  88% | ETA: 26sBootstrapping <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■   </span>  92% | ETA: 17sBootstrapping <span style="color: #00BB00;">■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■  </span>  96% | ETA:  8s                                                               <span style="color: #00BB00;">✔</span> 25 replicates completed successfully.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Using random seed 456 for reproducibility.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Bootstrap `nmin` not set, defaulting to: 78</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Validating 2 cut(s) from 'genetic' search using 'logrank'.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Running 25 replicates on 6 cores...</span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> 1 of 25 replicates failed.</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> 24 replicates completed.</span></span>
 <span><span class="co">#&gt; Cut-point Stability Analysis (Bootstrap)</span></span>
 <span><span class="co">#&gt; ----------------------------------------</span></span>
 <span><span class="co">#&gt; Original Optimal Cut-point(s): 1.864, 2.357 </span></span>
-<span><span class="co">#&gt; Successful Replicates: 25 / 25 ( 100 %)</span></span>
-<span><span class="co">#&gt; Failed Replicates: 0 </span></span>
+<span><span class="co">#&gt; Successful Replicates: 24 / 25 ( 96 %)</span></span>
+<span><span class="co">#&gt; Failed Replicates: 1 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 95% Confidence Intervals</span></span>
 <span><span class="co">#&gt; ------------------------</span></span>
 <span><span class="co">#&gt;       Lower Upper</span></span>
-<span><span class="co">#&gt; Cut 1 1.413 1.900</span></span>
-<span><span class="co">#&gt; Cut 2 1.729 2.358</span></span>
+<span><span class="co">#&gt; Cut 1 1.474 1.874</span></span>
+<span><span class="co">#&gt; Cut 2 1.678 2.394</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Bootstrap Summary Statistics</span></span>
 <span><span class="co">#&gt; ---------------------------</span></span>
 <span><span class="co">#&gt;       Cut  Mean    SD Median    Q1    Q3</span></span>
-<span><span class="co">#&gt; 25%  Cut1 1.732 0.157  1.758 1.712 1.864</span></span>
-<span><span class="co">#&gt; 25%1 Cut2 2.241 0.224  2.354 2.338 2.356</span></span>
+<span><span class="co">#&gt; 25%  Cut1 1.756 0.115  1.760 1.716 1.865</span></span>
+<span><span class="co">#&gt; 25%1 Cut2 2.234 0.228  2.346 2.255 2.356</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Hint: Use `summary()` for detailed statistics or `plot()` to visualize stability.</span></span></code></pre></div>
+<span><span class="co">#&gt; Hint: Use `summary()` or `plot()` to visualize stability.</span></span></code></pre></div>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">bootstrap_plot_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">validation_result_adj</span><span class="op">)</span> <span class="op">+</span> </span>
+<code class="sourceCode R"><span><span class="va">bootstrap_plot_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">validation_result_adj</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Bootstrap Stability of Adjusted Cut-points"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">bootstrap_plot_adj</span><span class="op">)</span></span></code></pre></div>
-<p><img src="CRC_Virome_files/figure-html/validate-cuts-plot-1.png" width="672" style="display: block; margin: auto;">
+<p><img src="CRC_Virome_files/figure-html/validate-cuts-plot-1.png" class="r-plt" width="672" style="display: block; margin: auto;">
 &gt; <strong>Interpretation:</strong> The bootstrap results assess the
 stability of the adjusted cut-points. Narrow confidence intervals
 indicate that even after accounting for sex, the thresholds defining the
@@ -635,13 +641,15 @@ cuts.</p>
 <span>    labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Low"</span>, <span class="st">"Medium"</span>, <span class="st">"High"</span><span class="op">)</span>,</span>
 <span>    right <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span>  <span class="op">)</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
-<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>abundance_group_adj <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">abundance_group_adj</span>, </span>
-<span>                                      levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Low"</span>, <span class="st">"Medium"</span>, <span class="st">"High"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>abundance_group_adj <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">abundance_group_adj</span>,</span>
+<span>    levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Low"</span>, <span class="st">"Medium"</span>, <span class="st">"High"</span><span class="op">)</span></span>
+<span>  <span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Set "Medium" abundance as the reference group for the Cox model</span></span>
 <span><span class="va">analysis_data_categorised</span><span class="op">$</span><span class="va">abundance_group_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/relevel.html" class="external-link">relevel</a></span><span class="op">(</span></span>
-<span>  <span class="va">analysis_data_categorised</span><span class="op">$</span><span class="va">abundance_group_adj</span>, </span>
-<span>  ref <span class="op">=</span> <span class="st">"Medium"</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="va">analysis_data_categorised</span><span class="op">$</span><span class="va">abundance_group_adj</span>,</span>
+<span>  ref <span class="op">=</span> <span class="st">"Medium"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 <div class="section level4">
 <h4 id="fit-final-adjusted-models">Fit Final Adjusted Models<a class="anchor" aria-label="anchor" href="#fit-final-adjusted-models"></a>
 </h4>
@@ -649,17 +657,21 @@ cuts.</p>
 covariates in the Cox model to get adjusted hazard ratios.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Fit Kaplan-Meier model (usually plotted without covariate adjustment)</span></span>
-<span><span class="va">km_fit_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/survival/man/survfit.html" class="external-link">survfit</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/survival/man/Surv.html" class="external-link">Surv</a></span><span class="op">(</span><span class="va">time</span>, <span class="va">status</span><span class="op">)</span> <span class="op">~</span> <span class="va">abundance_group_adj</span>, </span>
-<span>                      data <span class="op">=</span> <span class="va">analysis_data_categorised</span><span class="op">)</span></span>
+<span><span class="va">km_fit_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/survival/man/survfit.html" class="external-link">survfit</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/survival/man/Surv.html" class="external-link">Surv</a></span><span class="op">(</span><span class="va">time</span>, <span class="va">status</span><span class="op">)</span> <span class="op">~</span> <span class="va">abundance_group_adj</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">analysis_data_categorised</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Fit the final ADJUSTED Cox Proportional-Hazards model</span></span>
 <span><span class="va">covariate_formula_part</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">covariates_to_adjust_for</span>, collapse <span class="op">=</span> <span class="st">" + "</span><span class="op">)</span></span>
 <span><span class="co"># Create the formula as a string</span></span>
-<span><span class="va">formula_string</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"Surv(time, status) ~ abundance_group_adj +"</span>, </span>
-<span>                        <span class="va">covariate_formula_part</span><span class="op">)</span></span>
+<span><span class="va">formula_string</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span></span>
+<span>  <span class="st">"Surv(time, status) ~ abundance_group_adj +"</span>,</span>
+<span>  <span class="va">covariate_formula_part</span></span>
+<span><span class="op">)</span></span>
 <span><span class="co"># Pass the string to as.formula() *inside* the coxph call</span></span>
-<span><span class="va">cox_model_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/survival/man/coxph.html" class="external-link">coxph</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/formula.html" class="external-link">as.formula</a></span><span class="op">(</span><span class="va">formula_string</span><span class="op">)</span>, </span>
-<span>                       data <span class="op">=</span> <span class="va">analysis_data_categorised</span><span class="op">)</span></span></code></pre></div>
+<span><span class="va">cox_model_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/survival/man/coxph.html" class="external-link">coxph</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/formula.html" class="external-link">as.formula</a></span><span class="op">(</span><span class="va">formula_string</span><span class="op">)</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">analysis_data_categorised</span></span>
+<span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level4">
 <h4 id="plot-a-kaplan-meier-curve">Plot A: Kaplan-Meier Curve<a class="anchor" aria-label="anchor" href="#plot-a-kaplan-meier-curve"></a>
@@ -668,9 +680,9 @@ covariates in the Cox model to get adjusted hazard ratios.</p>
 different patient groups.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">km_plot_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/survminer/man/ggsurvplot.html" class="external-link">ggsurvplot</a></span><span class="op">(</span></span>
-<span>  <span class="va">km_fit_adj</span>, </span>
-<span>  data <span class="op">=</span> <span class="va">analysis_data_categorised</span>, </span>
-<span>  pval <span class="op">=</span> <span class="cn">TRUE</span>, </span>
+<span>  <span class="va">km_fit_adj</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">analysis_data_categorised</span>,</span>
+<span>  pval <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  risk.table <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  legend.title <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">microbe_name_to_analyze</span>, <span class="st">"(Adj. Groups)"</span><span class="op">)</span>,</span>
 <span>  legend.labs <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Medium"</span>, <span class="st">"Low"</span>, <span class="st">"High"</span><span class="op">)</span>, <span class="co"># Assumes Medium is ref level</span></span>
@@ -686,7 +698,7 @@ different patient groups.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">km_plot_adj</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Ignoring unknown labels:</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">•</span> <span style="color: #00BB00;">colour</span> : <span style="color: #0000BB;">"Enterovirus (Adj. Groups)"</span></span></span></code></pre></div>
-<p><img src="CRC_Virome_files/figure-html/plot-km-1.png" width="768" style="display: block; margin: auto;"></p>
+<p><img src="CRC_Virome_files/figure-html/plot-km-1.png" class="r-plt" width="768" style="display: block; margin: auto;"></p>
 <blockquote>
 <p><strong>Interpretation:</strong> The Kaplan-Meier plot using groups
 defined by the adjusted cut-points still shows a clear separation,
@@ -705,13 +717,17 @@ shifts caused by covariate adjustment.</p>
 abundance groups relative to the Medium group, adjusted for sex.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">forest_plot_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/survminer/man/ggforest.html" class="external-link">ggforest</a></span><span class="op">(</span></span>
-<span>  <span class="va">cox_model_adj</span>, data <span class="op">=</span> <span class="va">analysis_data_categorised</span>,</span>
-<span>  main <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"Adjusted HRs for"</span>, </span>
-<span>               <span class="va">microbe_name_to_analyze</span>, </span>
-<span>               <span class="st">"Groups (Ref: Medium)"</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="va">cox_model_adj</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">analysis_data_categorised</span>,</span>
+<span>  main <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span></span>
+<span>    <span class="st">"Adjusted HRs for"</span>,</span>
+<span>    <span class="va">microbe_name_to_analyze</span>,</span>
+<span>    <span class="st">"Groups (Ref: Medium)"</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">forest_plot_adj</span><span class="op">)</span></span></code></pre></div>
-<p><img src="CRC_Virome_files/figure-html/plot-forest-1.png" width="816" style="display: block; margin: auto;"></p>
+<p><img src="CRC_Virome_files/figure-html/plot-forest-1.png" class="r-plt" width="816" style="display: block; margin: auto;"></p>
 <blockquote>
 <p><strong>Interpretation:</strong> This plot quantifies the independent
 prognostic value of the Enterovirus abundance groups after controlling
@@ -739,30 +755,42 @@ for sex themselves.</p>
 <p>This box plot confirms how the <code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code> function
 has partitioned the patients based on their abundance levels.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">dist_plot_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">analysis_data_categorised</span>, </span>
-<span>                        <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">abundance_group_adj</span>, </span>
-<span>                            y <span class="op">=</span> <span class="va">abundance</span>, </span>
-<span>                            fill <span class="op">=</span> <span class="va">abundance_group_adj</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_boxplot.html" class="external-link">geom_boxplot</a></span><span class="op">(</span>show.legend <span class="op">=</span> <span class="cn">FALSE</span>, </span>
-<span>               outlier.shape <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_jitter.html" class="external-link">geom_jitter</a></span><span class="op">(</span>width <span class="op">=</span> <span class="fl">0.2</span>, </span>
-<span>              alpha <span class="op">=</span> <span class="fl">0.3</span>, </span>
-<span>              size <span class="op">=</span> <span class="fl">1</span>, </span>
-<span>              show.legend <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
+<code class="sourceCode R"><span><span class="va">dist_plot_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span></span>
+<span>  <span class="va">analysis_data_categorised</span>,</span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span></span>
+<span>    x <span class="op">=</span> <span class="va">abundance_group_adj</span>,</span>
+<span>    y <span class="op">=</span> <span class="va">abundance</span>,</span>
+<span>    fill <span class="op">=</span> <span class="va">abundance_group_adj</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_boxplot.html" class="external-link">geom_boxplot</a></span><span class="op">(</span></span>
+<span>    show.legend <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>    outlier.shape <span class="op">=</span> <span class="cn">NA</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_jitter.html" class="external-link">geom_jitter</a></span><span class="op">(</span></span>
+<span>    width <span class="op">=</span> <span class="fl">0.2</span>,</span>
+<span>    alpha <span class="op">=</span> <span class="fl">0.3</span>,</span>
+<span>    size <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>    show.legend <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
-<span>    title <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"Distribution of"</span>, </span>
-<span>                  <span class="va">microbe_name_to_analyze</span>, </span>
-<span>                  <span class="st">"Abundance by Adjusted Risk Group"</span><span class="op">)</span>,</span>
+<span>    title <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span></span>
+<span>      <span class="st">"Distribution of"</span>,</span>
+<span>      <span class="va">microbe_name_to_analyze</span>,</span>
+<span>      <span class="st">"Abundance by Adjusted Risk Group"</span></span>
+<span>    <span class="op">)</span>,</span>
 <span>    x <span class="op">=</span> <span class="st">"Adjusted Prognostic Group"</span>,</span>
 <span>    y <span class="op">=</span> <span class="st">"Relative Abundance"</span> <span class="co"># Check if log scale needed</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_fill_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#E7B800"</span>, <span class="st">"#2E9FDF"</span>, <span class="st">"#FC4E07"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_fill_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"#E7B800"</span>, <span class="st">"#2E9FDF"</span>, <span class="st">"#FC4E07"</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span>base_size <span class="op">=</span> <span class="fl">12</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_cartesian.html" class="external-link">coord_cartesian</a></span><span class="op">(</span>ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">analysis_data_categorised</span><span class="op">$</span><span class="va">abundance</span>, </span>
-<span>                                  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.99</span><span class="op">)</span>, na.rm<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="co"># Zoom axis</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_cartesian.html" class="external-link">coord_cartesian</a></span><span class="op">(</span>ylim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/quantile.html" class="external-link">quantile</a></span><span class="op">(</span><span class="va">analysis_data_categorised</span><span class="op">$</span><span class="va">abundance</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.01</span>, <span class="fl">0.99</span><span class="op">)</span>,</span>
+<span>    na.rm <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  <span class="op">)</span><span class="op">)</span> <span class="co"># Zoom axis</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">dist_plot_adj</span><span class="op">)</span></span></code></pre></div>
-<p><img src="CRC_Virome_files/figure-html/plot-boxplot-1.png" width="768" style="display: block; margin: auto;"></p>
+<p><img src="CRC_Virome_files/figure-html/plot-boxplot-1.png" class="r-plt" width="768" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level4">
 <h4 id="plot-e-checking-the-proportional-hazards-assumption">Plot E: Checking the Proportional Hazards Assumption<a class="anchor" aria-label="anchor" href="#plot-e-checking-the-proportional-hazards-assumption"></a>
@@ -780,7 +808,7 @@ GLOBAL test supports this assumption.</p>
 <span><span class="co">#&gt; sex                 0.436  1 0.51</span></span>
 <span><span class="co">#&gt; GLOBAL              4.884  3 0.18</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/pkg/survminer/man/ggcoxzph.html" class="external-link">ggcoxzph</a></span><span class="op">(</span><span class="va">schoenfeld_test_adj</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="CRC_Virome_files/figure-html/plot-residuals-1.png" width="768" style="display: block; margin: auto;"></p>
+<p><img src="CRC_Virome_files/figure-html/plot-residuals-1.png" class="r-plt" width="768" style="display: block; margin: auto;"></p>
 <blockquote>
 <p><strong>Interpretation</strong>: The <code>cox.zph</code> test
 provides a formal statistical check. If the p-value for
@@ -830,7 +858,7 @@ helps keep the project alive and improving!</li>
 version and all attached packages.</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; R version 4.5.1 (2025-06-13 ucrt)</span></span>
+<span><span class="co">#&gt; R version 4.5.2 (2025-10-31 ucrt)</span></span>
 <span><span class="co">#&gt; Platform: x86_64-w64-mingw32/x64</span></span>
 <span><span class="co">#&gt; Running under: Windows 11 x64 (build 26200)</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -851,31 +879,32 @@ version and all attached packages.</p>
 <span><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
-<span><span class="co">#&gt; [1] cli_3.6.5         knitr_1.50        patchwork_1.3.1   survminer_0.5.1  </span></span>
-<span><span class="co">#&gt; [5] ggpubr_0.6.2      ggplot2_4.0.0     survival_3.8-3    dplyr_1.1.4      </span></span>
-<span><span class="co">#&gt; [9] OptSurvCutR_0.1.7</span></span>
+<span><span class="co">#&gt; [1] cli_3.6.5         knitr_1.50        patchwork_1.3.2   survminer_0.5.1  </span></span>
+<span><span class="co">#&gt; [5] ggpubr_0.6.2      ggplot2_4.0.1     survival_3.8-3    dplyr_1.1.4      </span></span>
+<span><span class="co">#&gt; [9] OptSurvCutR_0.1.9</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span><span class="co">#&gt;  [1] gtable_0.3.6       xfun_0.53          bslib_0.9.0        htmlwidgets_1.6.4 </span></span>
-<span><span class="co">#&gt;  [5] rstatix_0.7.3      lattice_0.22-7     vctrs_0.6.5        tools_4.5.1       </span></span>
-<span><span class="co">#&gt;  [9] generics_0.1.4     parallel_4.5.1     tibble_3.3.0       pkgconfig_2.0.3   </span></span>
-<span><span class="co">#&gt; [13] Matrix_1.7-3       data.table_1.17.8  RColorBrewer_1.1-3 S7_0.2.0          </span></span>
-<span><span class="co">#&gt; [17] desc_1.4.3         lifecycle_1.0.4    stringr_1.5.2      compiler_4.5.1    </span></span>
-<span><span class="co">#&gt; [21] farver_2.1.2       textshaping_1.0.1  codetools_0.2-20   carData_3.0-5     </span></span>
-<span><span class="co">#&gt; [25] litedown_0.7       htmltools_0.5.8.1  sass_0.4.10        yaml_2.3.10       </span></span>
-<span><span class="co">#&gt; [29] Formula_1.2-5      pillar_1.11.1      pkgdown_2.1.3      car_3.1-3         </span></span>
-<span><span class="co">#&gt; [33] jquerylib_0.1.4    tidyr_1.3.1        cachem_1.1.0       iterators_1.0.14  </span></span>
-<span><span class="co">#&gt; [37] rgenoud_5.9-0.11   abind_1.4-8        foreach_1.5.2      km.ci_0.5-6       </span></span>
-<span><span class="co">#&gt; [41] commonmark_2.0.0   tidyselect_1.2.1   digest_0.6.37      stringi_1.8.7     </span></span>
-<span><span class="co">#&gt; [45] purrr_1.1.0        labeling_0.4.3     splines_4.5.1      cowplot_1.2.0     </span></span>
-<span><span class="co">#&gt; [49] fastmap_1.2.0      grid_4.5.1         magrittr_2.0.4     broom_1.0.10      </span></span>
-<span><span class="co">#&gt; [53] withr_3.0.2        scales_1.4.0       backports_1.5.0    rmarkdown_2.30    </span></span>
-<span><span class="co">#&gt; [57] ggtext_0.1.2       gridExtra_2.3      ggsignif_0.6.4     ragg_1.4.0        </span></span>
-<span><span class="co">#&gt; [61] zoo_1.8-14         evaluate_1.0.5     KMsurv_0.1-6       doParallel_1.0.17 </span></span>
-<span><span class="co">#&gt; [65] markdown_2.0       survMisc_0.5.6     rlang_1.1.6        Rcpp_1.1.0        </span></span>
-<span><span class="co">#&gt; [69] gridtext_0.1.5     xtable_1.8-4       glue_1.8.0         xml2_1.4.0        </span></span>
-<span><span class="co">#&gt; [73] rstudioapi_0.17.1  jsonlite_2.0.0     R6_2.6.1           systemfonts_1.2.3 </span></span>
-<span><span class="co">#&gt; [77] fs_1.6.6</span></span></code></pre></div>
+<span><span class="co">#&gt;  [1] tidyselect_1.2.1   farver_2.1.2       S7_0.2.1           fastmap_1.2.0     </span></span>
+<span><span class="co">#&gt;  [5] srr_0.1.4.009      digest_0.6.38      lifecycle_1.0.4    magrittr_2.0.4    </span></span>
+<span><span class="co">#&gt;  [9] compiler_4.5.2     rlang_1.1.6        sass_0.4.10        rngtools_1.5.2    </span></span>
+<span><span class="co">#&gt; [13] tools_4.5.2        yaml_2.3.10        data.table_1.17.8  ggsignif_0.6.4    </span></span>
+<span><span class="co">#&gt; [17] labeling_0.4.3     doRNG_1.8.6.2      htmlwidgets_1.6.4  xml2_1.4.1        </span></span>
+<span><span class="co">#&gt; [21] RColorBrewer_1.1-3 abind_1.4-8        withr_3.0.2        purrr_1.2.0       </span></span>
+<span><span class="co">#&gt; [25] desc_1.4.3         grid_4.5.2         rgenoud_5.9-0.11   roxygen2_7.3.3    </span></span>
+<span><span class="co">#&gt; [29] xtable_1.8-4       scales_1.4.0       iterators_1.0.14   rmarkdown_2.30    </span></span>
+<span><span class="co">#&gt; [33] ragg_1.5.0         generics_0.1.4     rstudioapi_0.17.1  km.ci_0.5-6       </span></span>
+<span><span class="co">#&gt; [37] commonmark_2.0.0   cachem_1.1.0       stringr_1.6.0      splines_4.5.2     </span></span>
+<span><span class="co">#&gt; [41] parallel_4.5.2     survMisc_0.5.6     vctrs_0.6.5        Matrix_1.7-4      </span></span>
+<span><span class="co">#&gt; [45] jsonlite_2.0.0     carData_3.0-5      litedown_0.8       car_3.1-3         </span></span>
+<span><span class="co">#&gt; [49] rstatix_0.7.3      Formula_1.2-5      systemfonts_1.3.1  foreach_1.5.2     </span></span>
+<span><span class="co">#&gt; [53] tidyr_1.3.1        jquerylib_0.1.4    glue_1.8.0         pkgdown_2.2.0     </span></span>
+<span><span class="co">#&gt; [57] codetools_0.2-20   cowplot_1.2.0      ggtext_0.1.2       stringi_1.8.7     </span></span>
+<span><span class="co">#&gt; [61] gtable_0.3.6       tibble_3.3.0       pillar_1.11.1      htmltools_0.5.8.1 </span></span>
+<span><span class="co">#&gt; [65] R6_2.6.1           KMsurv_0.1-6       textshaping_1.0.4  doParallel_1.0.17 </span></span>
+<span><span class="co">#&gt; [69] evaluate_1.0.5     lattice_0.22-7     markdown_2.0       backports_1.5.0   </span></span>
+<span><span class="co">#&gt; [73] gridtext_0.1.5     broom_1.0.10       bslib_0.9.0        Rcpp_1.1.0        </span></span>
+<span><span class="co">#&gt; [77] gridExtra_2.3      xfun_0.54          fs_1.6.6           zoo_1.8-14        </span></span>
+<span><span class="co">#&gt; [81] pkgconfig_2.0.3</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -889,7 +918,7 @@ version and all attached packages.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

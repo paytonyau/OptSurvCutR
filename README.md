@@ -4,97 +4,77 @@
   [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
   [![Codecov](https://codecov.io/gh/paytonyau/OptSurvCutR/branch/main/graph/badge.svg)](https://app.codecov.io/gh/paytonyau/OptSurvCutR/new)
   [![License: GPL-3](https://img.shields.io/badge/License-GPL%203-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-<a href="https://www.buymeacoffee.com/payton.yau" target="_blank">
- <img src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=payton.yau&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff" alt="Buy Me A Coffee" width="95"></a>
   
-`OptSurvCutR` (Optimal Survival Cut-points) is an R package for optimising cut-points in survival analysis, designed for biostatisticians analysing time-to-event data with continuous predictors (e.g., virome abundances in TCGA datasets). It provides a robust workflow to determine the optimal number and location of cut-points, moving beyond median splits to capture non-linear relationships (e.g., U-shaped effects).
+`OptSurvCutR` (Optimal Survival Cut-points) is a validated workflow for finding the optimal number and location of cut-points in survival analysis. It sesigned for statisticians and researchers working with **time-to-event data** and **continuous predictors** (e.g., gene expression, virome abundance, biomarkers). Moves beyond arbitrary median splits to **data-driven, reproducible cut-points**.
 
 ## Why OptSurvCutR?
-- **Beyond Median Splits**: Identifies the optimal number and location of cut-points using AIC, AICc, or BIC, revealing complex predictor effects.
-- **Complete Workflow**: Integrates `find_cutpoint_number()`, `find_cutpoint()`, and `validate_cutpoint()` for end-to-end analysis.
-- **Flexible Algorithms**: Offers systematic grid search and genetic algorithms (via `rgenoud`) for efficient multi-cut optimisation.
-- **Robust Validation**: Assesses cut-point stability using bootstrap resampling, providing 95% confidence intervals to gauge reliability.
-- **User-Friendly**: Provides clear S3 methods (`print`, `summary`, `plot`) for easy interpretation of results.
+| Feature | Benefit |
+|-------|--------|
+| **Optimal number of cuts** | Uses AIC, AICc, or BIC to select 0–k cut-points |
+| **Flexible search** | Systematic grid or genetic algorithm (`rgenoud`) |
+| **Covariate adjustment** | Control for confounders in cut-point discovery |
+| **Bootstrap validation** | 95% CI for cut-point stability |
+| **Publication-ready plots** | Kaplan-Meier, optimisation curves, diagnostics |
 
 ## Installation
-You can install the development version of OptSurvCutR from GitHub. Note that the genetic algorithm (`method = "genetic"`) requires the `rgenoud` package, which should be installed separately from CRAN if you plan to use it.
+You can install the development version of `OptSurvCutR` from GitHub. Note that the genetic algorithm (`method = "genetic"`) requires the `rgenoud` package, which should be installed separately from CRAN if you plan to use it.
 ```r
 # Install dependencies
 install.packages(c("remotes", "rgenoud", "survival"))
 
-# Install OptSurvCutR
+# Install from GitHub (development version)
+if (!require("remotes")) install.packages("remotes")
 remotes::install_github("paytonyau/OptSurvCutR")
 ```
 
 ## Example: Quick Workflow with CRC Virome Data
 Here is a short example demonstrating the core workflow using the built-in colorectal cancer virome dataset.
 ```r
-# Load necessary packages
-library(OptSurvCutR); library(dplyr); library(survival)
+library(OptSurvCutR)
+library(dplyr)
+library(survival)
 
-# --- 1. Load and prepare the built-in CRC dataset ---
-data("crc_virome", package = "OptSurvCutR")
+# Load built-in TCGA colorectal cancer virome data
+data("crc_virome")
 
-# A quick preparation to make the status column numeric (0=LIVING, 1=DECEASED)
-crc_data <- crc_virome %>%
-  select(
-    time = time_months,
-    status_char = status,
-    Enterovirus
-  ) %>%
-  mutate(
-    status = as.numeric(substr(status_char, 1, 1))
-  ) %>%
-  # Remove any rows with missing data
+# Prepare data: select predictor, time, and event (status is already numeric 0/1)
+crc <- crc_virome %>%
+  select(time = time_months, status, Enterovirus) %>%
   na.omit()
 
-# --- 2. Find the optimal NUMBER of cut-points ---
-# We will test for 0, 1, or 2 cuts using a fast systematic search
-number_result <- find_cutpoint_number(
-  data = crc_data,
+# Step 1: How many cut-points are optimal?
+num_cuts <- find_cutpoint_number(
+  data = crc,
   predictor = "Enterovirus",
   outcome_time = "time",
   outcome_event = "status",
-  method = "systematic", # "systematic" is fast for a README
   max_cuts = 2,
-  nmin = 0.15, # Ensure groups have at least 15% of subjects
+  nmin = 0.15,
   seed = 42
 )
+print(num_cuts)
+# BIC suggests 2 cut-points
 
-print(number_result)
-
-# The BIC suggests 2 cut-points are optimal for this data.
-
-# --- 3. Find the optimal VALUE of those cut-points ---
-# We will find the locations for the 2 optimal cuts
-cutpoint_result <- find_cutpoint(
-  data = crc_data,
+# Step 2: Find the optimal cut-point values
+cuts <- find_cutpoint(
+  data = crc,
   predictor = "Enterovirus",
   outcome_time = "time",
   outcome_event = "status",
-  num_cuts = 2, # Use the result from the step above
+  num_cuts = 2,
   method = "systematic",
   nmin = 0.15,
   seed = 123
 )
 
-# --- 4. (Optional) Validate cut-point stability ---
-# This step runs a bootstrap and can take a few minutes.
-# It is recommended for a full analysis but can be skipped for a quick check.
-validation_result <- validate_cutpoint(
-  cutpoint_result = cutpoint_result,
-  num_replicates = 25, # Use >= 500 for a real analysis
-  seed = 456
-)
+# Step 3: Validate stability (bootstrap)
+val <- validate_cutpoint(cuts, num_replicates = 25, seed = 456)
+summary(val)
 
-summary(validation_result)
-
-# --- 5. Visualise the Result ---
-# The plot reveals three distinct risk groups (Low, Medium, High)
-# based on Enterovirus abundance.
-# We plot the 'validation_result', which shows the survival curves
-# using the original optimal cuts found in step 3.
-plot(validation_result, type = "outcome")
+# Step 4: Visualise the Result
+plot(val, type = "outcome")      # Kaplan-Meier
+plot(cuts)                       # Optimization curve
+plot_diagnostics(cuts)           # Schoenfeld residuals (PH check)
 ```
 
 ## Workflow Summary
@@ -105,8 +85,8 @@ OptSurvCutR provides a three-step workflow for cut-point analysis:
 3.  `validate_cutpoint()`: Assesses the *stability* of the identified cut-points via bootstrap resampling, providing 95% confidence intervals.
 ## Resources
 - **Vignettes**: See browseVignettes("OptSurvCutR") for detailed tutorials, including analyses of the germination and crc_virome datasets.
-- **Package Website**: Full function documentation and articles available at https://paytonyau.github.io/OptSurvCutR/ (or run pkgdown::build_site() locally).
-- **Manuscript**: Read the accompanying paper for methodological details and further case studies: Yau, Payton T. O. "OptSurvCutR: Validated Cut-point Selection for Survival Analysis." bioRxiv preprint, posted October 10, 2025. https://doi.org/10.1101/2025.10.08.681246.
+- **Package Website**: Full function documentation and articles available at https://paytonyau.github.io/OptSurvCutR/.
+- **Manuscript**: Yau, Payton T. O. "OptSurvCutR: Validated Cut-point Selection for Survival Analysis." bioRxiv preprint, posted October 10, 2025. https://doi.org/10.1101/2025.10.08.681246.
 - **NEWS.md**: See NEWS.md file for recent changes and version history.
 - **Code of Conduct**: Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By contributing to this project, you agree to abide by its terms.
 
