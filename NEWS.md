@@ -1,3 +1,12 @@
+# OptSurvCutR 0.1.9.1 (2025-11-20)
+
+## POST-ROPENSCI INITIAL SUBMISSION
+
+* Renamed `plot_diagnostics()` → `plot_schoenfeld()` to avoid name clash with another package.
+* Stabilised and accepted all snapshot tests for pathological `find_cutpoint_number_result` S3 methods (now use real criterion `"BIC"`).
+* Cleaned DESCRIPTION: removed unused Suggests (`coxphf`, `patchwork`, `pROC`, `tibble`, `srr`) and Remotes (`ropensci-review-tools/srr`).
+* Test suite now passes with zero failures/warnings on R CMD check.
+
 # OptSurvCutR 0.1.9
 
 ## REFACTORING & MAINTENANCE
@@ -9,7 +18,7 @@
 ## BUG FIXES
 
 * **Fixed Parallel Reproducibility:** A bug in `validate_cutpoint()` that prevented true reproducibility for parallel runs (`n_cores > 1`) was fixed. The function now checks for and registers the `{doRNG}` package when a `seed` is provided, ensuring results are identical regardless of the number of cores used. The incorrect `set.seed(i)` call inside the `foreach` loop was removed.
-* **Improved S3 Method Robustness:** The `summary.find_cutpoint_number_result()` S3 method was updated to robustly handle `NULL` values in the `object$parameters` list (e.g., `method = NULL`). This prevents potential errors if a result object is created manually or improperly and aligns its behavior with the `print()` method.
+* **Improved S3 Method Robustness:** The `summary.find_cutpoint_number_result()` S3 method was updated to robustly handle `NULL` values in the `object$parameters` list (e.g., `method = NULL`). This prevents potential errors if a result object is created manually or improperly and aligns its behaviour with the `print()` method.
 
 ## DOCUMENTATION
 

@@ -101,14 +101,16 @@ summary_table <- analysis_data %>%
     N_Seeds = n(),
     N_Germinated = sum(germinated),
     Germination_Rate_Pct = mean(germinated) * 100,
-    Avg_Time_to_Germinate_Days = mean(time[germinated == 1], na.rm = TRUE)
+    Avg_Time_to_Germinate_Days = mean(time[germinated == 1], 
+                                      na.rm = TRUE)
   ) %>%
   rename(`Temperature (°C)` = temperature)
 
 # Display the table using kable for nice formatting
 knitr::kable(summary_table,
-  digits = 2,
-  caption = "Summary of Germination Outcomes by Temperature Group"
+             digits = 2,
+             caption = 
+               "Summary of Germination Outcomes by Temperature Group"
 )
 ```
 
@@ -140,10 +142,6 @@ The function's behaviour is controlled by two key arguments: `method` and `crite
 We will use the `"genetic"` search method (suitable for potentially multiple cuts) and the  `"BIC"` criterion.
 
 ```{r find-number-BIC}
-# Set to TRUE if either building the pkgdown site OR running interactively.
-# This will be FALSE only for non-interactive builds (like CRAN).
-run_parallel_locally <- (Sys.getenv("PKGDOWN") == "TRUE") || interactive()
-
 # Step 1: Find the number of cut(s) using BIC
 number_result_bic <- find_cutpoint_number(
   data = analysis_data,
@@ -155,9 +153,6 @@ number_result_bic <- find_cutpoint_number(
   max_cuts = 5, # Test models with 0, 1, 2, 3, or 4 cuts
   nmin = 0.1, # Ensure groups have at least 10% of seeds
   maxiter = 10, # REDUCED for vignette speed; use >= 100 for real analysis
-  use_parallel = run_parallel_locally, # Set FALSE for CRAN only
-  n_cores = 6,
-  # covariates = "replicate", # Example: Adjust for experimental replicate
   seed = 42
 )
 
@@ -224,8 +219,7 @@ A key question is whether these cut-points are stable or just an artefact of our
 validation_result <- validate_cutpoint(
   cutpoint_result = multi_cut_result,
   num_replicates = 50, # REDUCED for vignette speed; use >= 500 for publication
-  use_parallel = run_parallel_locally, # Set FALSE for CRAN only
-  n_cores = 6,
+  n_cores = 1,
   seed = 456,
   maxiter = 10 # REDUCED; matches maxiter used in find_cutpoint
 )
@@ -267,10 +261,12 @@ This table shows which experimental temperatures were assigned to our four stati
 composition_table <- analysis_data %>%
   group_by(Temp_Group) %>%
   summarise(
-    Temperatures_in_Group = paste(sort(unique(temperature)), collapse = ", ")
-  )
+    Temperatures_in_Group = paste(sort(unique(temperature)), 
+                                  collapse = ", ")
+    )
 
-knitr::kable(composition_table, caption = "Composition of Temperature Groups")
+knitr::kable(composition_table, 
+             caption = "Composition of Temperature Groups")
 ```
 
 ### Plot A: Kaplan-Meier Curve by Optimal Groups
@@ -359,16 +355,6 @@ We encourage you to try `OptSurvCutR` with your own data.
 -   **Star the repository** if you find it useful.
 - Cite the package: Please cite the accompanying paper if you use OptSurvCutR in your research: Yau, Payton T. O. “OptSurvCutR: Validated Cut-point Selection for Survival Analysis.” bioRxiv preprint, posted October 18, 2025. https://doi.org/10.1101/2025.10.08.681246.
 - If you find OptSurvCutR useful for your research, please consider supporting its ongoing development and maintenance. Your contribution helps keep the project alive and improving!
-
-```{r support-me, eval = (Sys.getenv("PKGDOWN") == "true"), results = 'asis', echo = FALSE}
-cat('
-## Support OptSurvCutR
-If you find `OptSurvCutR` helpful in your survival analysis research, please consider supporting its ongoing development/maintanance without any dedicated funding. Your contribution, big or small, directly helps dedicate more time to keeping the project alive and improving.
-
-<a href="[https://www.buymeacoffee.com/payton.yau](https://www.buymeacoffee.com/payton.yau)" target="_blank">
- <img src="[https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=payton.yau&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=payton.yau&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff)" alt="Buy Me A Coffee" width="150"></a>
-')
-```
 
 ## 6. Session Information
 

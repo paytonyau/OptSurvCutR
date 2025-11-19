@@ -31,6 +31,7 @@ ORCID
 PLOS
 PanCancer
 Picornaviridae
+ROPENSCI
 ROpenSci
 Roxygen
 SRR
@@ -39,6 +40,7 @@ Schoenfeld
 Schwarz
 Sekhon
 Sghaier
+Surv
 TCGA
 Tarnawa
 Tidyverse
@@ -51,7 +53,6 @@ bde
 bdf
 bioRxiv
 biomarker's
-browseVignettes
 cBioPortal
 cb
 cba
@@ -60,7 +61,6 @@ cbf
 cec
 cf
 com
-crc
 cutoff
 cyclomatic
 dataset's
@@ -85,9 +85,10 @@ ggforest
 ggplot
 github
 gov
+imal
 int
+ival
 logrank
-md
 modeling
 napus
 ncbi
@@ -98,7 +99,6 @@ num
 org
 overfit
 paytonyau
-pkgdown
 popSize
 psex
 pubmed

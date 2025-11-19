@@ -7,7 +7,7 @@
 A data frame with patient data in rows and variables in columns:
 \describe{
   \item{sample_id}{Unique TCGA patient identifier (character).}
-  \item{time_months}{Overall survival time (months), censored at 60 mos. (numeric).}
+  \item{time_months}{Overall survival (months), censored 60 mos. (numeric).}
   \item{status}{Overall survival status: 1 = deceased, 0 = alive (integer).}
   \item{age}{Age at diagnosis (numeric).}
   \item{sex}{Sex of the patient (character).}

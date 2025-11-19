@@ -8,7 +8,7 @@ output:
     toc: true
     fig_caption: yes
 vignette: >
-  %\VignetteIndexEntry{Stratifying Colorectal Cancer Patients by Gut Enterovirus Abundance Demonstrating Covariate Adjustment}
+  %\VignetteIndexEntry{Stratifying Colorectal Cancer Patients by Gut Enterovirus Abundance}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -22,7 +22,7 @@ knitr::opts_chunk$set(
   fig.height = 5,
   fig.align = "center",
   warning = FALSE,
-  messsex = FALSE
+  message = FALSE
 )
 ```
 
@@ -69,7 +69,6 @@ library(OptSurvCutR)
 library(dplyr)
 library(survival)
 library(survminer) # For ggsurvplot, ggforest, ggcoxzph
-library(patchwork) # For combining plots
 library(ggplot2)
 library(knitr) # For kable()
 library(cli) # For enhanced messsexs
@@ -81,14 +80,11 @@ We define the name of the microbe/virus we wish to analyse upfront. Here, we sel
 
 ```{r configuration}
 # Define the biomarker of interest.
+# Define the biomarker of interest.
 microbe_name_to_analyze <- "Enterovirus"
 
 # Define covariates available in the crc_virome dataset
 covariates_to_adjust_for <- c("sex")
-
-# Set to TRUE if either building the pkgdown site OR running interactively.
-# This will be FALSE only for non-interactive builds (like CRAN).
-run_parallel_locally <- (Sys.getenv("PKGDOWN") == "TRUE") || interactive()
 ```
 
 ------------------------------------------------------------------------
@@ -157,9 +153,7 @@ number_result_unadj <- find_cutpoint_number(
   method = "genetic",
   criterion = "BIC",
   max_cuts = 4, # Test 0-3 cuts
-  nmin = 0.15, # Min 15% per group
-  use_parallel = run_parallel_locally, # Set FALSE for CRAN only
-  n_cores = 6,
+  nmin = 0.1, # Min 10% per group
   seed = 42
 )
 ```
@@ -174,10 +168,8 @@ number_result_adj <- find_cutpoint_number(
   method = "genetic",
   criterion = "BIC",
   max_cuts = 4, # Test 0-3 cuts
-  nmin = 0.15,
+  nmin = 0.1,
   covariates = covariates_to_adjust_for, # ADDED COVARIATES
-  use_parallel = run_parallel_locally, # Set FALSE for CRAN only
-  n_cores = 6,
   seed = 43 # Use a different seed
 )
 ```
@@ -194,8 +186,9 @@ plot_num_adj <- plot(number_result_adj) +
   )) +
   theme(plot.title = element_text(size = 14))
 
-# Show plots side-by-side
-print(plot_num_unadj + plot_num_adj)
+# Show plots sequentially (removing patchwork dependency)
+print(plot_num_unadj)
+print(plot_num_adj)
 ```
 > **Interpretation:** We compare the BIC plots and optimal number of cuts from both the unadjusted and adjusted analyses. In this example, both might suggest 2 cut-points (3 groups) remain optimal even after adjusting for sex. If the optimal number changed significantly after adjustment, it might suggest the biomarker's grouping effect is partly confounded. We proceed using the optimal number suggested by the adjusted analysis.
 
@@ -216,7 +209,7 @@ cutpoint_result_unadj <- find_cutpoint(
   method = "genetic",
   criterion = "logrank",
   num_cuts = optimal_n_cuts_unadj,
-  nmin = 0.15,
+  nmin = 0.1,
   seed = 123
 )
 
@@ -238,7 +231,7 @@ cutpoint_result_adj <- find_cutpoint(
   method = "genetic",
   criterion = "logrank",
   num_cuts = optimal_n_cuts_adj,
-  nmin = 0.15,
+  nmin = 0.1,
   covariates = covariates_to_adjust_for,
   seed = 124 # Different seed
 )
@@ -263,7 +256,9 @@ plot_dist_adj <- plot(cutpoint_result_adj,
     paste(covariates_to_adjust_for, collapse = ", "), ")"
   ))
 
-print(plot_dist_unadj + plot_dist_adj)
+# Show plots sequentially
+print(plot_dist_unadj)
+print(plot_dist_adj)
 ```
 
 > **Interpretation**: We compare the optimal cut-point locations found with and without covariate adjustment. If the cut-points shift substantially after adjustment, it suggests the covariates influenced the optimal thresholds. If they remain similar, it strengthens the evidence for the biomarker's independent grouping effect. We will use the adjusted cut-points for the subsequent validation and final modeling.
@@ -275,15 +270,10 @@ print(plot_dist_unadj + plot_dist_adj)
 This is a crucial step to assess how reliable our discovered cut-points are. We use `validate_cutpoint()` to run a **bootstrap analysis**. This re-runs the `find_cutpoint()` algorithm many times on resampled data to see how much the optimal cut-points vary.
 
 ```{r validate-cuts}
-# Set to TRUE if either building the pkgdown site OR running interactively.
-# This will be FALSE only for non-interactive builds (like CRAN).
-run_parallel_locally <- (Sys.getenv("PKGDOWN") == "TRUE") || interactive()
-
 validation_result_adj <- validate_cutpoint(
   cutpoint_result = cutpoint_result_adj, # Use ADJUSTED result
   num_replicates = 25, # REDUCED for vignette speed; use >= 500
-  use_parallel = run_parallel_locally, # Set FALSE for CRAN only
-  n_core = 6,
+  n_cores = 1,
   seed = 456
   # Note: validate_cutpoint implicitly uses the covariates from cutpoint_result_adj
 )
@@ -465,15 +455,6 @@ We encoursex you to try `OptSurvCutR` with your own data.
 -   **Star the repository** if you find it useful.
 - Cite the package: Please cite the accompanying paper if you use OptSurvCutR in your research: Yau, Payton T. O. “OptSurvCutR: Validated Cut-point Selection for Survival Analysis.” bioRxiv preprint, posted October 18, 2025. https://doi.org/10.1101/2025.10.08.681246.
 - If you find OptSurvCutR useful for your research, please consider supporting its ongoing development and maintenance. Your contribution helps keep the project alive and improving!
-
-```{r support-me, eval = (Sys.getenv("PKGDOWN") == "TRUE") || interactive(), results = 'asis', echo = FALSE}
-cat('
-## Support OptSurvCutR
-If you find `OptSurvCutR` helpful in your survival analysis research, please consider supporting its ongoing development/maintanance without any dedicated funding. Your contribution, big or small, directly helps dedicate more time to keeping the project alive and improving.
-
-<a href="[https://www.buymeacoffee.com/payton.yau](https://www.buymeacoffee.com/payton.yau)" target="_blank">
- <img src="[https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=payton.yau&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=payton.yau&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff)" alt="Buy Me A Coffee" width="150"></a>
-')
 ```
 
 ------------------------------------------------------------------------

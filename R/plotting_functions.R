@@ -163,7 +163,7 @@ plot_optimization_curve <- function(cutpoint_result) {
 #' )
 #'
 #' if (!any(is.na(fit$optimal_cuts))) {
-#'   plot_diagnostics(fit)
+#'   plot_schoenfeld(fit)
 #' }
 #'
 #' @references
@@ -176,7 +176,7 @@ plot_optimization_curve <- function(cutpoint_result) {
 #' @importFrom cli cli_inform cli_abort
 #' @importFrom stats as.formula
 #' @export
-plot_diagnostics <- function(x, ...) {
+plot_schoenfeld <- function(x, ...) {
   if (!inherits(x, "find_cutpoint")) {
     cli::cli_abort("Input must be a {.cls find_cutpoint} object.")
   }
