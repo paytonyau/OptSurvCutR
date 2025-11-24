@@ -1,0 +1,10 @@
+pandoc: 3.6.3
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  CRC_Virome: CRC_Virome.html
+  Germination: Germination.html
+last_built: 2025-11-24T16:31Z
+urls:
+  reference: https://paytonyau.github.io/OptSurvCutR/reference
+  article: https://paytonyau.github.io/OptSurvCutR/articles

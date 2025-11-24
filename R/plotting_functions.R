@@ -15,11 +15,9 @@
 #' .
 #' @srrstats {G2.0} Input object class validated with `inherits()`.
 #' @srrstats {G2.1} Input types validated.
-#' @srrstats {G2.13} Missing/empty `all_stats` triggers `cli_abort()`.
-#' @srrstats {G2.14a} `NA` in `optimal_cuts` handled in subtitle.
-#' @srrstats {G3.1} Diagnostic plot for systematic search.
+#' @srrstats {RE6.0} Plot method provided for visualising search results.
+#' @srrstats {RE6.2} Visualises statistic (proxy for fit) vs cut-point.
 #' @srrstats {G5.2} Graceful handling of failed/NA results.
-#' @srrstats {G5.2b} Non-fatal messages if plot cannot be produced.
 #'
 #' @param cutpoint_result A `find_cutpoint` object
 #'   (`method = "systematic"`, `num_cuts = 1`).
@@ -39,7 +37,7 @@
 #' )
 #'
 #' if (!any(is.na(fit$optimal_cuts))) {
-#'   plot_optimization_curve(fit)
+#'   plot_optimisation_curve(fit)
 #' }
 #'
 #' @references
@@ -53,7 +51,7 @@
 #' @importFrom cli cli_abort
 #' @importFrom tools toTitleCase
 #' @export
-plot_optimization_curve <- function(cutpoint_result) {
+plot_optimisation_curve <- function(cutpoint_result) {
   if (!inherits(cutpoint_result, "find_cutpoint")) {
     cli::cli_abort(
       "Input must be an object from the {.fn find_cutpoint} function."
@@ -136,15 +134,11 @@ plot_optimization_curve <- function(cutpoint_result) {
 #'
 #' @section srrstats compliance:
 #' .
-#' @srrstats {G3.1a} Provides diagnostic residual plot (Schoenfeld)
-#'   for Cox PH assumption.
+#' @srrstats {RE6.3} Provides diagnostic residual plot (Schoenfeld).
 #' @srrstats {G5.2} Graceful handling when no valid cut-points exist.
 #' @srrstats {G5.2b} Non-fatal informative message when Cox model fails.
 #' @srrstats {G2.0} Input object class validated with `inherits()`.
-#' @srrstats {G2.13} Uses `cli_inform()` for non-error user feedback.
-#' @srrstats {RE3.1} Provides a visual check of statistical assumptions
-#' (Schoenfeld residuals) for the Cox model.
-#' @srrstats {RE6.1} Includes global Schoenfeld test p-value in plot.
+#' @srrstats {RE1.4} Visual check of PH assumption via residuals.
 #'
 #' @param x A `find_cutpoint` result object.
 #' @param ... Additional arguments passed to `survminer::ggcoxzph()`.
@@ -163,7 +157,7 @@ plot_optimization_curve <- function(cutpoint_result) {
 #' )
 #'
 #' if (!any(is.na(fit$optimal_cuts))) {
-#'   plot_schoenfeld(fit)
+#'   plot_cutpoint_residuals(fit)
 #' }
 #'
 #' @references
@@ -176,7 +170,7 @@ plot_optimization_curve <- function(cutpoint_result) {
 #' @importFrom cli cli_inform cli_abort
 #' @importFrom stats as.formula
 #' @export
-plot_schoenfeld <- function(x, ...) {
+plot_cutpoint_residuals <- function(x, ...) {
   if (!inherits(x, "find_cutpoint")) {
     cli::cli_abort("Input must be a {.cls find_cutpoint} object.")
   }

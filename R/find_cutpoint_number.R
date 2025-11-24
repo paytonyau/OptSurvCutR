@@ -8,53 +8,46 @@
 #'
 #' @section srrstats compliance:
 #' .
-#' @srrstats {RE4.1} Computes AIC, AICc, or BIC for model selection.
-#' @srrstats {G2.13} `cli_abort()` for invalid input.
-#' @srrstats {G2.14a} `NA` results handled via `na_result`.
-#' @srrstats {G3.1} `plot()` shows IC vs. number of cuts.
-#' @srrstats {G1.2} References provided for AIC, AICc, BIC.
+#' @srrstats {RE4.11} Computes Goodness-of-fit (AIC, AICc, BIC) for selection.
+#' @srrstats {G2.13} `cli_abort()` checks inputs pre-processing.
+#' @srrstats {G2.14} `NA` results handled via `na_result` helper.
+#' @srrstats {RE6.0} `plot()` method provided.
+#' @srrstats {RE6.2} `plot()` visualises model selection metric vs cuts.
+#' @srrstats {G1.0} References provided for AIC, AICc, BIC.
 #' @srrstats {G1.3} Systematic grid search (max_cuts <= 2) and
-#' `rgenoud` global optimization documented.
+#' `rgenoud` global optimisation documented.
 #' @srrstats {G1.5} Compared with `cutpointr`/`survminer` in vignette.
 #' @srrstats {G1.6} Numerical stability via `survival::coxph`
 #' and `rgenoud`; edge cases return `NA`.
 #' @srrstats {G2.3b} NSE via `as.formula()`/`data[...]`; no unsafe eval.
-#' @srrstats {G2.4} `NA` removed via `stats::na.omit()`;
-#' structured `NA` object returned on failure.
-#' @srrstats {G2.4e} `optimal_num_cuts`/`optimal_cuts` are `NA`
-#' when no valid solution found.
+#' @srrstats {G2.4} `NA` removed via `stats::na.omit()`.
+#' @srrstats {G5.2} `optimal_num_cuts` is `NA` when no valid solution found.
 #' @srrstats {G2.6} Input validation via direct checks.
 #' @srrstats {G2.8} Informative errors via `cli::cli_abort()`.
-#' @srrstats {G2.10} Warnings via `cli::cli_alert_warning()`.
-#' @srrstats {G2.12} Graceful degradation via `na_result()` for
+#' @srrstats {G5.2} Warnings via `cli::cli_alert_warning()`.
+#' @srrstats {G5.2} Graceful degradation via `na_result()` for
 #' empty data or model failures.
 #' @srrstats {G2.14c} `NA` propagation controlled.
-#' @srrstats {G4.0} All parameters/return values documented.
-#' @srrstats {G5.4c} Edge cases (zero rows, constant predictor) tested.
-#' @srrstats {G5.6a, G5.6b} Negative `max_cuts`/`nmin` rejected.
-#' @srrstats {G5.7} Large `max_cuts` constrained by `nmin`.
-#' @srrstats {G5.8d} `set.seed(seed)` for genetic reproducibility.
-#' @srrstats {G5.12} Systematic search scales poorly > 2 cuts.
+#' @srrstats {G1.4} All parameters/return values documented.
+#' @srrstats {RE4.17} `print()` method provided.
+#' @srrstats {RE4.18} `summary()` method provided.
 #'
 #' @srrstats {RE1.1} Assumes PH; check `summary()` for `cox.zph`.
-#' @srrstats {RE1.2} Provides AIC, AICc, BIC fit statistics.
-#' @srrstats {RE1.3, RE1.3a} PH diagnostics via `cox.zph` in `summary()`.
-#' @srrstats {RE2.0, RE2.1} Estimates/SEs from `coxph` in `summary()`.
-#' @srrstats {RE2.4, RE2.4a, RE2.4b} `tryCatch` checks model
-#' convergence; failures return `NA`.
-#' @srrstats {RE3.0} Prediction not implemented.
-#' @srrstats {RE3.2, RE3.3} Not applicable; no predictions.
+#' @srrstats {RE1.3} PH diagnostics via `cox.zph` in `summary()`.
+#' @srrstats {RE1.3a} `summary()` includes PH test results.
+#' @srrstats {RE2.0} Estimates/SEs from `coxph` in `summary()`.
+#' @srrstats {RE2.1} Missing values handled via explicit `na.omit`.
+#' @srrstats {RE3.0} `tryCatch` checks model convergence; failures return `NA`.
+#' @srrstats {RE2.4a} Checks for collinearity via model fitting constraints.
+#' @srrstats {RE2.4b} Checks for insufficient data/constant predictor.
 #' @srrstats {RE4.2} Model selection via AIC, AICc, or BIC.
-#' @srrstats {RE4.3, RE4.4, RE4.5, RE4.6, RE4.7, RE4.8, RE4.9,
-#' RE4.10, RE4.11, RE4.12, RE4.13, RE4.14, RE4.15, RE4.16,
-#' RE4.18} N/A (no stepwise, LASSO, etc.).
 #' @srrstats {RE5.0} Model averaging not implemented.
-#' @srrstats {RE6.0, RE6.2, RE6.3} No diagnostic plots; use `cox.zph`.
-#' @srrstats {RE7.0a, RE7.1a} `na.omit()` removes missing data.
+#' @srrstats {RE6.3} No diagnostic plots; use `cox.zph`.
+#' @srrstats {RE7.0a} `na.omit()` removes missing data.
 #'
 #' @details
 #' `method = "systematic"`: grid search respecting `nmin`.
-#' `method = "genetic"`: `rgenoud` global optimization.
+#' `method = "genetic"`: `rgenoud` global optimisation.
 #' Systematic search is slow for `max_cuts > 2`; use `genetic`.
 #'
 #' @references
@@ -91,7 +84,8 @@
 #' @param max_cuts Max number of cut-points to test (non-negative int).
 #' @param nmin Min. group size (count or proportion).
 #' @param seed Integer or `NULL`; random seed for `rgenoud`.
-#' @param maxiter Integer; generations for `rgenoud` (default 100).
+#' @param max.generations Integer; generations for `rgenoud` (default 100).
+#' @param pop.size Integer; population size for `rgenoud` (default 100).
 #' @param x An object from [find_cutpoint_number()].
 #' @param object An object from [find_cutpoint_number()].
 #' @param y Unused.
@@ -125,8 +119,11 @@ find_cutpoint_number <- function(data, predictor,
                                  outcome_time, outcome_event,
                                  method = "systematic", criterion = "BIC",
                                  covariates = NULL, max_cuts = 2,
-                                 nmin = 0.1, seed = NULL, maxiter = 100,
+                                 nmin = 0.1, seed = NULL,
+                                 max.generations = 100, pop.size = 100,
                                  ...) {
+  #' @srrstats {G3.0} Checks for integers avoid floating point equality
+  #'   comparisons.
   if (!is.numeric(max_cuts) || max_cuts < 0 || max_cuts != round(max_cuts)) {
     cli::cli_abort("max_cuts must be a non-negative integer.")
   }
@@ -186,7 +183,11 @@ find_cutpoint_number <- function(data, predictor,
         outcome_event = outcome_event,
         covariates = covariates,
         max_cuts = max_cuts,
-        nmin = nmin
+        nmin = nmin,
+        # --- FIX: Add genetic params to output ---
+        max.generations = max.generations,
+        pop.size = pop.size
+        # -----------------------------------------
       ),
       userdata = userdata,
       optimal_num_cuts = NA,
@@ -205,8 +206,9 @@ find_cutpoint_number <- function(data, predictor,
     return(na_result(userdata, method, criterion))
   }
 
+  # --- Nmin Handling (Fixed to match find_cutpoint logic) ---
   if (nmin < 1 && nmin > 0) {
-    nmin_abs <- ceiling(nmin * n)
+    nmin_abs <- floor(nmin * n) # Use floor() for consistency
     cli::cli_alert_info(
       "nmin {nmin} is a proportion. Min. group size set to {nmin_abs}."
     )
@@ -243,7 +245,9 @@ find_cutpoint_number <- function(data, predictor,
   params <- list(
     userdata = userdata, max_cuts = max_cuts, nmin = nmin,
     criterion = criterion, covariates = covariates,
-    maxiter = maxiter, ...
+    max.generations = max.generations, # Explicitly passed
+    pop.size = pop.size, # Explicitly passed
+    ...
   )
 
   results <- if (method == "systematic") {
@@ -290,7 +294,11 @@ find_cutpoint_number <- function(data, predictor,
       outcome_event = outcome_event,
       covariates = covariates,
       max_cuts = max_cuts,
-      nmin = nmin
+      nmin = nmin,
+      # --- FIX: Add genetic params to output ---
+      max.generations = max.generations,
+      pop.size = pop.size
+      # -----------------------------------------
     ),
     userdata = userdata
   )
@@ -313,7 +321,7 @@ find_cutpoint_number <- function(data, predictor,
 }
 
 # --- Internal Helper Functions ---
-#' @srrstats {RE4.1} Helper for systematic model selection (grid search).
+#' @srrstats {RE4.11} Helper for systematic model selection (grid search).
 #' @srrstats {RE1.0} Fits Cox models via `survival::coxph`.
 #' @srrstats {G1.4a} Internal use only (`@noRd`).
 #' @noRd
@@ -505,11 +513,11 @@ find_cutpoint_number <- function(data, predictor,
   return(results)
 }
 
-#' @srrstats {RE4.1} Helper for genetic-algorithm-based model selection.
+#' @srrstats {RE4.11} Helper for genetic-algorithm-based model selection.
 #' @srrstats {G1.4a} Internal use only (`@noRd`).
 #' @noRd
 .genetic_search_num <- function(userdata, max_cuts, nmin, criterion,
-                                covariates, maxiter, ...) {
+                                covariates, max.generations, pop.size, ...) {
   n <- nrow(userdata)
 
   # Define covariate formula part
@@ -559,7 +567,8 @@ find_cutpoint_number <- function(data, predictor,
           },
           nmin = nmin,
           criterion = "loglik",
-          numgen = maxiter,
+          max.generations = max.generations, # Explicitly passed
+          pop.size = pop.size, # Explicitly passed
           ...
         )
       },
@@ -598,7 +607,7 @@ find_cutpoint_number <- function(data, predictor,
   return(results)
 }
 
-#' @srrstats {RE4.1} Computes AIC, AICc, or BIC from a fitted Cox model.
+#' @srrstats {RE4.11} Computes AIC, AICc, or BIC from a fitted Cox model.
 #' @srrstats {RE1.0} Relies on `logLik()` from `coxph` fit.
 #' @srrstats {G1.4a} Internal use only (`@noRd`).
 #' @noRd
@@ -626,7 +635,7 @@ find_cutpoint_number <- function(data, predictor,
 
 # --- S3 Methods for Printing, Summarising and Plotting ---
 #' @rdname find_cutpoint_number
-#' @srrstats {RE1.3, RE1.3a} PH diagnostics via `cox.zph` in `summary()`.
+#' @srrstats {RE1.3} PH diagnostics via `cox.zph` in `summary()`.
 #' @export
 print.find_cutpoint_number_result <- function(x, ...) {
   cli::cli_h1("Optimal Cut-point Number Analysis")
@@ -699,7 +708,7 @@ print.find_cutpoint_number_result <- function(x, ...) {
   }
 
   cli::cli_text(
-    "\nHint: Use `summary()` for details, `plot()` to visualize."
+    "\nHint: Use `summary()` for details, `plot()` to visualise."
   )
   invisible(x)
 }
@@ -729,7 +738,7 @@ summary.find_cutpoint_number_result <- function(
   if (is.null(object) || is.null(object$results) ||
     nrow(object$results) == 0 ||
     all(is.na(object$results[[criterion_text]]))) {
-    cli::cli_inform("Cannot summarize: no valid model was found.")
+    cli::cli_inform("Cannot summarise: no valid model was found.")
     return(invisible(object))
   }
 

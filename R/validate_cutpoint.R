@@ -17,39 +17,21 @@
 #' @srrstats {G2.1} Input types validated (`numeric`, `logical`, `integer`).
 #' @srrstats {G2.1a} `cutpoint_result` needs `optimal_cuts`, `parameters`.
 #' @srrstats {G2.2} `NA` in `optimal_cuts` triggers `cli_abort()`.
-#' @srrstats {G2.3} `na.omit()` used in CI calculation.
-#' @srrstats {G2.3a} `complete.cases()` for replicate counting.
+#' @srrstats {RE2.1} `na.omit()` and `complete.cases()` used for replicate handling.
 #' @srrstats {G2.4a} `as.integer()` on `nmin`, `num_replicates`.
-#' @srrstats {G2.4d} `tryCatch()` on each bootstrap replicate.
-#' @srrstats {G2.5} `NA` results from failed replicates preserved.
-#' @srrstats {G2.11} `seed` controls randomness.
-#' @srrstats {G2.13} `cli_abort()` for invalid input.
+#' @srrstats {G5.2} `tryCatch()` handles failed replicates gracefully.
+#' @srrstats {G5.5} Reproducible via `seed` (using `doRNG` for parallel).
+#' @srrstats {G2.13} `cli_abort()` for invalid inputs or missing data.
 #' @srrstats {G2.14a} `NA` in `optimal_cuts` aborts.
-#' @srrstats {G2.14b} No imputation; fails fast.
-#' @srrstats {G2.16} Accepts `data.frame` and `tibble`.
-#' @srrstats {G5.0} Edge-case tests recommended.
-#' @srrstats {G5.1} Documentation includes edge-case behaviour.
-#' @srrstats {G5.2} Handles failed replicates gracefully.
-#' @srrstats {G5.2a} Handles <20 successful replicates.
-#' @srrstats {G5.2b} Handles 0 successful replicates.
-#' @srrstats {G5.3} Warns on low success rate (<80%).
-#' @srrstats {G5.4} Checks `n < nmin * (num_cuts + 1)`.
-#' @srrstats {G5.4a} `nmin` default = 90% of original.
-#' @srrstats {G5.5} Reproducible via `seed`.
-#' @srrstats {G5.6} Optional parallel via `doParallel`.
-#' @srrstats {G5.9} Output includes `bootstrap_distribution`.
-#' @srrstats {G5.9a} `confidence_intervals` as data frame.
-#' @srrstats {G5.9b} `boot_summary` with mean, SD, median, IQR.
-#' @srrstats {G5.10} `print()` shows CI and success rate.
-#' @srrstats {G5.11} `summary()` shows descriptives, CI, params.
-#' @srrstats {G5.11a} `plot()` shows density + CI.
-#' @srrstats {RE7.0} Implements bootstrap resampling.
-#' @srrstats {RE7.1} Assesses cut-point stability.
-#' @srrstats {RE7.2} Returns full bootstrap distribution.
-#' @srrstats {RE7.3} Output retains original cut-points.
-#' @srrstats {RE7.4} `parameters` list includes all settings.
-#' @srrstats {G3.0} S3 plot method for bootstrap distribution.
-#' @srrstats {G3.1} Diagnostic plot of bootstrap distribution.
+#' @srrstats {G2.7} Accepts `data.frame` and `tibble` (validated via inherits).
+#' @srrstats {G5.2a} Handles <20 successful replicates with error.
+#' @srrstats {G5.8} Edge cases (insufficient n) checked pre-bootstrap.
+#' @srrstats {RE4.0} Returns class `validate_cutpoint_result`.
+#' @srrstats {RE4.3} Computes 95% Confidence Intervals via bootstrapping.
+#' @srrstats {RE4.17} `print()` method provided.
+#' @srrstats {RE4.18} `summary()` method provided.
+#' @srrstats {RE6.0} `plot()` method provided.
+#' @srrstats {RE1.3} Output retains original cut-points and parameters.
 #'
 #' @param cutpoint_result An object from [find_cutpoint()].
 #' @param num_replicates Number of bootstrap replicates. Default is 500.
@@ -59,7 +41,7 @@
 #' @param nmin Minimum group size for bootstrap runs. Defaults to 90%
 #' of original `nmin` to reduce failures.
 #' @param ... Additional arguments passed to [find_cutpoint()]
-#' (e.g., `popSize`, `maxiter` for genetic algorithm).
+#' (e.g., `pop.size`, `max.generations` for genetic algorithm).
 #'
 #' @return An object of class `validate_cutpoint_result` with
 #' original cuts, 95% CIs, bootstrap distribution, and parameters.
@@ -135,6 +117,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   method <- original_params$method
   criterion <- original_params$criterion
   covariates <- original_params$covariates
+
   # --- Default nmin: 90% of original ---
   if (is.null(nmin)) {
     original_nmin_param <- original_params$nmin
@@ -145,16 +128,33 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
       nmin <- floor(0.9 * original_nmin_param)
     }
     if (nmin < 1) nmin <- 1
-    cli::cli_alert_info("Bootstrap `nmin` not set, defaulting to: {nmin}")
+    cli::cli_alert_info(paste(
+      "Bootstrap `nmin` not set.",
+      "Using {nmin} (90% of original) to improve stability."
+    ))
   }
-  if (!is.numeric(nmin) || nmin < 1) {
-    cli::cli_abort("`nmin` must be a positive integer.")
+
+  # --- Handle nmin as integer or proportion (Consistent with other funcs) ---
+  if (nmin > 0 && nmin < 1) {
+    nmin_abs <- floor(nmin * n)
+    if (nmin_abs < 1) nmin_abs <- 1
+    cli::cli_alert_info(
+      "nmin {nmin} is a proportion. Bootstrap group size set to {nmin_abs}."
+    )
+    nmin <- nmin_abs
+  } else if (nmin >= 1) {
+    nmin <- floor(nmin)
+  } else {
+    cli::cli_abort("`nmin` must be a positive number.")
   }
+
+  # --- Check constraints ---
   if (n < nmin * (num_cuts + 1)) {
     cli::cli_abort(
       "Not enough data ({n}) for nmin ({nmin}) and {num_cuts} cut(s)."
     )
   }
+
   cli::cli_alert_info(paste(
     "Validating {num_cuts} cut(s) from '{method}' search",
     "using '{criterion}'."
@@ -178,14 +178,12 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
         "Running {num_replicates} replicates on {cores_to_use} core{?s}..."
       )
 
-      # --- MODIFICATION 1: Add check for doRNG for reproducible parallel ---
       if (!is.null(seed)) {
         if (!requireNamespace("doRNG", quietly = TRUE)) {
           cli::cli_abort(
             "Package 'doRNG' is required for reproducible parallel."
           )
         }
-        # --- MODIFICATION 2: Register the doRNG backend ---
         doRNG::registerDoRNG()
       }
     } else {
@@ -204,29 +202,23 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     pb <- cli::cli_progress_bar("Bootstrapping", total = num_replicates)
   }
 
-  # --- MODIFICATION 4: Removed brittle 'functions_to_export' logic ---
-  # The .packages = "OptSurvCutR" argument handles this correctly
-  # by loading the *installed* package in each worker.
-
   i <- NULL
   bootstrap_results <- foreach::foreach(
     i = 1:num_replicates,
     .combine = "rbind",
     .packages = "OptSurvCutR",
     .errorhandling = "pass"
-    # .export argument is no longer needed
   ) %dopar% {
     if (cores_to_use == 1) {
       cli::cli_progress_update(id = pb)
     }
 
-    # --- MODIFICATION 3: Removed set.seed(i) from inside the loop ---
-    # This is now handled by doRNG (if seed is set) or
-    # left to the default parallel RNG (if seed is NULL).
-
     boot_indices <- sample(1:n, n, replace = TRUE)
     boot_data <- original_data[boot_indices, ]
+
+    # Pass ... which now contains max.generations / pop.size
     extra_args <- list(...)
+
     final_args <- c(
       list(
         data = boot_data,
@@ -339,7 +331,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
 #' @param x An object of class `validate_cutpoint_result`.
 #' @param ... Unused.
 #' @rdname validate_cutpoint
-#' @srrstats {G5.10} `print()` shows CI and success rate.
+#' @srrstats {RE4.17} `print()` shows CI and success rate.
 #' @export
 print.validate_cutpoint_result <- function(x, ...) {
   cat("Cut-point Stability Analysis (Bootstrap)\n")
@@ -374,14 +366,12 @@ print.validate_cutpoint_result <- function(x, ...) {
   numeric_cols <- vapply(summary_df, is.numeric, FUN.VALUE = logical(1))
   summary_df[, numeric_cols] <- round(summary_df[, numeric_cols], 3)
   print(summary_df)
-  cat("\nHint: Use `summary()` or `plot()` to visualize stability.\n")
+  cat("\nHint: Use `summary()` or `plot()` to visualise stability.\n")
 }
 #' @rdname validate_cutpoint
 #' @importFrom ggplot2 ggplot aes .data geom_density geom_vline
 #' @importFrom ggplot2 labs theme_minimal facet_wrap
-#' @srrstats {G3.0} S3 plot method for bootstrap distribution.
-#' @srrstats {G3.1} Diagnostic plot of bootstrap distribution.
-#' @srrstats {G5.11a} `plot()` shows density + CI.
+#' @srrstats {RE6.0} Plot method provided for bootstrap distribution.
 #' @export
 plot.validate_cutpoint_result <- function(x, ...) {
   dist_data <- x$bootstrap_distribution
@@ -438,7 +428,7 @@ plot.validate_cutpoint_result <- function(x, ...) {
 #' @param show_params Logical. Show validation run parameters?
 #' @param plot.it Logical. Display the density plot?
 #' @rdname validate_cutpoint
-#' @srrstats {G5.11} `summary()` shows descriptives, CI, params.
+#' @srrstats {RE4.18} `summary()` shows descriptives, CI, params.
 #' @export
 summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE,
                                              show_ci = TRUE, show_params = TRUE,

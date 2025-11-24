@@ -1,3 +1,24 @@
+# OptSurvCutR 0.1.9.2 (2025-11-25)
+
+## ROPENSCI REVIEW UPDATES (ITERATION 2)
+
+### BREAKING CHANGES
+* **Renamed Functions:** `plot_optimization_curve()` $\to$ `plot_optimisation_curve()` (British English) and `plot_schoenfeld()` $\to$ `plot_cutpoint_residuals()` (Namespace conflict).
+* **Renamed Argument:** `maxiter` is now `max.generations` in genetic algorithm functions to match `rgenoud`.
+
+### IMPROVEMENTS
+* **Explicit Parameters:** Exposed `pop.size` and `max.generations` as explicit arguments in `find_cutpoint()` and `find_cutpoint_number()`.
+* **Consistent Logic:** All functions now use `floor()` for `nmin` calculation to ensure identical sample size handling.
+* **Better Validation:** `validate_cutpoint()` now accepts `nmin` as a proportion and issues an informative message when using the default 90% buffer (Standard G2.10).
+* **Internal Cleanup:** Removed export of helper operator `%||%`.
+
+### DOCUMENTATION & STANDARDS
+* **British English:** Standardised all functions and documentation (e.g., "optimise", "summarise").
+* **Standards Compliance:** Audited and updated all `@srrstats` tags; moved non-applicable standards to `R/OptSurvCutR-package.R`.
+* **Testing:** Added tests for new genetic parameters and updated snapshot tests for S3 methods.
+
+---
+
 # OptSurvCutR 0.1.9.1 (2025-11-20)
 
 ## POST-ROPENSCI INITIAL SUBMISSION
@@ -6,6 +27,8 @@
 * Stabilised and accepted all snapshot tests for pathological `find_cutpoint_number_result` S3 methods (now use real criterion `"BIC"`).
 * Cleaned DESCRIPTION: removed unused Suggests (`coxphf`, `patchwork`, `pROC`, `tibble`, `srr`) and Remotes (`ropensci-review-tools/srr`).
 * Test suite now passes with zero failures/warnings on R CMD check.
+
+---
 
 # OptSurvCutR 0.1.9
 
@@ -28,6 +51,8 @@
 * **Test Coverage:** Increased test coverage to **88.5%** with new unit tests for parallel reproducibility, S3 method edge cases, and internal validation helpers.
 - Planned:  A ROpenSci submission is planned for review.
 - Planned:  A JOSS submission is planned post-rOpenSci review.
+
+---
 
 # OptSurvCutR 0.1.8
 

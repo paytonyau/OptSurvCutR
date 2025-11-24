@@ -3,19 +3,30 @@ url: https://paytonyau.github.io/OptSurvCutR/
 
 template:
   bootstrap: 5
-  bootswatch: "litera" # Choose a Bootswatch themea
-  light-switch: true # Enable light/dark mode 
+  bootswatch: "litera"
+  light-switch: true
   theme: gruvbox-light
-  theme-dark: gruvbox-dark
-  highlight: default # Using a light code highlighting theme
+  theme-dark: gruvbox-dark 
+  highlight: default
 
 development:
-  mode: auto
+  mode: release
 
-# --- NEW: Added basic metadata keywords ---
+# Metadata for SEO
 meta:
   keywords: survival analysis, time-to-event, cutpoint, threshold, biomarker, R package, bioinformatics, biostatistics, genetic algorithm, bootstrap, covariate adjustment
-# ----------------------------------------
+
+# Social Media Cards
+og:
+  title: "OptSurvCutR: Optimal Cut-point Selection"
+  description: "Discover and validate optimal cut-points for survival analysis using systematic and genetic algorithms."
+
+# --- FIX: This ensures the link appears in the sidebar ---
+home:
+  links:
+    - text: Support my work ☕
+      href: https://www.buymeacoffee.com/payton.yau
+# -------------------------------------------------------
 
 navbar:
   structure:
@@ -24,17 +35,23 @@ navbar:
   components:
     intro:
       text: Get started
-      href: index.html
+      menu:
+        - text: "Overview"
+          href: index.html
+        - text: "Contributing Guide"
+          href: contributing.html
+        - text: "Code of Conduct"
+          href: CODE_OF_CONDUCT.html
     reference:
       text: Reference
       href: reference/index.html
     articles:
       text: Vignettes
       menu:
-        - text: "CRC Virome Workflow" # Match vignette title/entry
-          href: articles/CRC_Virome.html
-        - text: "Rapeseed Germination Workflow" # Match vignette title/entry
-          href: articles/Germination.html
+        - text: "CRC Virome Workflow" 
+          href: articles/stratifying-crc-patients.html
+        - text: "Rapeseed Germination Workflow" 
+          href: articles/analysing-rapeseed-germination.html
     news:
       text: Changelog
       href: news/index.html
@@ -54,19 +71,31 @@ reference:
       - find_cutpoint_number
       - find_cutpoint
       - validate_cutpoint
-  - title: "Plotting Functions"
-    desc: "Functions and methods for visualizing results."
+
+  - title: "Plotting & Diagnostics"
+    desc: "Functions for visualising results and checking model assumptions."
     contents:
-      - starts_with("plot.") # Automatically include all plot methods
-      - plot_optimization_curve
+      - plot_optimisation_curve
+      - plot_cutpoint_residuals
+      - plot.find_cutpoint
+      - plot.find_cutpoint_number_result
+      - plot.validate_cutpoint_result
+
+  - title: "Inspecting & Reporting Results"
+    desc: "Methods for summarising analysis objects and extracting results."
+    contents:
+      - summary.find_cutpoint
+      - print.find_cutpoint
+      - summary.find_cutpoint_number_result
+      - print.find_cutpoint_number_result
+      - summary.validate_cutpoint_result
+      - print.validate_cutpoint_result
+
   - title: "Datasets"
     desc: "Example datasets included with the package."
     contents:
       - crc_virome
       - germination
-  - title: "Utilities"
-    contents:
-      - '`%||%`'
 
 footer:
   left: "Developed by Payton Yau."
@@ -76,33 +105,28 @@ footer:
     - text: "Report Issue"
       href: https://github.com/paytonyau/OptSurvCutR/issues
 
-# Control Table of Contents depth in vignettes/articles
 toc:
   depth: 3
 
-# Customize the sidebar (especially on the homepage)
+# Simplified sidebar (relies on 'home' for links now)
 sidebar:
-  structure: [links, vignettes, reference, license, community, support, dev] # Control order/sections
+  structure: [links, vignettes, reference, license, community, dev]
   components:
     vignettes:
       title: Vignettes
       links:
       - text: "CRC Virome Workflow"
-        href: articles/CRC_Virome.html
+        href: articles/stratifying-crc-patients.html
       - text: "Germination Workflow"
-        href: articles/Germination.html
-    support:
-      title: Support Development
-      links:
-      - text: Buy Me a Coffee
-        href: https://www.buymeacoffee.com/payton.yau
-        target: _blank
+        href: articles/analysing-rapeseed-germination.html
     community:
       title: Community & Help
       links:
       - text: Report an Issue
         href: https://github.com/paytonyau/OptSurvCutR/issues
       - text: Contributing Guide
-        href: contributing.html # Assumes CONTRIBUTING.md exists
+        href: contributing.html
+      - text: Code of Conduct
+        href: CODE_OF_CONDUCT.html
 
-# Ensure a blank line at the end of the file
+# Ensure a blank line at the end

@@ -2,19 +2,19 @@
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
   "identifier": "OptSurvCutR",
-  "description": " Provides a robust 3-step workflow for optimal cut-point analysis in time-to-event (survival) data. Functions determine the optimal number of cut-points ('find_cutpoint_number()'), find their precise locations ('find_cutpoint()') using systematic or genetic algorithms (via 'rgenoud'), and validate stability via bootstrapping ('validate_cutpoint()'). Analyses can be adjusted for covariates using standard 'survival' package models. Ideal for biomarker analysis and patient stratification, where non-linear relationships may exist. Methods described in Yau, P.T.O. (2025) <doi:10.1101/2025.10.08.681246>.",
+  "description": "Provides a robust 3-step workflow for optimal cut-point analysis in time-to-event (survival) data. Functions determine the optimal number of cut-points ('find_cutpoint_number()'), find their precise locations ('find_cutpoint()') using systematic or genetic algorithms (via 'rgenoud'), and validate stability via bootstrapping ('validate_cutpoint()'). Analyses can be adjusted for covariates using standard 'survival' package models. Ideal for biomarker analysis and patient stratification.",
   "name": "OptSurvCutR: Optimal Survival Cut-Point Discovery for Time-to-Event Analysis",
   "relatedLink": "https://paytonyau.github.io/OptSurvCutR/",
   "codeRepository": "https://github.com/paytonyau/OptSurvCutR",
   "issueTracker": "https://github.com/paytonyau/OptSurvCutR/issues",
   "license": "https://spdx.org/licenses/GPL-3.0",
-  "version": "0.1.8",
+  "version": "0.1.9.2",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.5.1 (2025-06-13 ucrt)",
+  "runtimePlatform": "R version 4.5.2 (2025-10-31 ucrt)",
   "author": [
     {
       "@type": "Person",
@@ -57,18 +57,6 @@
     },
     {
       "@type": "SoftwareApplication",
-      "identifier": "coxphf",
-      "name": "coxphf",
-      "provider": {
-        "@id": "https://cran.r-project.org",
-        "@type": "Organization",
-        "name": "Comprehensive R Archive Network (CRAN)",
-        "url": "https://cran.r-project.org"
-      },
-      "sameAs": "https://CRAN.R-project.org/package=coxphf"
-    },
-    {
-      "@type": "SoftwareApplication",
       "identifier": "dplyr",
       "name": "dplyr",
       "provider": {
@@ -90,30 +78,6 @@
         "url": "https://cran.r-project.org"
       },
       "sameAs": "https://CRAN.R-project.org/package=knitr"
-    },
-    {
-      "@type": "SoftwareApplication",
-      "identifier": "patchwork",
-      "name": "patchwork",
-      "provider": {
-        "@id": "https://cran.r-project.org",
-        "@type": "Organization",
-        "name": "Comprehensive R Archive Network (CRAN)",
-        "url": "https://cran.r-project.org"
-      },
-      "sameAs": "https://CRAN.R-project.org/package=patchwork"
-    },
-    {
-      "@type": "SoftwareApplication",
-      "identifier": "pROC",
-      "name": "pROC",
-      "provider": {
-        "@id": "https://cran.r-project.org",
-        "@type": "Organization",
-        "name": "Comprehensive R Archive Network (CRAN)",
-        "url": "https://cran.r-project.org"
-      },
-      "sameAs": "https://CRAN.R-project.org/package=pROC"
     },
     {
       "@type": "SoftwareApplication",
@@ -175,30 +139,6 @@
         "url": "https://cran.r-project.org"
       },
       "sameAs": "https://CRAN.R-project.org/package=testthat"
-    },
-    {
-      "@type": "SoftwareApplication",
-      "identifier": "tibble",
-      "name": "tibble",
-      "provider": {
-        "@id": "https://cran.r-project.org",
-        "@type": "Organization",
-        "name": "Comprehensive R Archive Network (CRAN)",
-        "url": "https://cran.r-project.org"
-      },
-      "sameAs": "https://CRAN.R-project.org/package=tibble"
-    },
-    {
-      "@type": "SoftwareApplication",
-      "identifier": "withr",
-      "name": "withr",
-      "provider": {
-        "@id": "https://cran.r-project.org",
-        "@type": "Organization",
-        "name": "Comprehensive R Archive Network (CRAN)",
-        "url": "https://cran.r-project.org"
-      },
-      "sameAs": "https://CRAN.R-project.org/package=withr"
     }
   ],
   "softwareRequirements": {
@@ -228,6 +168,18 @@
     },
     "3": {
       "@type": "SoftwareApplication",
+      "identifier": "doRNG",
+      "name": "doRNG",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=doRNG"
+    },
+    "4": {
+      "@type": "SoftwareApplication",
       "identifier": "foreach",
       "name": "foreach",
       "provider": {
@@ -238,7 +190,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=foreach"
     },
-    "4": {
+    "5": {
       "@type": "SoftwareApplication",
       "identifier": "ggplot2",
       "name": "ggplot2",
@@ -250,17 +202,17 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=ggplot2"
     },
-    "5": {
+    "6": {
       "@type": "SoftwareApplication",
       "identifier": "parallel",
       "name": "parallel"
     },
-    "6": {
+    "7": {
       "@type": "SoftwareApplication",
       "identifier": "stats",
       "name": "stats"
     },
-    "7": {
+    "8": {
       "@type": "SoftwareApplication",
       "identifier": "survival",
       "name": "survival",
@@ -272,7 +224,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=survival"
     },
-    "8": {
+    "9": {
       "@type": "SoftwareApplication",
       "identifier": "survminer",
       "name": "survminer",
@@ -284,7 +236,7 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=survminer"
     },
-    "9": {
+    "10": {
       "@type": "SoftwareApplication",
       "identifier": "tidyr",
       "name": "tidyr",
@@ -296,11 +248,6 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=tidyr"
     },
-    "10": {
-      "@type": "SoftwareApplication",
-      "identifier": "srr",
-      "name": "srr"
-    },
     "11": {
       "@type": "SoftwareApplication",
       "identifier": "R",
@@ -309,10 +256,37 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "953.707KB",
+  "fileSize": "950.732KB",
+  "citation": [
+    {
+      "@type": "ScholarlyArticle",
+      "datePublished": "2025",
+      "author": [
+        {
+          "@type": "Person",
+          "givenName": "Payton T. O.",
+          "familyName": "Yau"
+        }
+      ],
+      "name": "OptSurvCutR: Validated Cut-point Selection for Survival Analysis",
+      "identifier": "10.1101/2025.10.08.681246",
+      "url": "https://doi.org/10.1101/2025.10.08.681246",
+      "description": "Preprint posted October 10, 2025",
+      "@id": "https://doi.org/10.1101/2025.10.08.681246",
+      "sameAs": "https://doi.org/10.1101/2025.10.08.681246",
+      "isPartOf": {
+        "@type": "PublicationIssue",
+        "datePublished": "2025",
+        "isPartOf": {
+          "@type": ["PublicationVolume", "Periodical"],
+          "name": "bioRxiv"
+        }
+      }
+    }
+  ],
   "releaseNotes": "https://github.com/paytonyau/OptSurvCutR/blob/main/NEWS.md",
   "readme": "https://github.com/paytonyau/OptSurvCutR/blob/main/README.md",
-  "contIntegration": ["https://github.com/paytonyau/OptSurvCutR/actions/workflows/R-CMD-check.yaml", "https://app.codecov.io/gh/paytonyau/OptSurvCutR/new"],
+  "contIntegration": ["https://github.com/paytonyau/OptSurvCutR/actions/workflows/R-CMD-check.yaml", "https://app.codecov.io/gh/paytonyau/OptSurvCutR"],
   "developmentStatus": "https://lifecycle.r-lib.org/articles/stages.html#experimental",
   "keywords": ["bioinformatics-pipeline", "cut-points", "rstats-package", "survival-analysis", "validation"]
 }

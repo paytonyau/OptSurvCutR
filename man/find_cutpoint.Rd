@@ -18,7 +18,8 @@ find_cutpoint(
   covariates = NULL,
   nmin = 20,
   seed = NULL,
-  maxiter = 100,
+  max.generations = 100,
+  pop.size = 100,
   quiet = FALSE,
   ...
 )
@@ -50,10 +51,10 @@ find_cutpoint(
 
 \item{method}{Algorithm: `"systematic"` or `"genetic"`.}
 
-\item{criterion}{The statistic to optimize: `"logrank"` (max),
+\item{criterion}{The statistic to optimise: `"logrank"` (max),
 `"hazard_ratio"` (max), or `"p_value"` (min).
 Note: When covariates are provided, the `"logrank"` criterion
-is automatically generalized to the Cox score test.}
+is automatically generalised to the Cox score test.}
 
 \item{covariates}{Character vector of covariate names.}
 
@@ -61,11 +62,15 @@ is automatically generalized to the Cox score test.}
 
 \item{seed}{Optional integer seed for `"genetic"` method.}
 
-\item{maxiter}{Number of generations for genetic algorithm (default 100).}
+\item{max.generations}{Integer; max generations for genetic algorithm
+(default 100).}
+
+\item{pop.size}{Integer; population size for genetic algorithm
+(default 100).}
 
 \item{quiet}{Logical. If `TRUE`, suppresses final print.}
 
-\item{...}{Additional arguments passed to `rgenoud` (e.g., `popSize`).}
+\item{...}{Additional arguments passed to `rgenoud`.}
 
 \item{x}{An object from [find_cutpoint()].}
 
@@ -96,7 +101,7 @@ cuts) or a genetic algorithm (any number of cuts).
 }
 \details{
 `method = "systematic"`: grid search respecting `nmin`.
-`method = "genetic"`: `rgenoud` global optimization.
+`method = "genetic"`: `rgenoud` global optimisation.
 Systematic search is slow for `num_cuts > 2`; use `genetic`.
 }
 \section{srrstats compliance}{

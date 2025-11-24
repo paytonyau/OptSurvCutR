@@ -18,7 +18,8 @@ find_cutpoint_number(
   max_cuts = 2,
   nmin = 0.1,
   seed = NULL,
-  maxiter = 100,
+  max.generations = 100,
+  pop.size = 100,
   ...
 )
 
@@ -57,7 +58,9 @@ find_cutpoint_number(
 
 \item{seed}{Integer or `NULL`; random seed for `rgenoud`.}
 
-\item{maxiter}{Integer; generations for `rgenoud` (default 100).}
+\item{max.generations}{Integer; generations for `rgenoud` (default 100).}
+
+\item{pop.size}{Integer; population size for `rgenoud` (default 100).}
 
 \item{...}{Additional arguments passed to `rgenoud`.}
 
@@ -89,7 +92,7 @@ by comparing AIC, AICc, or BIC. Supports systematic search
 }
 \details{
 `method = "systematic"`: grid search respecting `nmin`.
-`method = "genetic"`: `rgenoud` global optimization.
+`method = "genetic"`: `rgenoud` global optimisation.
 Systematic search is slow for `max_cuts > 2`; use `genetic`.
 }
 \section{srrstats compliance}{

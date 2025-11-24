@@ -10,7 +10,6 @@
 #'
 #' @section srrstats compliance:
 #' .
-#' @srrstats {G2.15} NSE used in plotting/data manipulation.
 #' @srrstats {G1.4a} Internal use only (`@noRd`).
 #'
 #' @noRd

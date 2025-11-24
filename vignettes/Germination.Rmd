@@ -60,7 +60,7 @@ First, let us get the necessary tools. `OptSurvCutR` is in development and it is
 # You will need the 'remotes' package first: install.packages("remotes")
 # remotes::install_github("paytonyau/OptSurvCutR")
 
-# Option 2: Install the stable version from CRAN - Pending
+# Option 2: Install from CRAN (Once accepted)
 # install.packages("OptSurvCutR")
 ```
 
@@ -101,16 +101,17 @@ summary_table <- analysis_data %>%
     N_Seeds = n(),
     N_Germinated = sum(germinated),
     Germination_Rate_Pct = mean(germinated) * 100,
-    Avg_Time_to_Germinate_Days = mean(time[germinated == 1], 
-                                      na.rm = TRUE)
+    Avg_Time_to_Germinate_Days = mean(time[germinated == 1],
+      na.rm = TRUE
+    )
   ) %>%
   rename(`Temperature (°C)` = temperature)
 
 # Display the table using kable for nice formatting
 knitr::kable(summary_table,
-             digits = 2,
-             caption = 
-               "Summary of Germination Outcomes by Temperature Group"
+  digits = 2,
+  caption =
+    "Summary of Germination Outcomes by Temperature Group"
 )
 ```
 
@@ -151,8 +152,9 @@ number_result_bic <- find_cutpoint_number(
   method = "genetic",
   criterion = "BIC",
   max_cuts = 5, # Test models with 0, 1, 2, 3, or 4 cuts
-  nmin = 0.1, # Ensure groups have at least 10% of seeds
-  maxiter = 10, # REDUCED for vignette speed; use >= 100 for real analysis
+  nmin = 0.1, # Min 10% per group
+  max.generations = 50, # REDUCED for vignette speed; use >= 100 for real analysis
+  pop.size = 50, # REDUCED for vignette speed; use >= 100 for real analysis
   seed = 42
 )
 
@@ -190,7 +192,8 @@ multi_cut_result <- find_cutpoint(
   criterion = "logrank",
   num_cuts = 3, # Based on Step 1
   nmin = 0.1, # Ensure groups have at least 10% of seeds
-  maxiter = 50, # REDUCED for vignette speed; use >= 100-500 for real analysis
+  max.generations = 50, # REDUCED for vignette speed; use >= 100-500 for real analysis
+  pop.size = 50, # REDUCED for vignette speed
   seed = 123
 )
 
@@ -221,7 +224,8 @@ validation_result <- validate_cutpoint(
   num_replicates = 50, # REDUCED for vignette speed; use >= 500 for publication
   n_cores = 1,
   seed = 456,
-  maxiter = 10 # REDUCED; matches maxiter used in find_cutpoint
+  max.generations = 10, # REDUCED; passed via ... to find_cutpoint
+  pop.size = 10 # REDUCED; passed via ... to find_cutpoint
 )
 
 summary(validation_result)
@@ -261,12 +265,14 @@ This table shows which experimental temperatures were assigned to our four stati
 composition_table <- analysis_data %>%
   group_by(Temp_Group) %>%
   summarise(
-    Temperatures_in_Group = paste(sort(unique(temperature)), 
-                                  collapse = ", ")
+    Temperatures_in_Group = paste(sort(unique(temperature)),
+      collapse = ", "
     )
+  )
 
-knitr::kable(composition_table, 
-             caption = "Composition of Temperature Groups")
+knitr::kable(composition_table,
+  caption = "Composition of Temperature Groups"
+)
 ```
 
 ### Plot A: Kaplan-Meier Curve by Optimal Groups

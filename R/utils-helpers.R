@@ -9,8 +9,8 @@
 #' log-rank stat, etc.) for a given set of cut-points.
 #' `rgenoud` always maximises, so all criteria are framed as such.
 #'
-#' @param params Numeric vector. First `numcut` are cut-points;
-#' remaining (if `criterion = "loglik"`) are initial betas.
+#' @param params Numeric vector. First `numcut` are cut-points; remaining (if
+#'   `criterion = "loglik"`) are initial betas.
 #' @param time,censor,target,confound Survival data and predictor.
 #' @param numcut Number of cut-points.
 #' @param gap Minimum distance between cut-points.
@@ -31,11 +31,10 @@
 #'
 #' @section srrstats compliance:
 #' .
-#' @srrstats {G2.3} `na.rm = TRUE` in `quantile`.
+#' @srrstats {G2.3} `na.rm = TRUE` used in quantile calculations.
 #' @srrstats {G2.4a} `make.names()` sanitises covariate names.
-#' @srrstats {G2.13} Invalid gaps return `-Inf`.
-#' @srrstats {G5.0} Edge cases (zero gap, infinite domain) return `-Inf`.
-#' @srrstats {G5.1} Failure modes documented.
+#' @srrstats {G2.13} Invalid gaps or insufficient N return `-Inf`.
+#' @srrstats {G5.8} Edge cases (zero gap, infinite domain) return `-Inf`.
 #' @srrstats {G1.4a} Internal use only (`@noRd`).
 #'
 #' @noRd
@@ -45,6 +44,7 @@
   if (numcut > 1 && min(diff(sort(cutoff))) < gap) {
     return(-Inf)
   }
+  #' @srrstats {G2.4d} Explicit conversion to factor used for group creation.
   cut_design <- factor(cut(target,
     breaks = c(-Inf, sort(cutoff), Inf),
     labels = FALSE, include.lowest = TRUE
@@ -138,6 +138,8 @@
 #' @param target Continuous predictor vector.
 #' @param numcut Number of cut-points.
 #' @param criterion Optimisation criterion.
+#' @param max.generations Max generations (native rgenoud arg).
+#' @param pop.size Population size (native rgenoud arg).
 #' @param ... Additional arguments passed to `.obj` and `genoud`.
 #'
 #' @return A `genoud` object (or `NULL` on failure).
@@ -149,22 +151,26 @@
 #'
 #' @section srrstats compliance:
 #' .
-#' @srrstats {G2.13} `requireNamespace("rgenoud")` check.
-#' @srrstats {G5.0} Edge cases (zero gap, infinite range) return `NULL`.
-#' @srrstats {G5.1} Failure modes documented.
+#' @srrstats {G2.0} `requireNamespace("rgenoud")` check.
+#' @srrstats {G5.8} Edge cases (zero gap, infinite range) return `NULL`.
 #' @srrstats {G1.4a} Internal use only (`@noRd`).
 #'
 #' @noRd
 .run_genetic_search <- function(target, numcut, time, censor, confound, nmin,
-                                criterion, numgen = 15, gap = NULL,
+                                criterion, max.generations = 100,
+                                pop.size = 100,
+                                gap = NULL,
                                 print.level = 0, ...) {
   num_confound_vars <- if (is.null(confound) || all(is.na(confound))) {
     0
   } else {
     ncol(confound)
   }
-  optimizing_betas <- (criterion == "loglik")
-  nvars <- if (optimizing_betas) {
+
+  # --- British Spelling Update for Variable Name ---
+  optimising_betas <- (criterion == "loglik")
+
+  nvars <- if (optimising_betas) {
     numcut + numcut + num_confound_vars
   } else {
     numcut
@@ -175,7 +181,7 @@
   if (any(is.infinite(domain_cuts))) {
     return(NULL)
   }
-  domain <- if (optimizing_betas) {
+  domain <- if (optimising_betas) {
     domain_betas <- matrix(rep(c(-5, 5), nvars - numcut),
       ncol = 2,
       byrow = TRUE
@@ -188,7 +194,7 @@
     probs = seq(0, 1, length.out = numcut + 2),
     na.rm = TRUE
   )[2:(numcut + 1)]
-  initial_values <- if (optimizing_betas) {
+  initial_values <- if (optimising_betas) {
     initial_betas <- rep(0, nvars - numcut)
     c(initial_cuts, initial_betas)
   } else {
@@ -229,12 +235,13 @@
   if (!requireNamespace("rgenoud", quietly = TRUE)) {
     stop("The 'rgenoud' package is required. Please install it.", call. = FALSE)
   }
+
   optim_result <- tryCatch(rgenoud::genoud(
     fn = .obj,
     nvars = nvars,
     max = TRUE,
-    pop.size = 100,
-    max.generations = numgen,
+    pop.size = pop.size, # Explicitly passed
+    max.generations = max.generations, # Explicitly passed
     wait.generations = 10,
     hard.generation.limit = TRUE,
     starting.values = initial_values,
@@ -279,7 +286,7 @@
 #'
 #' @section srrstats compliance:
 #' .
-#' @srrstats {RE4.1} Implements AIC, AICc, BIC.
+#' @srrstats {RE4.11} Implements AIC, AICc, BIC.
 #' @srrstats {G1.4a} Internal use only (`@noRd`).
 #'
 #' @noRd
@@ -327,8 +334,8 @@
 #' @srrstats {G2.0} Validates `method`, `criterion`, `num_cuts`.
 #' @srrstats {G2.1} Type checks.
 #' @srrstats {G2.4b} `match.arg()` for controlled vocabularies.
-#' @srrstats {G2.4c} `requireNamespace()` for optional `rgenoud`.
-#' @srrstats {G2.9} Column-name existence.
+#' @srrstats {G2.0} `requireNamespace()` for optional `rgenoud`.
+#' @srrstats {G2.9} Column-name existence checks.
 #' @srrstats {G2.13} `cli_abort()` for invalid inputs.
 #' @srrstats {G1.4a} Internal use only (`@noRd`).
 #'
@@ -395,9 +402,11 @@
 #'
 #' @section srrstats compliance:
 #' .
-#' @srrstats {G2.3} `na.omit()` with explicit `NA` handling.
-#' @srrstats {G2.3a} Removes incomplete cases.
+#' @srrstats {RE2.1} `na.omit()` with explicit `NA` handling.
+#' @srrstats {G2.13} Checks for missing data (via NA removal).
 #' @srrstats {G1.4a} Internal use only (`@noRd`).
+#' @srrstats {G2.10} Ensures column extraction handles single columns
+#'   consistently using `drop = FALSE`.
 #'
 #' @noRd
 .prepare_cutpoint_data <- function(data, predictor, outcome_time,
@@ -458,9 +467,7 @@
 #' .
 #' @srrstats {G2.1} Event column must be numeric 0/1.
 #' @srrstats {G2.13} `cli_abort()` for invalid event data.
-#' @srrstats {G5.0} Edge cases (constant predictor, insufficient data).
-#' @srrstats {G5.4a} Checks `n < nmin * (num_cuts + 1)`.
-#' @srrstats {G5.4b} Checks `unique(factor) <= num_cuts`.
+#' @srrstats {G5.8} Edge cases (constant predictor, insufficient data).
 #' @srrstats {G1.4a} Internal use only (`@noRd`).
 #'
 #' @noRd
@@ -529,5 +536,5 @@
 #' @srrstats {G2.1} Type checking.
 #'
 #' @name or-operator
-#' @export
+#' @noRd
 `%||%` <- function(a, b) if (is.null(a)) b else a

@@ -1,6 +1,6 @@
 ---
-title: 'Stratifying Colorectal Cancer Patients by Gut Enterovirus Abundance'
-subtitle: Survival Analysis Workflow with OptSurvCutR Demonstrating Covariate Adjustment
+title: "Stratifying Colorectal Cancer Patients by Gut Enterovirus Abundance"
+subtitle: "Survival Analysis Workflow with OptSurvCutR Demonstrating Covariate Adjustment"
 author: "Payton Yau"
 date: "`r Sys.Date()`"
 output:
@@ -80,7 +80,6 @@ We define the name of the microbe/virus we wish to analyse upfront. Here, we sel
 
 ```{r configuration}
 # Define the biomarker of interest.
-# Define the biomarker of interest.
 microbe_name_to_analyze <- "Enterovirus"
 
 # Define covariates available in the crc_virome dataset
@@ -145,6 +144,7 @@ We first run `find_cutpoint_number()` without covariates, then with covariates, 
 
 ```{r find-number-Unadjusted-Analysis}
 # --- Unadjusted Analysis ---
+# --- Unadjusted Analysis ---
 number_result_unadj <- find_cutpoint_number(
   data = analysis_data,
   predictor = "abundance",
@@ -152,8 +152,10 @@ number_result_unadj <- find_cutpoint_number(
   outcome_event = "status",
   method = "genetic",
   criterion = "BIC",
-  max_cuts = 4, # Test 0-3 cuts
+  max_cuts = 4, # Test 0-3 cuts (4 groups max)
   nmin = 0.1, # Min 10% per group
+  max.generations = 50, # Reduced for vignette speed
+  pop.size = 50, # Reduced for vignette speed
   seed = 42
 )
 ```
@@ -167,14 +169,16 @@ number_result_adj <- find_cutpoint_number(
   outcome_event = "status",
   method = "genetic",
   criterion = "BIC",
-  max_cuts = 4, # Test 0-3 cuts
+  max_cuts = 4,
   nmin = 0.1,
+  max.generations = 50,
+  pop.size = 50,
   covariates = covariates_to_adjust_for, # ADDED COVARIATES
   seed = 43 # Use a different seed
 )
 ```
 
-```{r find-number-plots}
+```{r find-number-plots, fig.alt = "Two line plots comparing Bayesian Information Criterion (BIC) against the number of cut-points. The left plot shows unadjusted analysis, and the right shows analysis adjusted for sex. Both show a minimum at 2 cut-points."}
 plot_num_unadj <- plot(number_result_unadj) +
   ggtitle("BIC vs Cuts (Unadj.)") +
   theme(plot.title = element_text(size = 14))
@@ -186,7 +190,7 @@ plot_num_adj <- plot(number_result_adj) +
   )) +
   theme(plot.title = element_text(size = 14))
 
-# Show plots sequentially (removing patchwork dependency)
+# Show plots sequentially
 print(plot_num_unadj)
 print(plot_num_adj)
 ```
@@ -210,6 +214,8 @@ cutpoint_result_unadj <- find_cutpoint(
   criterion = "logrank",
   num_cuts = optimal_n_cuts_unadj,
   nmin = 0.1,
+  max.generations = 50,
+  pop.size = 50,
   seed = 123
 )
 
@@ -232,6 +238,8 @@ cutpoint_result_adj <- find_cutpoint(
   criterion = "logrank",
   num_cuts = optimal_n_cuts_adj,
   nmin = 0.1,
+  max.generations = 50,
+  pop.size = 50,
   covariates = covariates_to_adjust_for,
   seed = 124 # Different seed
 )
@@ -241,7 +249,7 @@ print(summary(cutpoint_result_adj))
 optimal_cuts_adj_values <- cutpoint_result_adj$optimal_cuts
 ```
 
-```{r find-cuts-plot}
+```{r find-cuts-plot, fig.alt = "Two density plots of Enterovirus abundance. Vertical lines indicate the optimal cut-points. The left plot shows unadjusted cut-points, while the right shows cut-points adjusted for sex."}
 # Plot comparison
 plot_dist_unadj <- plot(cutpoint_result_unadj,
   type = "distribution"
@@ -272,14 +280,16 @@ This is a crucial step to assess how reliable our discovered cut-points are. We 
 ```{r validate-cuts}
 validation_result_adj <- validate_cutpoint(
   cutpoint_result = cutpoint_result_adj, # Use ADJUSTED result
-  num_replicates = 25, # REDUCED for vignette speed; use >= 500
+  num_replicates = 25, # REDUCED for vignette speed; use >= 500 for real analyses
   n_cores = 1,
+  max.generations = 50, # Passed via ... to find_cutpoint
+  pop.size = 50, # Passed via ... to find_cutpoint
   seed = 456
   # Note: validate_cutpoint implicitly uses the covariates from cutpoint_result_adj
 )
 ```
 
-```{r validate-cuts-plot}
+```{r validate-cuts-plot, fig.alt = "Density plot showing the distribution of cut-points derived from bootstrap replicates. The peaks align closely with the original cut-points (solid lines), indicating stability."}
 bootstrap_plot_adj <- plot(validation_result_adj) +
   ggtitle("Bootstrap Stability of Adjusted Cut-points")
 print(bootstrap_plot_adj)
@@ -338,7 +348,7 @@ cox_model_adj <- coxph(as.formula(formula_string),
 
 A Kaplan-Meier curve shows the probability of survival over time for different patient groups.
 
-```{r plot-km, fig.width=8, fig.height=6}
+```{r plot-km, fig.width=8, fig.height=6, fig.alt = "Kaplan-Meier survival curves for three groups: Low, Medium, and High Enterovirus abundance. The Medium group shows the highest survival probability over 60 months, while Low and High groups show lower survival."}
 km_plot_adj <- ggsurvplot(
   km_fit_adj,
   data = analysis_data_categorised,
@@ -364,7 +374,7 @@ print(km_plot_adj)
 
 This forest plot shows the Hazard Ratios (HR) for the Low and High abundance groups relative to the Medium group, adjusted for sex.
 
-```{r plot-forest, fig.width=8.5, fig.height=4.5}
+```{r plot-forest, fig.width=8.5, fig.height=4.5, fig.alt = "Forest plot displaying Hazard Ratios. Compared to the Medium group (reference), both Low and High abundance groups have Hazard Ratios significantly greater than 1."}
 forest_plot_adj <- ggforest(
   cox_model_adj,
   data = analysis_data_categorised,
@@ -391,7 +401,7 @@ print(forest_plot_adj)
 
 This box plot confirms how the `find_cutpoint()` function has partitioned the patients based on their abundance levels.
 
-```{r plot-boxplot, fig.width=8, fig.height=5}
+```{r plot-boxplot, fig.width=8, fig.height=5, fig.alt = "Boxplots showing the distribution of Enterovirus abundance within the three identified risk groups (Low, Medium, High)."}
 dist_plot_adj <- ggplot(
   analysis_data_categorised,
   aes(
@@ -433,7 +443,7 @@ print(dist_plot_adj)
 
 A key assumption of the Cox model is that the hazard ratio (the effect of the predictor) is constant over time. We check this using Schoenfeld residuals. A non-significant p-value (p > 0.05) for the GLOBAL test supports this assumption.
 
-```{r plot-residuals, fig.width=8, fig.height=5}
+```{r plot-residuals, fig.width=8, fig.height=5, fig.alt = "Plots of Schoenfeld residuals over time for the Cox model variables. The smoothed trend lines are approximately horizontal, supporting the proportional hazards assumption."}
 schoenfeld_test_adj <- cox.zph(cox_model_adj)
 
 print(schoenfeld_test_adj)

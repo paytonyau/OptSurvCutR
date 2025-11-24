@@ -1,17 +1,28 @@
 # Comprehensive test file for the OptSurvCutR package.
 # This script merges core functionality tests with additional
 # tests for edge cases, error conditions, and internal helpers.
-# Tests are organized logically by function and category for clarity.
+# Tests are organised logically by function and category for clarity.
 
 #' @srrstats {G5.0} Implements edge case and validation tests.
+#' @srrstats {G5.3} Tests for absence of NA/NaN in return objects (via
+#'   successful class checks).
+#' @srrstats {G5.4} Correctness tests against known data properties
+#'   (bimodal/trimodal distributions).
+#' @srrstats {G5.4a} Correctness tests for new method implementation.
+#' @srrstats {G5.4b} Comparison against previous/alternative implementations
+#'   (systematic vs genetic).
+#' @srrstats {G5.4c} Comparison against published/known values (simulated data).
+#' @srrstats {G5.9} Noise susceptibility tests (stochastic genetic algorithm).
+#' @srrstats {G5.9a} Tests with trivial noise (implicit in stochastic runs).
+#' @srrstats {G5.9b} Tests with different seeds.
 #' @srrstats {RE1.0} Tests the core cut-point implementation.
 #' @srrstats {RE4.0} Tests model selection via AIC, BIC, and AICc.
 #' @srrstats {RE7.0} Tests the bootstrap validation function.
 #' @srrstats {G2.0} Tests for input validation are included.
-#' @srrstats {G3.0} Tests for S3 methods (print, plot, summary).
+#' @srrstats {RE6.0} Tests for S3 plot methods.
+#' @srrstats {RE4.17} Tests for S3 print methods.
 #' @srrstats {G5.8} Tests stochastic genetic algorithm behaviour.
 #' @srrstats {G2.4c} Tests optional dependency handling.
-#' @srrstats {G1.4a} Internal test file (no export).
 
 library(testthat)
 library(survival)
@@ -79,7 +90,7 @@ mock_data_no_events$event <- 0
 # searches, covariate handling, edge cases, and input validation.
 
 #' @srrstats {RE4.0} Tests AIC, AICc, BIC criteria.
-#' @srrstats {RE4.1} Tests implementation of IC formulas.
+#' @srrstats {RE4.11} Tests implementation of IC formulas.
 #' @srrstats {G5.8} Tests stochastic genetic algorithm.
 test_that("find_cutpoint_number genetic search works for all criteria", {
   skip_if_not_installed("rgenoud")
@@ -87,7 +98,7 @@ test_that("find_cutpoint_number genetic search works for all criteria", {
   res_bic <- suppressMessages(suppressWarnings(
     find_cutpoint_number(mock_data, "predictor", "time", "event",
       method = "genetic", criterion = "BIC", max_cuts = 2,
-      maxiter = 5, nmin = 1
+      max.generations = 5, nmin = 1
     )
   ))
   skip_if(is.null(res_bic), "Genetic search returned NULL.")
@@ -99,7 +110,7 @@ test_that("find_cutpoint_number genetic search works for all criteria", {
   res_aic <- suppressMessages(suppressWarnings(
     find_cutpoint_number(mock_data, "predictor", "time", "event",
       method = "genetic", criterion = "AIC",
-      maxiter = 5, nmin = 1
+      max.generations = 5, nmin = 1
     )
   ))
   skip_if(is.null(res_aic), "Genetic search returned NULL.")
@@ -109,7 +120,7 @@ test_that("find_cutpoint_number genetic search works for all criteria", {
   res_aicc <- suppressMessages(suppressWarnings(
     find_cutpoint_number(mock_data, "predictor", "time", "event",
       method = "genetic", criterion = "AICc",
-      maxiter = 5, nmin = 1
+      max.generations = 5, nmin = 1
     )
   ))
   skip_if(is.null(res_aicc), "Genetic search returned NULL.")
@@ -133,7 +144,6 @@ test_that("find_cutpoint_number systematic search works for BIC", {
 })
 
 #' @srrstats {RE2.2} Tests covariate adjustment.
-#' @srrstats {RE2.3} Tests that covariates are passed to the model.
 test_that("find_cutpoint_number works with covariates (systematic)", {
   res_bic_cov <- suppressMessages(suppressWarnings(
     find_cutpoint_number(
@@ -162,7 +172,6 @@ test_that("find_cutpoint_number works with covariates (systematic)", {
 })
 
 #' @srrstats {RE2.2} Tests covariate adjustment.
-#' @srrstats {RE2.3} Tests that covariates are passed to the model.
 #' @srrstats {G5.8} Tests stochastic genetic algorithm.
 test_that("find_cutpoint_number works with covariates (genetic)", {
   skip_if_not_installed("rgenoud")
@@ -177,7 +186,7 @@ test_that("find_cutpoint_number works with covariates (genetic)", {
       criterion = "BIC",
       max_cuts = 1,
       nmin = 10,
-      maxiter = 5
+      max.generations = 5
     )
   ))
   skip_if(
@@ -191,8 +200,7 @@ test_that("find_cutpoint_number works with covariates (genetic)", {
 })
 
 #' @srrstats {G5.0} Tests edge case (constant predictor).
-#' @srrstats {G5.4b} Tests check for unique(factor) <= max_cuts.
-#' @srrstats {G5.8c} Tests that constant predictor returns na_result.
+#' @srrstats {G5.8} Tests that constant predictor returns na_result.
 test_that("find_cutpoint_number handles too few unique values", {
   skip_if(
     length(unique(small_data_unique$predictor)) > 1,
@@ -220,8 +228,8 @@ test_that("find_cutpoint_number handles too few unique values", {
 })
 
 #' @srrstats {G5.0} Tests edge case (small sample).
-#' @srrstats {RE4.1} Tests IC formula branch for small n.
-#' @srrstats {G5.8b} Tests small n - k - 1 in .calc_ic.
+#' @srrstats {RE4.11} Tests IC formula branch for small n.
+#' @srrstats {G5.8} Tests small n - k - 1 in .calc_ic.
 test_that("find_cutpoint_number handles AIC/AICc edge cases", {
   res_aic <- suppressMessages(suppressWarnings(
     find_cutpoint_number(tiny_data, "predictor", "time", "event",
@@ -266,7 +274,7 @@ test_that("find_cutpoint_number (genetic) runs sequentially", {
   res_bic_gen <- suppressMessages(suppressWarnings(
     find_cutpoint_number(mock_data, "predictor", "time", "event",
       method = "genetic", criterion = "BIC", max_cuts = 1,
-      maxiter = 5, nmin = 1
+      max.generations = 5, nmin = 1 # Updated param
     )
   ))
   skip_if(is.null(res_bic_gen), "Genetic search returned NULL.")
@@ -312,7 +320,7 @@ test_that("find_cutpoint_number handles invalid inputs", {
 })
 
 #' @srrstats {G5.0} Tests edge case (constant predictor).
-#' @srrstats {G5.8c} Tests NA result for constant predictor.
+#' @srrstats {G5.8} Tests NA result for constant predictor.
 test_that("find_cutpoint_number handles insufficient and constant data", {
   small_data <- mock_data[1:5, ]
   res_insufficient <- suppressMessages(suppressWarnings(
@@ -359,7 +367,7 @@ test_that("find_cutpoint_number handles search failures gracefully", {
   )
 })
 
-#' @srrstats {RE4.1} Tests implementation of IC formulas.
+#' @srrstats {RE4.11} Tests implementation of IC formulas.
 test_that("find_cutpoint_number base model IC failure (Pathological Data)", {
   res_sys_fail <- suppressMessages(suppressWarnings(
     find_cutpoint_number(
@@ -416,13 +424,44 @@ test_that("find_cutpoint systematic search works for one and two cuts", {
   expect_length(res_lr2$optimal_cuts, 2)
 })
 
+#' @srrstats {G2.0} Tests validation of explicit genetic algorithm parameters.
+test_that("find_cutpoint respects explicit pop.size and max.generations", {
+  skip_if_not_installed("rgenoud")
+
+  # Run with non-default GA parameters
+  res_ga_params <- suppressMessages(suppressWarnings(
+    find_cutpoint(
+      data = mock_data,
+      predictor = "predictor",
+      outcome_time = "time",
+      outcome_event = "event",
+      num_cuts = 1,
+      method = "genetic",
+      pop.size = 50, # Explicit non-default
+      max.generations = 5, # Explicit non-default
+      nmin = 5,
+      quiet = TRUE
+    )
+  ))
+
+  # 1. Check object class
+  expect_s3_class(res_ga_params, "find_cutpoint")
+
+  # 2. Check that parameters were stored correctly in the output
+  expect_equal(res_ga_params$parameters$pop.size, 50)
+  expect_equal(res_ga_params$parameters$max.generations, 5)
+
+  # 3. Check that the method was indeed genetic
+  expect_equal(res_ga_params$parameters$method, "genetic")
+})
+
 #' @srrstats {G5.8} Tests stochastic genetic algorithm for multiple cuts.
 test_that("find_cutpoint genetic search works for multiple cuts", {
   skip_if_not_installed("rgenoud")
   res_lr2 <- suppressMessages(suppressWarnings(
     find_cutpoint(mock_data_3groups, "predictor", "time", "event",
       num_cuts = 2, method = "genetic",
-      criterion = "logrank", maxiter = 5, nmin = 1,
+      criterion = "logrank", max.generations = 5, nmin = 1,
       quiet = TRUE
     )
   ))
@@ -435,7 +474,7 @@ test_that("find_cutpoint genetic search works for multiple cuts", {
   res_lr3 <- suppressMessages(suppressWarnings(
     find_cutpoint(mock_data_3groups, "predictor", "time", "event",
       num_cuts = 3, method = "genetic",
-      criterion = "logrank", maxiter = 5, nmin = 1,
+      criterion = "logrank", max.generations = 5, nmin = 1,
       quiet = TRUE
     )
   ))
@@ -444,7 +483,7 @@ test_that("find_cutpoint genetic search works for multiple cuts", {
   expect_length(res_lr3$optimal_cuts, 3)
 })
 
-#' @srrstats {RE1.0} Tests all optimization criteria.
+#' @srrstats {RE1.0} Tests all optimisation criteria.
 #' @srrstats {RE4.17} Tests nmin as a proportion.
 test_that("find_cutpoint handles various criteria and nmin proportion", {
   # Hazard ratio
@@ -477,7 +516,7 @@ test_that("find_cutpoint handles various criteria and nmin proportion", {
 
 #' @srrstats {G2.0} Tests input validation.
 #' @srrstats {G2.1} Tests input type validation.
-#' @srrstats {G2.9} Tests column name validation.
+#' @srrstats {G2.4b} Tests match.arg validation.
 #' @srrstats {G2.13} Tests that invalid inputs trigger errors.
 test_that("find_cutpoint handles invalid inputs", {
   bad_data <- mock_data[, c("time", "event")]
@@ -521,7 +560,6 @@ test_that("find_cutpoint handles invalid inputs", {
 })
 
 #' @srrstats {G5.0} Tests edge case (constant predictor).
-#' @srrstats {G5.4b} Tests check for unique(factor) <= num_cuts.
 test_that("find_cutpoint handles quiet arg and low variability predictor", {
   expect_no_message(
     find_cutpoint(mock_data, "predictor", "time", "event", quiet = TRUE)
@@ -535,7 +573,7 @@ test_that("find_cutpoint handles quiet arg and low variability predictor", {
 })
 
 #' @srrstats {G5.0} Tests edge cases (skewed data, heavy censoring).
-#' @srrstats {G5.2b} Tests handling of non-converged models.
+#' @srrstats {G5.2} Tests handling of non-converged models.
 test_that("find_cutpoint handles various data scenarios", {
   res_lr_skewed <- suppressMessages(suppressWarnings(
     find_cutpoint(mock_data_skewed, "predictor", "time", "event",
@@ -591,7 +629,7 @@ test_that("find_cutpoint (genetic) works sequentially", {
   res_gen_seq <- suppressMessages(suppressWarnings(
     find_cutpoint(mock_data, "predictor", "time", "event",
       num_cuts = 2, method = "genetic",
-      criterion = "logrank", maxiter = 5, nmin = 1, quiet = TRUE
+      criterion = "logrank", max.generations = 5, nmin = 1, quiet = TRUE
     )
   ))
   skip_if(
@@ -608,7 +646,7 @@ test_that("find_cutpoint handles high num_cuts with p_value", {
   res_pv4 <- suppressMessages(suppressWarnings(
     find_cutpoint(mock_data, "predictor", "time", "event",
       num_cuts = 4, method = "genetic",
-      criterion = "p_value", maxiter = 5, nmin = 1, quiet = TRUE
+      criterion = "p_value", max.generations = 5, nmin = 1, quiet = TRUE
     )
   ))
   skip_if(all(is.na(res_pv4$optimal_cuts)), "GA search failed for 4 cuts.")
@@ -617,8 +655,7 @@ test_that("find_cutpoint handles high num_cuts with p_value", {
 })
 
 #' @srrstats {G5.0} Tests edge cases.
-#' @srrstats {G5.4a} Tests check for insufficient data (nmin).
-#' @srrstats {G5.8c} Tests that constant predictor returns na_result.
+#' @srrstats {G5.8} Tests that constant predictor returns na_result.
 test_that("find_cutpoint handles insufficient and constant data", {
   small_data <- mock_data[1:5, ]
   res_insufficient <- suppressMessages(suppressWarnings(
@@ -646,7 +683,7 @@ test_that("group creation works in find_cutpoint", {
   res_fc <- suppressMessages(suppressWarnings(
     find_cutpoint(mock_data, "predictor", "time", "event",
       num_cuts = 2,
-      method = "genetic", criterion = "logrank", maxiter = 5,
+      method = "genetic", criterion = "logrank", max.generations = 5,
       nmin = 1, quiet = TRUE
     )
   ))
@@ -659,7 +696,7 @@ test_that("group creation works in find_cutpoint", {
 })
 
 #' @srrstats {G5.0} Tests edge case (constant predictor).
-#' @srrstats {G5.8c} Tests NA result for constant predictor.
+#' @srrstats {G5.8} Tests NA result for constant predictor.
 test_that("find_cutpoint's systematic search handles edge cases", {
   edge_data <- mock_data
   edge_data$predictor <- rep(50, n_test)
@@ -677,7 +714,7 @@ test_that("find_cutpoint's systematic search handles edge cases", {
   )
 })
 
-#' @srrstats {G5.2b} Tests handling of non-converged models in plotting.
+#' @srrstats {G5.2} Tests handling of non-converged models in plotting.
 test_that("plot.find_cutpoint handles Cox model failure", {
   data_cox_fail <- data.frame(
     time = rexp(20, rate = 0.05),
@@ -762,7 +799,7 @@ test_that("Coverage: .systematic_search - 2 cuts with insufficient data", {
 
 test_that("Coverage: find_cutpoint (genetic) shows messages", {
   skip_if_not_installed("rgenoud")
-  # Suppress rgenoud's own warning about maxiter
+  # Suppress rgenoud's own warning about max.generations
   expect_message(
     suppressWarnings(find_cutpoint(
       data = mock_data,
@@ -770,7 +807,7 @@ test_that("Coverage: find_cutpoint (genetic) shows messages", {
       outcome_time = "time",
       outcome_event = "event",
       method = "genetic",
-      maxiter = 1,
+      max.generations = 1,
       quiet = FALSE
     )),
     regexp = "Starting genetic search"
@@ -924,7 +961,7 @@ test_that(
         criterion = "p_value",
         covariates = "covariate1",
         nmin = 5,
-        maxiter = 5,
+        max.generations = 5,
         seed = 123,
         quiet = TRUE
       )
@@ -963,17 +1000,19 @@ if (any(is.na(valid_fc_result_for_boot$optimal_cuts))) {
 #' @srrstats {RE7.0} Tests bootstrap resampling.
 #' @srrstats {RE7.1} Tests cut-point stability assessment.
 test_that("validate_cutpoint works with recommended settings", {
-  suppressMessages({
+  # Capture messages to verify the "90% stability" message appears
+  expect_message(
     suppressWarnings({
       result <- validate_cutpoint(valid_fc_result_for_boot,
         num_replicates = 20,
         n_cores = 1,
-        nmin = 5,
-        maxiter = 10,
+        max.generations = 10,
         seed = 42
       )
-    })
-  })
+    }),
+    regexp = "90% of original" # Check for the new explanation
+  )
+
   expect_s3_class(result, "validate_cutpoint_result")
   expect_true(result$parameters$successful_reps >= 10)
 })
@@ -991,7 +1030,7 @@ test_that("validate_cutpoint works for genetic result with 2 cuts", {
       num_cuts = 2,
       method = "genetic",
       nmin = 5,
-      maxiter = 5,
+      max.generations = 5,
       quiet = TRUE
     )
   ))
@@ -1005,7 +1044,7 @@ test_that("validate_cutpoint works for genetic result with 2 cuts", {
         num_replicates = 20,
         n_cores = 1,
         nmin = 5,
-        maxiter = 10,
+        max.generations = 10,
         seed = 42
       )
     })
@@ -1016,14 +1055,14 @@ test_that("validate_cutpoint works for genetic result with 2 cuts", {
 })
 
 #' @srrstats {G5.6} Tests optional parallel via doParallel.
-test_that("validate_cutpoint works with parallelization", {
+test_that("validate_cutpoint works with parallelisation", {
   suppressMessages({
     suppressWarnings({
       result <- validate_cutpoint(valid_fc_result_for_boot,
         num_replicates = 20,
         n_cores = 2,
         nmin = 2,
-        maxiter = 10,
+        max.generations = 10,
         seed = 42
       )
     })
@@ -1069,7 +1108,7 @@ test_that("validate_cutpoint works with covariates", {
         num_replicates = 20,
         n_cores = 1,
         nmin = 5,
-        maxiter = 10,
+        max.generations = 10,
         seed = 42
       )
     })
@@ -1109,6 +1148,9 @@ test_that("Coverage: validate_cutpoint - non-integer num_replicates", {
   )
 })
 
+#' @srrstats {G2.0a} Tests validation of scalar parameter num_replicates.
+#' @srrstats {G5.8d} Tests data outside scope (insufficient sample size for
+#'   requested cuts).
 test_that("Coverage: validate_cutpoint - insufficient data after nmin", {
   valid_fc <- suppressMessages(suppressWarnings(
     find_cutpoint(mock_data[1:30, ], "predictor", "time", "event",
@@ -1119,7 +1161,8 @@ test_that("Coverage: validate_cutpoint - insufficient data after nmin", {
   expect_error(
     validate_cutpoint(valid_fc,
       num_replicates = 20,
-      nmin = 16, n_cores = 1
+      n_cores = 1,
+      nmin = 16
     ),
     regexp = "Not enough data"
   )
@@ -1188,10 +1231,10 @@ test_that("Coverage: validate_cutpoint S3 methods for 0 successes", {
 
 # --- SECTION 4: Tests for plotting_functions.R ---
 # Note: These tests cover diagnostic and publication-ready plots, including
-# optimization curves and Schoenfeld residuals.
+# optimisation curves and Schoenfeld residuals.
 
-#' @srrstats {G3.1} Tests diagnostic plot for systematic search.
-test_that("plot_optimization_curve works for all criteria", {
+#' @srrstats {RE6.0} Tests diagnostic plot for systematic search.
+test_that("plot_optimisation_curve works for all criteria", {
   res_lr <- suppressMessages(suppressWarnings(
     find_cutpoint(mock_data, "predictor", "time", "event",
       num_cuts = 1,
@@ -1203,7 +1246,7 @@ test_that("plot_optimization_curve works for all criteria", {
     is.null(res_lr) || all(is.na(res_lr$optimal_cuts)),
     "Systematic logrank search failed."
   )
-  p_lr <- plot_optimization_curve(res_lr)
+  p_lr <- plot_optimisation_curve(res_lr)
   expect_s3_class(p_lr, "ggplot")
   expect_equal(p_lr$labels$y, "Log-Rank Statistic")
   res_hr <- suppressMessages(suppressWarnings(
@@ -1217,7 +1260,7 @@ test_that("plot_optimization_curve works for all criteria", {
     is.null(res_hr) || all(is.na(res_hr$optimal_cuts)),
     "Systematic HR search failed."
   )
-  p_hr <- plot_optimization_curve(res_hr)
+  p_hr <- plot_optimisation_curve(res_hr)
   expect_s3_class(p_hr, "ggplot")
   expect_equal(p_hr$labels$y, "Hazard Ratio (HR)")
   res_pv <- suppressMessages(suppressWarnings(
@@ -1231,13 +1274,13 @@ test_that("plot_optimization_curve works for all criteria", {
     is.null(res_pv) || all(is.na(res_pv$optimal_cuts)),
     "Systematic p-value search failed."
   )
-  p_pv <- plot_optimization_curve(res_pv)
+  p_pv <- plot_optimisation_curve(res_pv)
   expect_s3_class(p_pv, "ggplot")
   expect_equal(p_pv$labels$y, "P-value")
 })
 
 #' @srrstats {G2.0} Tests input validation for plotting function.
-test_that("plot_optimization_curve throws errors for invalid input", {
+test_that("plot_optimisation_curve throws errors for invalid input", {
   res_valid <- suppressMessages(suppressWarnings(
     find_cutpoint(mock_data, "predictor", "time", "event",
       num_cuts = 1,
@@ -1249,31 +1292,31 @@ test_that("plot_optimization_curve throws errors for invalid input", {
     "Systematic search failed, cannot run error tests."
   )
   expect_error(
-    plot_optimization_curve(list()),
+    plot_optimisation_curve(list()),
     regexp = "Input must be an object from the"
   )
   res_genetic <- res_valid
   res_genetic$parameters$method <- "genetic"
   expect_error(
-    plot_optimization_curve(res_genetic),
+    plot_optimisation_curve(res_genetic),
     regexp = "only for `method = \"systematic\"`"
   )
   res_2_cuts <- res_valid
   res_2_cuts$parameters$num_cuts <- 2
   expect_error(
-    plot_optimization_curve(res_2_cuts),
+    plot_optimisation_curve(res_2_cuts),
     regexp = "only for `num_cuts = 1`"
   )
   res_no_stats <- res_valid
   res_no_stats$all_stats <- NULL
   expect_error(
-    plot_optimization_curve(res_no_stats),
+    plot_optimisation_curve(res_no_stats),
     regexp = "must have a valid `all_stats`"
   )
 })
 
-#' @srrstats {G3.1a} Tests diagnostic Schoenfeld residual plot.
-test_that("plot_schoenfeld produces Schoenfeld residual plot (G3.1a)", {
+#' @srrstats {RE6.3} Tests diagnostic Schoenfeld residual plot.
+test_that("plot_cutpoint_residuals produces Schoenfeld residual plot (RE6.3)", {
   res <- suppressMessages(
     find_cutpoint(mock_data, "predictor", "time", "event",
       num_cuts = 1,
@@ -1284,7 +1327,7 @@ test_that("plot_schoenfeld produces Schoenfeld residual plot (G3.1a)", {
     is.null(res) || any(is.na(res$optimal_cuts)),
     "No valid cut-point for diagnostics test."
   )
-  p <- plot_schoenfeld(res)
+  p <- plot_cutpoint_residuals(res)
   expect_type(p, "list")
   expect_true(length(p) > 0)
   expect_true(all(vapply(p, inherits, "ggplot", FUN.VALUE = logical(1))))
@@ -1294,7 +1337,7 @@ test_that("plot_schoenfeld produces Schoenfeld residual plot (G3.1a)", {
   expect_match(last_subtitle, "Global", all = FALSE)
 })
 
-test_that("Coverage: plot_optimization_curve empty all_stats", {
+test_that("Coverage: plot_optimisation_curve empty all_stats", {
   res_valid <- suppressMessages(suppressWarnings(
     find_cutpoint(mock_data, "predictor", "time", "event",
       num_cuts = 1,
@@ -1303,12 +1346,12 @@ test_that("Coverage: plot_optimization_curve empty all_stats", {
   ))
   res_valid$all_stats <- data.frame()
   expect_error(
-    plot_optimization_curve(res_valid),
+    plot_optimisation_curve(res_valid),
     regexp = "`all_stats` is empty"
   )
 })
 
-test_that("Coverage: plot_schoenfeld - NULL fit from coxph failure", {
+test_that("Coverage: plot_cutpoint_residuals - NULL fit from coxph failure", {
   # Force coxph to fail by making the event column non-numeric
   result <- suppressMessages(suppressWarnings(
     find_cutpoint(mock_data, "predictor", "time", "event",
@@ -1317,19 +1360,19 @@ test_that("Coverage: plot_schoenfeld - NULL fit from coxph failure", {
   ))
   skip_if(any(is.na(result$optimal_cuts)), "No valid cut-point for test setup")
 
-  # Corrupt the event column → coxph will fail inside plot_schoenfeld()
+  # Corrupt the event column → coxph will fail inside plot_cutpoint_residuals()
   result$userdata$event <- as.character(result$userdata$event)
 
   expect_message(
-    plot_schoenfeld(result),
+    plot_cutpoint_residuals(result),
     regexp = "Cox model failed"
   )
 })
 
-test_that("Coverage: plot_schoenfeld Cox failure (Pathological Data)", {
+test_that("Coverage: plot_cutpoint_residuals Cox failure (Pathological Data)", {
   res_valid <- valid_fc_result_for_boot
   res_valid$userdata$event <- 0
-  expect_error(plot_schoenfeld(res_valid))
+  expect_error(plot_cutpoint_residuals(res_valid))
 })
 
 test_that(
@@ -1353,7 +1396,7 @@ test_that(
 # Note: These tests cover S3 methods for all main classes, including
 # handling of NA results.
 
-#' @srrstats {G1.0} Tests S3 methods (print, summary, plot).
+#' @srrstats {RE4.17} Tests S3 print methods.
 #' @srrstats {G5.2} Tests graceful handling of empty/NA results.
 test_that("S3 methods for find_cutpoint handle NA results", {
   res_na <- find_cutpoint(mock_data_pathological, "predictor", "time", "event",
@@ -1381,7 +1424,7 @@ test_that("S3 methods for find_cutpoint handle NA results", {
   expect_s3_class(sum_res, "find_cutpoint")
 })
 
-#' @srrstats {G1.0} Tests S3 summary method.
+#' @srrstats {RE4.18} Tests S3 summary method.
 test_that("S3 summary.find_cutpoint works with all arguments", {
   res_valid <- suppressMessages(suppressWarnings(
     find_cutpoint(mock_data, "predictor", "time", "event",
@@ -1401,7 +1444,7 @@ test_that("S3 summary.find_cutpoint works with all arguments", {
   )
 })
 
-#' @srrstats {G3.1} Tests S3 plot method.
+#' @srrstats {RE6.0} Tests S3 plot method.
 test_that("plot.find_cutpoint generates all plot types", {
   skip_if_not_installed("broom")
   res_valid <- suppressMessages(suppressWarnings(
@@ -1425,7 +1468,7 @@ test_that("plot.find_cutpoint generates all plot types", {
   res_2_cuts <- suppressMessages(suppressWarnings(
     find_cutpoint(mock_data_3groups, "predictor", "time", "event",
       num_cuts = 2,
-      method = "genetic", maxiter = 5, quiet = TRUE
+      method = "genetic", max.generations = 5, quiet = TRUE
     )
   ))
   skip_if(
@@ -1437,7 +1480,7 @@ test_that("plot.find_cutpoint generates all plot types", {
   expect_match(p_forest_g2$labels$subtitle, "G2")
 })
 
-#' @srrstats {G3.0} Tests S3 methods (print, summary, plot).
+#' @srrstats {RE4.17} Tests S3 methods (print, summary, plot).
 #' @srrstats {G5.2} Tests graceful handling of empty/NA results.
 test_that("S3 methods for find_cutpoint_number handle NA results/args", {
   res_na <- structure(
@@ -1453,7 +1496,7 @@ test_that("S3 methods for find_cutpoint_number handle NA results/args", {
   )
   expect_message(
     summary(res_na),
-    regexp = "Cannot summarize: no valid model was found"
+    regexp = "Cannot summarise: no valid model was found"
   )
   res_valid <- suppressMessages(suppressWarnings(
     find_cutpoint_number(
@@ -1473,7 +1516,7 @@ test_that("S3 methods for find_cutpoint_number handle NA results/args", {
   )
 })
 
-#' @srrstats {G3.0} Tests S3 summary method.
+#' @srrstats {RE4.18} Tests S3 summary method.
 test_that("S3 summary.find_cutpoint_number works with all arguments", {
   res_valid <- suppressMessages(suppressWarnings(
     find_cutpoint_number(
@@ -1492,8 +1535,8 @@ test_that("S3 summary.find_cutpoint_number works with all arguments", {
   )
 })
 
-#' @srrstats {G3.0} Tests S3 methods (print, summary, plot).
-#' @srrstats {G3.1} Tests diagnostic plot of bootstrap distribution.
+#' @srrstats {RE4.17} Tests S3 methods (print, summary, plot).
+#' @srrstats {RE6.0} Tests diagnostic plot of bootstrap distribution.
 test_that("S3 methods for validate_cutpoint handle arguments", {
   suppressMessages({
     suppressWarnings({
@@ -1501,7 +1544,7 @@ test_that("S3 methods for validate_cutpoint handle arguments", {
         num_replicates = 20,
         n_cores = 1,
         nmin = 5,
-        maxiter = 10,
+        max.generations = 10,
         seed = 42
       )
     })
@@ -1533,11 +1576,74 @@ test_that("S3 methods for validate_cutpoint handle arguments", {
   expect_s3_class(plot(result), "ggplot")
 })
 
+test_that("Coverage: summary.find_cutpoint_number_result – no valid IC", {
+  obj <- structure(
+    list(
+      optimal_cuts = NA_real_,
+      optimal_stat = NA_real_,
+      ic = rep(NA_real_, 5),
+      parameters = list(
+        method    = "systematic",
+        criterion = "BIC"
+      )
+    ),
+    class = "find_cutpoint_number_result"
+  )
+  expect_snapshot(summary(obj))
+})
+
+test_that("Coverage: plot.find_cutpoint_number_result – all IC NA", {
+  obj <- structure(
+    list(
+      optimal_cuts = NA_real_,
+      optimal_stat = NA_real_,
+      ic = rep(NA_real_, 5),
+      parameters = list(
+        method    = "systematic",
+        criterion = "BIC"
+      )
+    ),
+    class = "find_cutpoint_number_result"
+  )
+  expect_snapshot(plot(obj))
+})
+
+test_that("summary handles pathological IC (mix of NA/Inf)", {
+  obj <- structure(
+    list(
+      optimal_cuts = NA_real_,
+      optimal_stat = NA_real_,
+      ic = c(Inf, NA, Inf, NA, Inf),
+      parameters = list(
+        method    = "systematic",
+        criterion = "BIC"
+      )
+    ),
+    class = "find_cutpoint_number_result"
+  )
+  expect_snapshot(summary(obj))
+})
+
+test_that("S3 methods handle missing parameters gracefully", {
+  obj <- structure(
+    list(
+      optimal_cuts = NA_real_,
+      optimal_stat = NA_real_,
+      ic = rep(NA_real_, 3)
+    ),
+    class = "find_cutpoint_number_result",
+    parameters = list(method = "unknown", criterion = "BIC")
+  )
+  expect_snapshot(print(obj))
+  expect_snapshot(summary(obj))
+  expect_snapshot(plot(obj))
+})
+
 # --- SECTION 6: Tests for Internal Helpers (utils-helpers.R) ---
 # Note: These tests cover objective functions, genetic search wrappers, and
 # data validation helpers.
 
-#' @srrstats {G5.8a} Tests handling of invalid cut-points.
+#' @srrstats {G5.8} Tests handling of invalid cut-points.
 test_that(".obj handles invalid cuts", {
   expect_equal(
     .obj(
@@ -1587,7 +1693,7 @@ test_that(".obj - p_value with loglik path", {
   result <- .obj(
     params = 50,
     time = rexp(30, 0.05),
-    censor = sample(0:1, 30, replace = TRUE), # <-- fixed line
+    censor = sample(0:1, 30, replace = TRUE),
     target = rnorm(30, 50, 10),
     confound = confound_data,
     numcut = 1,
@@ -1626,7 +1732,7 @@ test_that(".run_genetic_search - gap = NULL (auto)", {
       confound = NULL,
       nmin = 5,
       criterion = "logrank",
-      numgen = 3,
+      max.generations = 3,
       gap = NULL,
       print.level = 0
     )
@@ -1645,7 +1751,7 @@ test_that(".run_genetic_search - zero gap fallback", {
       confound = NULL,
       nmin = 5,
       criterion = "logrank",
-      numgen = 3,
+      max.generations = 3,
       gap = NULL,
       print.level = 0
     )
@@ -1856,7 +1962,7 @@ test_that("full workflow: num -> find -> validate", {
           num_replicates = 20,
           n_cores = 1,
           nmin = 5,
-          maxiter = 10,
+          max.generations = 10,
           seed = 42
         )
       })
@@ -1931,14 +2037,16 @@ test_that("Coverage: find_cutpoint_number uses seed", {
     predictor = "predictor",
     outcome_time = "time",
     outcome_event = "event",
-    method = "genetic", max_cuts = 1, seed = 123, maxiter = 5
+    method = "genetic", max_cuts = 1, seed = 123,
+    max.generations = 5
   )))
   res2 <- suppressMessages(suppressWarnings(find_cutpoint_number(
     data = head(mock_data, 30),
     predictor = "predictor",
     outcome_time = "time",
     outcome_event = "event",
-    method = "genetic", max_cuts = 1, seed = 123, maxiter = 5
+    method = "genetic", max_cuts = 1, seed = 123,
+    max.generations = 5
   )))
   # Seed ensures the (stochastic) results are identical
   expect_equal(res1$results, res2$results)
@@ -1968,7 +2076,6 @@ test_that("Coverage: find_cutpoint_number handles Cox model failures", {
     .package = "survival"
   )
   # Test systematic path
-  # *** FIX ***: Expect the message from the error, not an error
   expect_message(
     suppressWarnings(find_cutpoint_number(
       data = mock_data,
@@ -2035,7 +2142,8 @@ test_that("Coverage: .genetic_search_num - base model calculation", {
       nmin = 5,
       criterion = "AIC",
       covariates = NULL,
-      maxiter = 3
+      max.generations = 3,
+      pop.size = 10
     )
   ))
   expect_true("AIC" %in% names(result))
@@ -2049,79 +2157,4 @@ test_that("Coverage: .systematic_search_num – max_cuts > 2 error", {
     ),
     regexp = "only implemented for max_cuts <= 2"
   )
-})
-
-## -------------------------------------------------------------------------
-## 1. summary.find_cutpoint_number_result – no valid IC (warning → snapshot)
-## -------------------------------------------------------------------------
-test_that("Coverage: summary.find_cutpoint_number_result – no valid IC", {
-  obj <- structure(
-    list(
-      optimal_cuts = NA_real_,
-      optimal_stat = NA_real_,
-      ic = rep(NA_real_, 5), # all NA → no model
-      parameters = list(
-        method    = "systematic",
-        criterion = "BIC" # ← Fixed: was "IC"
-      )
-    ),
-    class = "find_cutpoint_number_result"
-  )
-  expect_snapshot(summary(obj))
-})
-
-## -------------------------------------------------------------------------
-## 2. plot.find_cutpoint_number_result – all IC NA (warning → snapshot)
-## -------------------------------------------------------------------------
-test_that("Coverage: plot.find_cutpoint_number_result – all IC NA", {
-  obj <- structure(
-    list(
-      optimal_cuts = NA_real_,
-      optimal_stat = NA_real_,
-      ic = rep(NA_real_, 5),
-      parameters = list(
-        method    = "systematic",
-        criterion = "BIC" # ← Fixed: was "IC"
-      )
-    ),
-    class = "find_cutpoint_number_result"
-  )
-  expect_snapshot(plot(obj))
-})
-
-## -------------------------------------------------------------------------
-## 3. summary handles pathological IC (mix of NA/Inf) → stable snapshot
-## -------------------------------------------------------------------------
-test_that("summary handles pathological IC (mix of NA/Inf)", {
-  obj <- structure(
-    list(
-      optimal_cuts = NA_real_,
-      optimal_stat = NA_real_,
-      ic = c(Inf, NA, Inf, NA, Inf), # realistic pathological IC
-      parameters = list(
-        method    = "systematic",
-        criterion = "BIC" # ← Fixed: was "IC"
-      )
-    ),
-    class = "find_cutpoint_number_result"
-  )
-  expect_snapshot(summary(obj))
-})
-
-## -------------------------------------------------------------------------
-## 4. S3 methods handle missing parameters gracefully
-## -------------------------------------------------------------------------
-test_that("S3 methods handle missing parameters gracefully", {
-  obj <- structure(
-    list(
-      optimal_cuts = NA_real_,
-      optimal_stat = NA_real_,
-      ic           = rep(NA_real_, 3)
-    ),
-    class = "find_cutpoint_number_result",
-    parameters = list(method = "unknown", criterion = "BIC") # ← Fixed: was "IC"
-  )
-  expect_snapshot(print(obj))
-  expect_snapshot(summary(obj))
-  expect_snapshot(plot(obj))
 })

@@ -11,7 +11,7 @@ A data frame with 1040 rows and 5 variables:
   \item{time}{Day of measurement (integer).}
   \item{growth}{Simulated seedling growth (numeric).}
   \item{germinated}{Germination status: 1 = germinated,
-    0 = not germinated (integer).}
+     0 = not germinated (integer).}
 }
 }
 \source{
@@ -24,11 +24,6 @@ Simulated germination and early growth of rapeseed (Brassica napus L.)
 across a range of temperatures. Based on parameters from
 Haj Sghaier et al. (2022).
 }
-\section{srrstats compliance}{
-
-.
-}
-
 \references{
 Haj Sghaier, A., Tarnawa, Á., Khaeim, H., Kovács, G. P.,
 Gyuricza, C., & Kende, Z. (2022). The Effects of Temperature and

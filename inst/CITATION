@@ -1,0 +1,10 @@
+bibentry(
+  bibtype = "Article",
+  title = "OptSurvCutR: Validated Cut-point Selection for Survival Analysis",
+  author = person("Payton T. O.", "Yau"),
+  journal = "bioRxiv",
+  year = "2025",
+  doi = "10.1101/2025.10.08.681246",
+  url = "https://doi.org/10.1101/2025.10.08.681246",
+  note = "Preprint posted October 10, 2025"
+)

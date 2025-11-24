@@ -5,7 +5,7 @@
     Message
       
       -- Optimal Cut-point Number Analysis (Systematic) ------------------------------
-      Cannot summarize: no valid model was found.
+      Cannot summarise: no valid model was found.
 
 # Coverage: plot.find_cutpoint_number_result – all IC NA
 
@@ -21,7 +21,7 @@
     Message
       
       -- Optimal Cut-point Number Analysis (Systematic) ------------------------------
-      Cannot summarize: no valid model was found.
+      Cannot summarise: no valid model was found.
 
 # S3 methods handle missing parameters gracefully
 
@@ -41,7 +41,7 @@
     Message
       
       -- Optimal Cut-point Number Analysis (Unknown) ---------------------------------
-      Cannot summarize: no valid model was found.
+      Cannot summarise: no valid model was found.
 
 ---
 

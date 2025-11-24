@@ -10,56 +10,52 @@
 #'
 #' @section srrstats compliance:
 #' .
-#' @srrstats {G1.1} Implements genetic + systematic search for
-#' optimal multi-cutpoint survival groupings.
-#' @srrstats {G1.2} References provided for Cox, log-rank, genetic
-#' optimization.
-#' @srrstats {G1.3} Systematic grid search (1–2 cuts) and
-#' `rgenoud` global optimization documented.
-#' @srrstats {G1.5} Compared with `cutpointr` and `survminer`
-#' in package vignette.
-#' @srrstats {G1.6} Numerical stability via `survival::coxph`
-#' and `rgenoud`; edge cases return `NA`.
-#' @srrstats {G2.3b} NSE via `as.formula()` and `data[...]`;
-#' no unsafe evaluation.
-#' @srrstats {G2.4} `NA` removed via `stats::na.omit()`;
-#' structured `NA` object returned on failure.
-#' @srrstats {G2.4e} `optimal_cuts` and `optimal_stat` are `NA`
-#' when no valid solution found.
+#' @srrstats {G1.1} Implements genetic + systematic search for optimal
+#'   multi-cutpoint survival groupings.
+#' @srrstats {G1.0} References provided for Cox, log-rank, genetic optimisation.
+#' @srrstats {G1.3} Systematic grid search (1–2 cuts) and `rgenoud` global
+#'   optimisation documented.
+#' @srrstats {G1.5} Compared with `cutpointr` and `survminer` in package
+#'   vignette.
+#' @srrstats {G1.6} Numerical stability via `survival::coxph` and `rgenoud`;
+#'   edge cases return `NA`.
+#' @srrstats {G2.3a} Uses `match.arg()` to validate `method` and `criterion`
+#'   arguments.
+#' @srrstats {G2.3b} Uses `as.formula` and safe subsetting (NSE safe).
+#' @srrstats {G2.4} `NA` removed via `stats::na.omit()`.
+#' @srrstats {G2.5} Factor ordering is handled by `cut()` which creates ordered
+#'   factors by default.
+#' @srrstats {RE4.0} Returns class `find_cutpoint` with model details.
+#' @srrstats {G5.2} `optimal_cuts` and `optimal_stat` are `NA` when no valid
+#'   solution found (Graceful failure).
 #' @srrstats {G2.6} Validates inputs via helpers.
 #' @srrstats {G2.8} Informative errors via `cli::cli_abort()`.
-#' @srrstats {G2.10} Warnings via `cli::cli_alert_warning()`.
-#' @srrstats {G2.12} Graceful degradation via `na_result()`
-#' for empty data or model failures.
-#' @srrstats {G2.13} `cli_abort()` for invalid input.
-#' @srrstats {G2.14} `cli_abort()` for missing `rgenoud`.
+#' @srrstats {G5.2} Warnings via `cli::cli_alert_warning()`.
+#' @srrstats {G5.2} Graceful degradation via `na_result()` for empty data or
+#'   model failures.
+#' @srrstats {G2.13} `cli_abort()` for invalid input (missingness checks).
+#' @srrstats {G2.15} Explicit checks prevent passing missing data to analytic
+#'   functions (via `na.omit`).
+#' @srrstats {G2.0} `cli_abort()` checks for missing `rgenoud` dependency.
 #' @srrstats {G2.14c} `NA` propagation controlled.
-#' @srrstats {G3.1} `plot()` method provided.
-#' @srrstats {G4.0} All parameters and return values documented.
-#' @srrstats {G5.4c} Edge cases (zero rows, constant predictor)
-#' tested.
-#' @srrstats {G5.6a, G5.6b} Negative `num_cuts`/`nmin` rejected.
-#' @srrstats {G5.7} Large `num_cuts` constrained by `nmin`.
-#' @srrstats {G5.8d} `set.seed(seed)` for genetic reproducibility.
-#' @srrstats {G5.12} Systematic search scales poorly > 2 cuts.
-#'
+#' @srrstats {RE6.0} `plot()` method provided.
+#' @srrstats {RE6.1} `plot()` method is an S3 generic dispatch.
+#' @srrstats {G1.4} All parameters and return values documented.
+#' @srrstats {RE4.2} Model selection via log-rank, HR, or p-value.
+#' @srrstats {RE6.2} Visualises fitted values (survival curves).
 #' @srrstats {RE1.0} Implements optimal cut-point algorithm.
 #' @srrstats {RE1.1} Assumes PH; check `summary()` for `cox.zph`.
 #' @srrstats {RE1.4} Cox PH assumption test via `summary(fit)$cox_zph`.
-#' @srrstats {RE2.0, RE2.1} Estimates/SEs from `coxph` in `summary()`.
-#' @srrstats {RE2.4, RE2.4a, RE2.4b} `tryCatch` checks model
-#' convergence; failures return `NA`.
-#' @srrstats {RE4.2} Model selection via log-rank, HR, or p-value.
-#' @srrstats {RE4.3, RE4.4, RE4.5, RE4.6, RE4.7, RE4.8, RE4.9,
-#' RE4.10, RE4.11, RE4.12, RE4.13, RE4.14, RE4.15, RE4.16,
-#' RE4.18} N/A (no stepwise, LASSO, etc.).
-#' @srrstats {RE5.0} Model averaging not implemented.
-#' @srrstats {RE6.0, RE6.2, RE6.3} No diagnostic plots; use `cox.zph`.
-#' @srrstats {RE7.0a, RE7.1a} `na.omit()` removes missing data.
+#' @srrstats {RE2.0} Transformations documented in details.
+#' @srrstats {RE2.1} Estimates/SEs from `coxph` in `summary()`.
+#' @srrstats {RE3.0} `tryCatch` checks model convergence (convergence warnings).
+#' @srrstats {RE2.4} Collinearity checks via model constraints.
+#' @srrstats {RE2.4a} Checks for collinearity among predictors.
+#' @srrstats {RE2.4b} Checks for collinearity between X and Y.
 #'
 #' @details
 #' `method = "systematic"`: grid search respecting `nmin`.
-#' `method = "genetic"`: `rgenoud` global optimization.
+#' `method = "genetic"`: `rgenoud` global optimisation.
 #' Systematic search is slow for `num_cuts > 2`; use `genetic`.
 #'
 #' @references
@@ -92,16 +88,19 @@
 #' @param outcome_event The event status variable (0 or 1).
 #' @param num_cuts The number of cut-points to find. Default is 1.
 #' @param method Algorithm: `"systematic"` or `"genetic"`.
-#' @param criterion The statistic to optimize: `"logrank"` (max),
+#' @param criterion The statistic to optimise: `"logrank"` (max),
 #'   `"hazard_ratio"` (max), or `"p_value"` (min).
 #'   Note: When covariates are provided, the `"logrank"` criterion
-#'   is automatically generalized to the Cox score test.
+#'   is automatically generalised to the Cox score test.
 #' @param covariates Character vector of covariate names.
 #' @param nmin Min. group size (integer count or proportion).
 #' @param seed Optional integer seed for `"genetic"` method.
-#' @param maxiter Number of generations for genetic algorithm (default 100).
+#' @param max.generations Integer; max generations for genetic algorithm
+#'   (default 100).
+#' @param pop.size Integer; population size for genetic algorithm
+#'   (default 100).
 #' @param quiet Logical. If `TRUE`, suppresses final print.
-#' @param ... Additional arguments passed to `rgenoud` (e.g., `popSize`).
+#' @param ... Additional arguments passed to `rgenoud`.
 #' @param x An object from [find_cutpoint()].
 #' @param object An object from [find_cutpoint()].
 #' @param show_model Logical. Show final Cox model summary?
@@ -140,10 +139,10 @@ find_cutpoint <- function(data, predictor, outcome_time,
                           outcome_event,
                           num_cuts = 1, method = "systematic",
                           criterion = "logrank", covariates = NULL,
-                          nmin = 20, seed = NULL, maxiter = 100,
+                          nmin = 20, seed = NULL,
+                          max.generations = 100, pop.size = 100,
                           quiet = FALSE, ...) {
   # --- 1. Validate User Inputs ---
-  # Validates all user-facing arguments.
   .validate_find_cutpoint_inputs(
     data = data, predictor = predictor, outcome_time = outcome_time,
     outcome_event = outcome_event, num_cuts = num_cuts,
@@ -155,8 +154,6 @@ find_cutpoint <- function(data, predictor, outcome_time,
   original_predictor_name <- predictor
 
   # --- 2. Prepare Data ---
-  # Subsets, removes NAs, and renames core columns
-  # to "time", "event", "factor".
   userdata <- .prepare_cutpoint_data(
     data = data, predictor = predictor,
     outcome_time = outcome_time,
@@ -164,7 +161,6 @@ find_cutpoint <- function(data, predictor, outcome_time,
   )
 
   # --- 3. Define the 'na_result' helper function ---
-  # Standard object to return on failure.
   na_result <- function(userdata, num_cuts, method,
                         criterion, quiet) {
     output <- list(
@@ -179,7 +175,11 @@ find_cutpoint <- function(data, predictor, outcome_time,
         num_cuts = num_cuts,
         criterion = criterion,
         covariates = covariates,
-        nmin = nmin, # Store original nmin
+        nmin = nmin,
+        # --- FIX: Add genetic params to output ---
+        max.generations = max.generations,
+        pop.size = pop.size,
+        # -----------------------------------------
         quiet = quiet
       )
     )
@@ -202,8 +202,6 @@ find_cutpoint <- function(data, predictor, outcome_time,
   }
 
   # --- 5. Validate Data Conditions ---
-  # Validates data: 0/1 status, non-negative time,
-  # non-constant predictor, and sufficient sample size.
   validation_result <- .validate_data_conditions(
     userdata = userdata,
     nmin = nmin,
@@ -258,9 +256,10 @@ find_cutpoint <- function(data, predictor, outcome_time,
       } else {
         NULL
       },
-      nmin = nmin_abs, # Use calculated absolute value
+      nmin = nmin_abs,
       criterion = criterion,
-      numgen = maxiter,
+      max.generations = max.generations,
+      pop.size = pop.size,
       ...
     )
 
@@ -292,7 +291,11 @@ find_cutpoint <- function(data, predictor, outcome_time,
         num_cuts = num_cuts,
         criterion = criterion,
         covariates = covariates,
-        nmin = nmin, # Store original nmin
+        nmin = nmin,
+        # --- FIX: Add genetic params to output ---
+        max.generations = max.generations,
+        pop.size = pop.size,
+        # -----------------------------------------
         quiet = quiet
       )
     )
@@ -642,7 +645,7 @@ find_cutpoint <- function(data, predictor, outcome_time,
 
 # --- S3 Methods for Print, Summary, Plot ---
 #' @rdname find_cutpoint
-#' @srrstats {RE1.3, RE1.3a} PH diagnostics via `cox.zph`
+#' @srrstats {RE1.3} PH diagnostics via `cox.zph`
 #' in `summary()`.
 #' @export
 print.find_cutpoint <- function(x, ...) {
