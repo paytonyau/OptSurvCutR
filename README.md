@@ -9,6 +9,8 @@
 
 `OptSurvCutR` (**Opt**imal **Surv**ival **Cut**-points **R**) provides a rigorous, reproducible **three-step workflow** for discovering the optimal number and location of cut-points in time-to-event (survival) data. Designed for continuous predictors (e.g., gene expression, virome abundance, biomarkers), it moves beyond arbitrary median splits to fully **data-driven stratification**.
 
+![OptSurvCutR Graphical Abstract](image/graphical_abstract.jpg)
+
 ## Why OptSurvCutR?
 
 | Feature                        | Benefit                                                               |
