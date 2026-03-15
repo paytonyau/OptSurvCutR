@@ -34,7 +34,7 @@ This vignette demonstrates how the **`OptSurvCutR`** package provides a comprehe
 
 > **Based on simulated data, can we find the optimal temperature threshold(s) that best separate fast and slow germination in rapeseed?**
 
-To answer this, we will use the germination dataset, which is included with the package. This dataset was simulated based on the findings of Haj Sghaier et al. (2022). It is intentionally designed to have a non-monotonic, U-shaped relationship between temperature and germination time, making it a perfect case study for testing a multi-cut-point algorithm.
+To answer this, we will use the germination dataset, which is included with the package. This dataset was simulated based on the findings of Haj Sghaier *et al.* (2022). It is intentionally designed to have a non-monotonic, U-shaped relationship between temperature and germination time, making it a perfect case study for testing a multi-cut-point algorithm.
 
 ### Analysis Workflow
 
@@ -80,7 +80,7 @@ library(cli)
 
 ### The Rapeseed Germination Data
 
-To create a realistic dataset for demonstrating the package's capabilities, time-to-event data was simulated based on the findings of Haj Sghaier et al. (2022). The simulation was designed in two parts to generate a rich, continuous predictor with a non-linear relationship to the outcome. First, a core dataset was generated based on parameters reported directly in the source manuscript for seven distinct temperature points (5, 10, 15, 20, 25, 30, and 35°C). These parameters included the germination time window (start and end day), coefficients for a linear growth model (slope and intercept), and the overall germination rate for each temperature. Second, to create a more continuous variable suitable for cut-point optimisation, these parameters were linearly interpolated for six intermediate temperature points (7.5, 12.5, 17.5, 22.5, 27.5, and 32.5°C). The final dataset, `germination`, is included with the package and was formed by combining these two simulated subsets.
+To create a realistic dataset for demonstrating the package's capabilities, time-to-event data was simulated based on the findings of Haj Sghaier *et al.* (2022). The simulation was designed in two parts to generate a rich, continuous predictor with a non-linear relationship to the outcome. First, a core dataset was generated based on parameters reported directly in the source manuscript for seven distinct temperature points (5, 10, 15, 20, 25, 30, and 35°C). These parameters included the germination time window (start and end day), coefficients for a linear growth model (slope and intercept), and the overall germination rate for each temperature. Second, to create a more continuous variable suitable for cut-point optimisation, these parameters were linearly interpolated for six intermediate temperature points (7.5, 12.5, 17.5, 22.5, 27.5, and 32.5°C). The final dataset, `germination`, is included with the package and was formed by combining these two simulated subsets.
 
 ```{r load-data}
 # Load the pre-simulated data included with the package
