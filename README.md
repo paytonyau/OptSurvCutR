@@ -9,19 +9,15 @@
 
 `OptSurvCutR` (**Opt**imal **Surv**ival **Cut**-points **R**) provides a rigorous, reproducible **three-step workflow** for discovering the optimal number and location of cut-points in time-to-event (survival) data. Designed for continuous predictors (e.g., gene expression, virome abundance, biomarkers), it moves beyond arbitrary median splits to fully **data-driven stratification**.
 
-<p align="center">
-  <img src="image/graphical_abstract.png" alt="OptSurvCutR Graphical Abstract" width="100%">
-</p>
-
 ## Why OptSurvCutR?
 
-| Feature                       | Benefit                                                               |
+| Feature                        | Benefit                                                               |
 |-------------------------------|-----------------------------------------------------------------------|
 | Optimal number of cuts        | Uses AIC, AICc, or BIC to select 0–k cut-points                       |
-| Flexible search               | Systematic grid or genetic algorithm (`rgenoud`)                      |
+| Flexible search               | Systematic grid or genetic algorithm (`rgenoud`)                     |
 | Covariate adjustment          | Control for confounders during cut-point discovery                    |
-| Bootstrap validation          | 95% confidence intervals for cut-point stability                      |
-| Publication-ready plots       | Kaplan–Meier, optimisation curves, Schoenfeld residual diagnostics    |
+| Bootstrap validation          | 95% confidence intervals for cut-point stability                     |
+| Publication-ready plots       | Kaplan–Meier, optimisation curves, Schoenfeld residual diagnostics   |
 
 ## Installation
 You can install the development version of `OptSurvCutR` from GitHub. Note that the genetic algorithm (`method = "genetic"`) requires the `rgenoud` package, which should be installed separately from CRAN if you plan to use it.
@@ -41,7 +37,6 @@ remotes::install_github("paytonyau/OptSurvCutR")
 ```r
 library(OptSurvCutR)
 library(survival)
-library(dplyr)
 
 data("crc_virome")
 
@@ -69,10 +64,10 @@ val <- validate_cutpoint(cuts, num_replicates = 200, seed = 456)
 summary(val)
 
 # Step 4: Visualise results
-plot(cuts, type = "outcome")          # Kaplan–Meier curves
-plot(cuts, type = "distribution")     # Predictor + cuts
-plot_cutpoint_residuals(cuts)         # Proportional hazards check (Schoenfeld)
-plot(val)                             # Bootstrap density + 95% CI
+plot(cuts, type = "outcome")        # Kaplan–Meier curves
+plot(cuts, type = "distribution")  # Predictor + cuts
+plot_schoenfeld(cuts)               # Proportional hazards check
+plot(val)                           # Bootstrap density + 95% CI
 ```
 
 ## Workflow Summary
@@ -81,10 +76,8 @@ OptSurvCutR provides a three-step workflow for cut-point analysis:
 1.  `find_cutpoint_number()`: – selects the statistically optimal number of cut-points using information criteria
 2.  `find_cutpoint()`: locates exact cut-point values (systematic or genetic search)
 3.  `validate_cutpoint()`: assesses stability via bootstrapping with 95% confidence intervals
-
 ## Resources
 - **Vignettes**: `browseVignettes("OptSurvCutR")`
-- **Protocol**: https://paytonyau.github.io/OptSurvCutR/index.html
 - **Package Website**:  https://paytonyau.github.io/OptSurvCutR/
 - **Manuscript**: Yau, Payton T. O. "OptSurvCutR: Validated Cut-point Selection for Survival Analysis." bioRxiv preprint, posted October 10, 2025. https://doi.org/10.1101/2025.10.08.681246.
 
@@ -102,6 +95,13 @@ OptSurvCutR provides a three-step workflow for cut-point analysis:
 }
 ```
 A JOSS submission is planned post-rOpenSci review.
+
+## Support OptSurvCutR
+If `OptSurvCutR` helps your research, consider buying me a coffee — it directly supports ongoing maintenance with no dedicated funding.
+
+<a href="https://buymeacoffee.com/payton.yau" target="_blank">
+ <img src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=payton.yau&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff" alt="Buy Me A Coffee" width="150"></a>
+
 
 ## License
 Licensed under the GPL-3 License.

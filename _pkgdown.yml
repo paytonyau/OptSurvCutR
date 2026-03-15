@@ -3,15 +3,11 @@ url: https://paytonyau.github.io/OptSurvCutR/
 
 template:
   bootstrap: 5
-  bootswatch: "litera" # Clean, publication-quality theme
-  # Improved code syntax highlighting (better colours than 'default')
-  highlight: textmate  
-  light-switch: true   # Enable light/dark mode toggle
-
-# Correct Repo Configuration for "View Source" links
-repo:
-  url: https://github.com/paytonyau/OptSurvCutR/
-  branch: main
+  bootswatch: "litera"
+  light-switch: true
+  theme: gruvbox-light
+  theme-dark: gruvbox-dark 
+  highlight: default
 
 development:
   mode: release
@@ -25,20 +21,14 @@ og:
   title: "OptSurvCutR: Optimal Cut-point Selection"
   description: "Discover and validate optimal cut-points for survival analysis using systematic and genetic algorithms."
 
-# --- SIDEBAR LINKS (Home) ---
+# --- FIX: This ensures the link appears in the sidebar ---
 home:
   links:
-    - text: Support my work
+    - text: Support my work ☕
       href: https://www.buymeacoffee.com/payton.yau
-      icon: fas fa-coffee # Coffee Cup Icon
-    - text: ORCID
-      href: https://orcid.org/0000-0002-3283-0370
-      icon: fab fa-orcid # ORCID Academic Icon
-# ----------------------------
+# -------------------------------------------------------
 
 navbar:
-  # "primary" gives the navbar a distinct colour based on the theme
-  type: primary 
   structure:
     left:  [intro, reference, articles, news, manuscript]
     right: [search, github]
@@ -118,8 +108,8 @@ footer:
 toc:
   depth: 3
 
+# Simplified sidebar (relies on 'home' for links now)
 sidebar:
-  # 'links' automatically pulls from DESCRIPTION + the 'home' section above
   structure: [links, vignettes, reference, license, community, dev]
   components:
     vignettes:

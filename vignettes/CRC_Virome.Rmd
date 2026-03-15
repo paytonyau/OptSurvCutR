@@ -448,13 +448,6 @@ schoenfeld_test_adj <- cox.zph(cox_model_adj)
 
 print(schoenfeld_test_adj)
 print(ggcoxzph(schoenfeld_test_adj))
-# Use OptSurvCutR's built-in diagnostic plotter
-# This handles titles and subtitles automatically
-plot_cutpoint_residuals(validation_result_adj, type = "schoenfeld") 
-# Note: If your function takes the 'find_cutpoint' object, pass that. 
-# If it takes the cox.zph object, pass that. 
-# Based on your code, it takes the result object 'x':
-plot_cutpoint_residuals(cutpoint_result_adj)
 ```
 
 > **Interpretation**: The `cox.zph` test provides a formal statistical check. If the p-value for `GLOBAL` is greater than 0.05, we generally conclude that there is no strong evidence against the proportional hazards assumption. The plot provides a visual check; ideally, the smoothed lines should be roughly horizontal with confidence bands overlapping zero. Minor deviations are often acceptable, especially with smaller group sizes.

@@ -1,14 +1,3 @@
-# OptSurvCutR 0.1.9.2 (2026-03-15)
-
-### DOCUMENTATION & STANDARDS
-* **Grapical Abstract:** Added the new graphical abstract to the image/ folder for inclusion in the README.md.
-
-### COMMUNITY & OUTREACH
-
-* **Presentations:** Presented at FOSDEM 2026 (Jan 2026) in the Bioinformatics & Computational Biology DevRoom in Brussels, Belgium. ([View lightning talk details]((https://fosdem.org/2026/schedule/event/9JQJ9M-bioinformatics_lighthning_talks/)))
-* **Presentations:** Presented at R!SK 2026 (February, 2026). This 100% online conference focuses on evaluating, measuring, and mitigating risk across diverse industries including healthcare, finance, and insurance. The event featured deep content sessions and live Q&A interactions. ([View presentation abstract](https://rconsortium.github.io/Risk_website/Abstracts.html#payton-yau))
-
-
 # OptSurvCutR 0.1.9.2 (2025-11-25)
 
 ## ROPENSCI REVIEW UPDATES (ITERATION 2)
