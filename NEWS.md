@@ -1,9 +1,12 @@
-# OptSurvCutR 0.1.9.3 (2026-03-15)
+# OptSurvCutR 0.1.9.3 (2026-03-22)
 
 ## DOCUMENTATION & STANDARDS
 
 **Graphical Abstract:** Added the new graphical abstract to the `image/` folder for inclusion in the README.md.
 ![OptSurvCutR Graphical Abstract](image/graphical_abstract.jpg)
+
+* **Instruction Page (README.md):** Updated the main package repository instructions.
+
 ## COMMUNITY & OUTREACH
 
 **Presentations:** Presented at FOSDEM 2026 in the Bioinformatics & Computational Biology DevRoom in Brussels, Belgium. [View lightning talk details](https://fosdem.org/2026/schedule/event/9JQJ9M-bioinformatics_lighthning_talks/)

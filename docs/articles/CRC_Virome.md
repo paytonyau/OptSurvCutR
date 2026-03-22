@@ -715,7 +715,7 @@ We encoursex you to try `OptSurvCutR` with your own data.
 
     ``` r
     sessionInfo()
-    #> R version 4.5.2 (2025-10-31 ucrt)
+    #> R version 4.5.3 (2026-03-11 ucrt)
     #> Platform: x86_64-w64-mingw32/x64
     #> Running under: Windows 11 x64 (build 26200)
     #> 
@@ -737,23 +737,23 @@ We encoursex you to try `OptSurvCutR` with your own data.
     #> 
     #> other attached packages:
     #> [1] cli_3.6.5           knitr_1.50          survminer_0.5.1    
-    #> [4] ggpubr_0.6.2        ggplot2_4.0.1       survival_3.8-3     
-    #> [7] dplyr_1.1.4         OptSurvCutR_0.1.9.2
+    #> [4] ggpubr_0.6.2        ggplot2_4.0.1       survival_3.8-6     
+    #> [7] dplyr_1.1.4         OptSurvCutR_0.1.9.3
     #> 
     #> loaded via a namespace (and not attached):
     #>  [1] gtable_0.3.6       xfun_0.54          bslib_0.9.0        htmlwidgets_1.6.4 
-    #>  [5] rstatix_0.7.3      lattice_0.22-7     vctrs_0.6.5        tools_4.5.2       
-    #>  [9] generics_0.1.4     parallel_4.5.2     tibble_3.3.0       pkgconfig_2.0.3   
+    #>  [5] rstatix_0.7.3      lattice_0.22-9     vctrs_0.6.5        tools_4.5.3       
+    #>  [9] generics_0.1.4     parallel_4.5.3     tibble_3.3.0       pkgconfig_2.0.3   
     #> [13] Matrix_1.7-4       data.table_1.17.8  RColorBrewer_1.1-3 S7_0.2.1          
-    #> [17] desc_1.4.3         lifecycle_1.0.4    stringr_1.6.0      compiler_4.5.2    
+    #> [17] desc_1.4.3         lifecycle_1.0.4    stringr_1.6.0      compiler_4.5.3    
     #> [21] farver_2.1.2       textshaping_1.0.4  codetools_0.2-20   carData_3.0-5     
     #> [25] litedown_0.8       htmltools_0.5.8.1  sass_0.4.10        yaml_2.3.10       
     #> [29] Formula_1.2-5      pillar_1.11.1      pkgdown_2.2.0      car_3.1-3         
     #> [33] jquerylib_0.1.4    tidyr_1.3.1        cachem_1.1.0       iterators_1.0.14  
     #> [37] rgenoud_5.9-0.11   abind_1.4-8        foreach_1.5.2      km.ci_0.5-6       
     #> [41] commonmark_2.0.0   tidyselect_1.2.1   digest_0.6.39      stringi_1.8.7     
-    #> [45] purrr_1.2.0        labeling_0.4.3     splines_4.5.2      cowplot_1.2.0     
-    #> [49] fastmap_1.2.0      grid_4.5.2         magrittr_2.0.4     broom_1.0.10      
+    #> [45] purrr_1.2.0        labeling_0.4.3     splines_4.5.3      cowplot_1.2.0     
+    #> [49] fastmap_1.2.0      grid_4.5.3         magrittr_2.0.4     broom_1.0.10      
     #> [53] withr_3.0.2        scales_1.4.0       backports_1.5.0    rmarkdown_2.30    
     #> [57] ggtext_0.1.2       gridExtra_2.3      ggsignif_0.6.4     ragg_1.5.0        
     #> [61] zoo_1.8-14         evaluate_1.0.5     KMsurv_0.1-6       doParallel_1.0.17 

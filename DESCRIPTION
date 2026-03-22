@@ -1,7 +1,7 @@
 Package: OptSurvCutR
 Type: Package
 Title: Optimal Survival Cut-Point Discovery for Time-to-Event Analysis
-Version: 0.1.9.2
+Version: 0.1.9.3
 Authors@R: 
     person(given = "Payton",
            family = "Yau",
