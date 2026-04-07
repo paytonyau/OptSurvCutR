@@ -21,7 +21,6 @@ og:
   title: "OptSurvCutR: Optimal Cut-point Selection"
   description: "Discover and validate optimal cut-points for survival analysis using systematic and genetic algorithms."
 
-# --- FIX: This ensures the link appears in the sidebar ---
 home:
   links:
     - text: Support my work ☕
@@ -49,9 +48,9 @@ navbar:
       text: Vignettes
       menu:
         - text: "CRC Virome Workflow" 
-          href: articles/stratifying-crc-patients.html
+          href: articles/CRC_Virome.html
         - text: "Rapeseed Germination Workflow" 
-          href: articles/analysing-rapeseed-germination.html
+          href: articles/Germination.html
     news:
       text: Changelog
       href: news/index.html
@@ -112,13 +111,13 @@ toc:
 sidebar:
   structure: [links, vignettes, reference, license, community, dev]
   components:
-    vignettes:
+   vignettes:
       title: Vignettes
       links:
       - text: "CRC Virome Workflow"
-        href: articles/stratifying-crc-patients.html
+        href: articles/CRC_Virome.html
       - text: "Germination Workflow"
-        href: articles/analysing-rapeseed-germination.html
+        href: articles/Germination.html
     community:
       title: Community & Help
       links:
