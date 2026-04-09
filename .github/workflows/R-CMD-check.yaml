@@ -23,12 +23,11 @@ jobs:
           - {os: windows-latest, r: 'release'}
           - {os: ubuntu-latest,   r: 'devel', http-user-agent: 'release'}
           - {os: ubuntu-latest,   r: 'release'}
-          # Removed oldrel-1 to resolve ggrepel >= 4.5.0 dependency conflict
+          - {os: ubuntu-latest,   r: 'oldrel-1'}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true # Silences the Node.js 20 warning
 
     steps:
       - uses: actions/checkout@v4

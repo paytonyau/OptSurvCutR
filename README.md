@@ -4,12 +4,12 @@
 [![R-CMD-check](https://github.com/paytonyau/OptSurvCutR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/paytonyau/OptSurvCutR/actions/workflows/R-CMD-check.yaml)
 [![Codecov](https://codecov.io/gh/paytonyau/OptSurvCutR/branch/main/graph/badge.svg)](https://app.codecov.io/gh/paytonyau/OptSurvCutR)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![License: GPL-3](https://img.shields.io/badge/License-GPL%203-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![License: GPL-3](https://img.shields.io/badge/License-GPL%203-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
 <!-- badges: end -->
 
 `OptSurvCutR` (**Opt**imal **Surv**ival **Cut**-points **R**) provides a rigorous, reproducible **three-step workflow** for discovering the optimal number and location of cut-points in time-to-event (survival) data. Designed for continuous predictors (e.g., gene expression, virome abundance, biomarkers), it moves beyond arbitrary median splits to fully **data-driven stratification**.
 
-![OptSurvCutR Graphical Abstract](image/graphical_abstract.jpg)
+![OptSurvCutR Graphical Abstract](man/figures/graphical_abstract.jpg)
 
 ## Why OptSurvCutR?
 
