@@ -736,16 +736,15 @@ We encoursex you to try `OptSurvCutR` with your own data.
     #> [1] stats     graphics  grDevices utils     datasets  methods   base     
     #> 
     #> other attached packages:
-    #> [1] cli_3.6.5           knitr_1.50          survminer_0.5.1    
-    #> [4] ggpubr_0.6.2        ggplot2_4.0.1       survival_3.8-6     
-    #> [7] dplyr_1.1.4         OptSurvCutR_0.1.9.3
+    #> [1] cli_3.6.5         knitr_1.50        survminer_0.5.1   ggpubr_0.6.2     
+    #> [5] ggplot2_4.0.1     survival_3.8-6    dplyr_1.1.4       OptSurvCutR_0.2.0
     #> 
     #> loaded via a namespace (and not attached):
     #>  [1] gtable_0.3.6       xfun_0.54          bslib_0.9.0        htmlwidgets_1.6.4 
     #>  [5] rstatix_0.7.3      lattice_0.22-9     vctrs_0.6.5        tools_4.5.3       
     #>  [9] generics_0.1.4     parallel_4.5.3     tibble_3.3.0       pkgconfig_2.0.3   
     #> [13] Matrix_1.7-4       data.table_1.17.8  RColorBrewer_1.1-3 S7_0.2.1          
-    #> [17] desc_1.4.3         lifecycle_1.0.4    stringr_1.6.0      compiler_4.5.3    
+    #> [17] desc_1.4.3         lifecycle_1.0.5    stringr_1.6.0      compiler_4.5.3    
     #> [21] farver_2.1.2       textshaping_1.0.4  codetools_0.2-20   carData_3.0-5     
     #> [25] litedown_0.8       htmltools_0.5.8.1  sass_0.4.10        yaml_2.3.10       
     #> [29] Formula_1.2-5      pillar_1.11.1      pkgdown_2.2.0      car_3.1-3         
@@ -757,7 +756,7 @@ We encoursex you to try `OptSurvCutR` with your own data.
     #> [53] withr_3.0.2        scales_1.4.0       backports_1.5.0    rmarkdown_2.30    
     #> [57] ggtext_0.1.2       gridExtra_2.3      ggsignif_0.6.4     ragg_1.5.0        
     #> [61] zoo_1.8-14         evaluate_1.0.5     KMsurv_0.1-6       doParallel_1.0.17 
-    #> [65] markdown_2.0       survMisc_0.5.6     rlang_1.1.6        Rcpp_1.1.0        
+    #> [65] markdown_2.0       survMisc_0.5.6     rlang_1.1.7        Rcpp_1.1.0        
     #> [69] gridtext_0.1.5     xtable_1.8-4       glue_1.8.0         xml2_1.5.0        
     #> [73] rstudioapi_0.17.1  jsonlite_2.0.0     R6_2.6.1           systemfonts_1.3.1 
-    #> [77] fs_1.6.6
+    #> [77] fs_2.0.0

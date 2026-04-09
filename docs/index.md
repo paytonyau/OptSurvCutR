@@ -7,7 +7,8 @@ data. Designed for continuous predictors (e.g., gene expression, virome
 abundance, biomarkers), it moves beyond arbitrary median splits to fully
 **data-driven stratification**.
 
-![OptSurvCutR Graphical Abstract](image/graphical_abstract.jpg)
+![OptSurvCutR Graphical
+Abstract](reference/figures/graphical_abstract.jpg)
 
 OptSurvCutR Graphical Abstract
 

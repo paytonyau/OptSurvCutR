@@ -1,12 +1,25 @@
 # Changelog
 
-## OptSurvCutR 0.1.9.3 (2026-03-15)
+## OptSurvCutR 0.2.0 (2026-04-09)
+
+### DOCUMENTATION & STANDARDS
+
+- Initial CRAN submission.
+- Updated the package strucure (minor) to meet the submission
+  requirement.
+
+## OptSurvCutR 0.1.9.3 (2026-03-22)
 
 ### DOCUMENTATION & STANDARDS
 
 **Graphical Abstract:** Added the new graphical abstract to the `image/`
 folder for inclusion in the README.md. ![OptSurvCutR Graphical
-Abstract](image/graphical_abstract.jpg) \## COMMUNITY & OUTREACH
+Abstract](image/graphical_abstract.jpg)
+
+- **Instruction Page (README.md):** Updated the main package repository
+  instructions.
+
+### COMMUNITY & OUTREACH
 
 **Presentations:** Presented at FOSDEM 2026 in the Bioinformatics &
 Computational Biology DevRoom in Brussels, Belgium. [View lightning talk

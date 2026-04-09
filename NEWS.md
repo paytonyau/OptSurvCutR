@@ -1,3 +1,9 @@
+# OptSurvCutR 0.2.0 (2026-04-09)
+
+## DOCUMENTATION & STANDARDS
+* Initial CRAN submission.
+* Updated the package strucure (minor) to meet the submission requirement.
+
 # OptSurvCutR 0.1.9.3 (2026-03-22)
 
 ## DOCUMENTATION & STANDARDS

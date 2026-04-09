@@ -111,21 +111,21 @@ toc:
 sidebar:
   structure: [links, vignettes, reference, license, community, dev]
   components:
-   vignettes:
+    vignettes:
       title: Vignettes
       links:
-      - text: "CRC Virome Workflow"
-        href: articles/CRC_Virome.html
-      - text: "Germination Workflow"
-        href: articles/Germination.html
+        - text: "CRC Virome Workflow"
+          href: articles/CRC_Virome.html
+        - text: "Germination Workflow"
+          href: articles/Germination.html
     community:
       title: Community & Help
       links:
-      - text: Report an Issue
-        href: https://github.com/paytonyau/OptSurvCutR/issues
-      - text: Contributing Guide
-        href: contributing.html
-      - text: Code of Conduct
-        href: CODE_OF_CONDUCT.html
+        - text: Report an Issue
+          href: https://github.com/paytonyau/OptSurvCutR/issues
+        - text: Contributing Guide
+          href: contributing.html
+        - text: Code of Conduct
+          href: CODE_OF_CONDUCT.html
 
 # Ensure a blank line at the end

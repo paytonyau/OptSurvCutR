@@ -32,12 +32,12 @@ A data frame with 1040 rows and 5 variables:
 
 Computationally simulated based on parameters derived from Haj Sghaier
 et al. (2022)
-\[[doi:10.3390/plants11212819](https://doi.org/10.3390/plants11212819)
-\]. <https://www.mdpi.com/2223-7747/11/21/2819>
+[doi:10.3390/plants11212819](https://doi.org/10.3390/plants11212819) .
 
 ## References
 
 Haj Sghaier, A., Tarnawa, Á., Khaeim, H., Kovács, G. P., Gyuricza, C., &
 Kende, Z. (2022). The Effects of Temperature and Water on the Seed
 Germination and Seedling Development of Rapeseed (Brassica napus L.).
-\*Plants\*,11(21), 2819. https://doi.org/10.3390/plants11212819
+\*Plants\*, 11(21), 2819.
+[doi:10.3390/plants11212819](https://doi.org/10.3390/plants11212819)
