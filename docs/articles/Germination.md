@@ -209,20 +209,6 @@ number_result_bic <- find_cutpoint_number(
   pop.size = 50, # REDUCED for vignette speed; use >= 100 for real analysis
   seed = 42
 )
-#>  num_cuts      BIC Delta_BIC BIC_Weight    Evidence
-#>         0 10878.79    421.52         0%     Minimal
-#>         1 10687.53    230.25         0%     Minimal
-#>         2 10532.11     74.83         0%     Minimal
-#>         3 10457.27      0.00      91.7% Substantial
-#>         4 10462.80      5.52       5.8%    Moderate
-#>         5 10464.44      7.16       2.5%     Minimal
-#>                              cuts
-#>                                NA
-#>                              7.82
-#>                      10.85, 30.43
-#>                9.65, 13.24, 30.83
-#>         8.23, 13.94, 25.38, 32.33
-#>  8.55, 14.54, 19.47, 26.24, 31.23
 
 summary(number_result_bic)
 #>  num_cuts      BIC Delta_BIC BIC_Weight    Evidence
@@ -408,27 +394,6 @@ validation_result <- validate_cutpoint(
   max.generations = 10, # REDUCED; passed via ... to find_cutpoint
   pop.size = 10 # REDUCED; passed via ... to find_cutpoint
 )
-#> Cut-point Stability Analysis (Bootstrap)
-#> ----------------------------------------
-#> Original Optimal Cut-point(s): 8.703, 12.804, 30.64 
-#> Successful Replicates: 48 / 50 ( 96 %)
-#> Failed Replicates: 2 
-#> 
-#> 95% Confidence Intervals
-#> ------------------------
-#>        Lower  Upper
-#> Cut 1  7.619 14.179
-#> Cut 2 12.617 25.205
-#> Cut 3 27.680 32.335
-#> 
-#> Bootstrap Summary Statistics
-#> ---------------------------
-#>       Cut   Mean    SD Median     Q1     Q3
-#> 25%  Cut1 10.397 1.875 10.097  8.881 12.071
-#> 25%1 Cut2 17.500 3.757 16.400 15.356 19.326
-#> 25%2 Cut3 30.259 1.510 30.493 29.098 31.458
-#> 
-#> Hint: Use `summary()` or `plot()` to visualise stability.
 
 summary(validation_result)
 #> Cut-point Stability Analysis (Bootstrap)
@@ -701,7 +666,7 @@ sessionInfo()
 #> 
 #> other attached packages:
 #> [1] cli_3.6.5         knitr_1.50        dplyr_1.1.4       survminer_0.5.1  
-#> [5] ggpubr_0.6.2      ggplot2_4.0.1     survival_3.8-6    OptSurvCutR_0.2.0
+#> [5] ggpubr_0.6.2      ggplot2_4.0.1     survival_3.8-6    OptSurvCutR_0.2.1
 #> 
 #> loaded via a namespace (and not attached):
 #>  [1] gtable_0.3.6       xfun_0.54          bslib_0.9.0        htmlwidgets_1.6.4 

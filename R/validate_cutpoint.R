@@ -325,8 +325,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     )
   )
   class(output) <- "validate_cutpoint_result"
-  print(output)
-  invisible(output)
+  return(output)
 }
 #' @param x An object of class `validate_cutpoint_result`.
 #' @param ... Unused.

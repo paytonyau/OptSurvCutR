@@ -51,12 +51,6 @@ fit <- find_cutpoint(
 #> ℹ Running systematic search...
 #> ℹ Testing for 1 cut-point(s)...
 #> ✔ Systematic search complete.
-#> 
-#> ── Optimal Cut-point Analysis for Survival Data (Systematic) ───────────────────
-#> • Predictor: Alphapapillomavirus
-#> • Criterion: logrank
-#> • Optimal Log-Rank Statistic: 0.3205
-#> ✔ Recommended Cut-point(s): 1.957
 
 if (!any(is.na(fit$optimal_cuts))) {
   plot_optimisation_curve(fit)

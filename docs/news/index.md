@@ -1,5 +1,36 @@
 # Changelog
 
+## OptSurvCutR 0.2.1 (2026-04-20)
+
+### CRAN Compliance & Quality of Life Improvements
+
+This patch release addresses CRAN reviewer feedback and polishes the
+package’s console behavior and visual branding.
+
+- **Enhanced Console Control:** Replaced all informational
+  [`print()`](https://rdrr.io/r/base/print.html) and
+  [`cat()`](https://rdrr.io/r/base/cat.html) statements with
+  [`message()`](https://rdrr.io/r/base/message.html) in the core
+  functions
+  ([`find_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint.md),
+  [`find_cutpoint_number()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md),
+  and
+  [`validate_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/validate_cutpoint.md)).
+  Users can now easily silence progress text by wrapping functions in
+  [`suppressMessages()`](https://rdrr.io/r/base/message.html).
+- **Cleaned Return Behaviors:** Removed forced
+  [`print()`](https://rdrr.io/r/base/print.html) calls from the end of
+  the main S3 calculation functions. Results now return silently when
+  assigned to a variable, while preserving formatted output when called
+  directly.
+- **DESCRIPTION File Formatting:** Removed single quotes around function
+  and package names in the `DESCRIPTION` file to satisfy CRAN automated
+  parsers.
+- **Official Branding:** Added the official `OptSurvCutR` hex logo! The
+  logo is now bundled within the package (`man/figures/logo.png`) and
+  fully integrated into the GitHub README and `pkgdown` website
+  configuration.
+
 ## OptSurvCutR 0.2.0 (2026-04-09)
 
 ### DOCUMENTATION & STANDARDS

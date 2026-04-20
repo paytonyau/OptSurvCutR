@@ -302,8 +302,7 @@ find_cutpoint <- function(data, predictor, outcome_time,
   }
 
   class(output) <- "find_cutpoint"
-  if (!quiet) print(output)
-  invisible(output)
+  return(output)
 }
 
 # --- Internal Helper: Systematic Search ---

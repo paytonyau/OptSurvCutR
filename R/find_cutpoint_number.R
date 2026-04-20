@@ -315,9 +315,7 @@ find_cutpoint_number <- function(data, predictor,
   }
 
   class(output) <- "find_cutpoint_number_result"
-
-  print(output)
-  invisible(output)
+  return(output)
 }
 
 # --- Internal Helper Functions ---

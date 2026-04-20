@@ -190,10 +190,4 @@ res <- find_cutpoint(
 #> ℹ Running systematic search...
 #> ℹ Testing for 1 cut-point(s)...
 #> ✔ Systematic search complete.
-#> 
-#> ── Optimal Cut-point Analysis for Survival Data (Systematic) ───────────────────
-#> • Predictor: Alphapapillomavirus
-#> • Criterion: logrank
-#> • Optimal Log-Rank Statistic: 2.8814
-#> ✔ Recommended Cut-point(s): 3.764
 ```

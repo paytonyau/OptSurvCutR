@@ -1,8 +1,8 @@
 Package: OptSurvCutR
 Type: Package
 Title: Optimal Survival Cut-Point Discovery for Time-to-Event Analysis
-Version: 0.2.0
-Date: 2026-04-09
+Version: 0.2.1
+Date: 2026-04-20
 Authors@R: 
     person(given = "Payton",
            family = "Yau",
@@ -11,10 +11,10 @@ Authors@R:
            comment = c(ORCID = "0000-0002-3283-0370"))
 Description: Provides a robust 3-step workflow for optimal cut-point analysis in
     time-to-event (survival) data. Functions determine the optimal number
-    of cut-points ('find_cutpoint_number()'), find their precise locations
-    ('find_cutpoint()') using systematic or genetic algorithms (via 'rgenoud'),
-    and validate stability via bootstrapping ('validate_cutpoint()'). Analyses
-    can be adjusted for covariates using standard 'survival' package models.
+    of cut-points (find_cutpoint_number()), find their precise locations
+    (find_cutpoint()) using systematic or genetic algorithms (via rgenoud),
+    and validate stability via bootstrapping (validate_cutpoint()). Analyses
+    can be adjusted for covariates using standard survival package models.
     Ideal for biomarker analysis and patient stratification.
 License: GPL-3
 URL: https://github.com/paytonyau/OptSurvCutR,
@@ -48,4 +48,4 @@ Config/testthat/edition: 3
 Depends: 
     R (>= 3.5)
 Language: en-GB
-
+Config/Needs/website: logo.png

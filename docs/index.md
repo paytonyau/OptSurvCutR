@@ -1,5 +1,7 @@
 # OptSurvCutR: Validated Cut-point Selection for Survival Analysis
 
+![OptSurvCutR logo](reference/figures/logo.png)
+
 `OptSurvCutR` (**Opt**imal **Surv**ival **Cut**-points **R**) provides a
 rigorous, reproducible **three-step workflow** for discovering the
 optimal number and location of cut-points in time-to-event (survival)

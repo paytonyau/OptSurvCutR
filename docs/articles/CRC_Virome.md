@@ -176,12 +176,6 @@ number_result_unadj <- find_cutpoint_number(
   pop.size = 50, # Reduced for vignette speed
   seed = 42
 )
-#>  num_cuts     BIC Delta_BIC BIC_Weight    Evidence                   cuts
-#>         0 1258.74     10.54       0.3%     Minimal                     NA
-#>         1 1251.79      3.59      10.7%    Moderate                   2.36
-#>         2 1248.21      0.00      64.5% Substantial             1.74, 2.35
-#>         3 1250.46      2.25      20.9%    Moderate       1.61, 1.74, 2.36
-#>         4 1254.05      5.84       3.5%    Moderate 1.42, 1.72, 1.86, 2.35
 ```
 
 ``` r
@@ -200,12 +194,6 @@ number_result_adj <- find_cutpoint_number(
   covariates = covariates_to_adjust_for, # ADDED COVARIATES
   seed = 43 # Use a different seed
 )
-#>  num_cuts     BIC Delta_BIC BIC_Weight    Evidence                   cuts
-#>         0 1265.10     11.16       0.3%     Minimal                     NA
-#>         1 1263.47      9.54       0.6%     Minimal                   1.74
-#>         2 1253.93      0.00      67.2% Substantial             1.77, 2.35
-#>         3 1255.43      1.50      31.8% Substantial       1.61, 1.87, 2.36
-#>         4 1265.76     11.82       0.2%     Minimal 1.61, 1.72, 1.87, 2.16
 ```
 
 ``` r
@@ -430,25 +418,6 @@ validation_result_adj <- validate_cutpoint(
   seed = 456
   # Note: validate_cutpoint implicitly uses the covariates from cutpoint_result_adj
 )
-#> Cut-point Stability Analysis (Bootstrap)
-#> ----------------------------------------
-#> Original Optimal Cut-point(s): 1.766, 2.355 
-#> Successful Replicates: 24 / 25 ( 96 %)
-#> Failed Replicates: 1 
-#> 
-#> 95% Confidence Intervals
-#> ------------------------
-#>       Lower Upper
-#> Cut 1 1.434 2.213
-#> Cut 2 1.812 2.752
-#> 
-#> Bootstrap Summary Statistics
-#> ---------------------------
-#>       Cut  Mean    SD Median    Q1    Q3
-#> 25%  Cut1 1.825 0.207  1.806 1.736 1.895
-#> 25%1 Cut2 2.340 0.229  2.356 2.338 2.357
-#> 
-#> Hint: Use `summary()` or `plot()` to visualise stability.
 ```
 
 ``` r
@@ -737,7 +706,7 @@ We encoursex you to try `OptSurvCutR` with your own data.
     #> 
     #> other attached packages:
     #> [1] cli_3.6.5         knitr_1.50        survminer_0.5.1   ggpubr_0.6.2     
-    #> [5] ggplot2_4.0.1     survival_3.8-6    dplyr_1.1.4       OptSurvCutR_0.2.0
+    #> [5] ggplot2_4.0.1     survival_3.8-6    dplyr_1.1.4       OptSurvCutR_0.2.1
     #> 
     #> loaded via a namespace (and not attached):
     #>  [1] gtable_0.3.6       xfun_0.54          bslib_0.9.0        htmlwidgets_1.6.4 

@@ -120,12 +120,6 @@ fit <- find_cutpoint(
 #> ℹ Running systematic search...
 #> ℹ Testing for 1 cut-point(s)...
 #> ✔ Systematic search complete.
-#> 
-#> ── Optimal Cut-point Analysis for Survival Data (Systematic) ───────────────────
-#> • Predictor: Alphapapillomavirus
-#> • Criterion: logrank
-#> • Optimal Log-Rank Statistic: 2.8814
-#> ✔ Recommended Cut-point(s): 3.764
 
 if (!any(is.na(fit$optimal_cuts))) {
   val <- validate_cutpoint(fit, num_replicates = 20, seed = 123)
@@ -137,23 +131,6 @@ if (!any(is.na(fit$optimal_cuts))) {
 #> ℹ Validating 1 cut(s) from 'systematic' search using 'logrank'.
 #> ℹ Running 20 replicates sequentially (n_cores = 1).
 #> ✔ 20 replicates completed.
-#> Cut-point Stability Analysis (Bootstrap)
-#> ----------------------------------------
-#> Original Optimal Cut-point(s): 3.764 
-#> Successful Replicates: 20 / 20 ( 100 %)
-#> Failed Replicates: 0 
-#> 
-#> 95% Confidence Intervals
-#> ------------------------
-#>       Lower Upper
-#> Cut 1 0.837 4.594
-#> 
-#> Bootstrap Summary Statistics
-#> ---------------------------
-#>      Cut  Mean    SD Median    Q1    Q3
-#> 25% Cut1 2.927 1.427  3.121 1.483 3.971
-#> 
-#> Hint: Use `summary()` or `plot()` to visualise stability.
 #> Cut-point Stability Analysis (Bootstrap)
 #> ----------------------------------------
 #> Original Optimal Cut-point(s): 3.764 

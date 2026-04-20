@@ -8,6 +8,8 @@ template:
   theme: gruvbox-light
   theme-dark: gruvbox-dark 
   highlight: default
+  params:
+    logo: man/figures/logo.png
 
 development:
   mode: release

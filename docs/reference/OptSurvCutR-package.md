@@ -2,12 +2,11 @@
 
 Provides a robust 3-step workflow for optimal cut-point analysis in
 time-to-event (survival) data. Functions determine the optimal number of
-cut-points ('find_cutpoint_number()'), find their precise locations
-('find_cutpoint()') using systematic or genetic algorithms (via
-'rgenoud'), and validate stability via bootstrapping
-('validate_cutpoint()'). Analyses can be adjusted for covariates using
-standard 'survival' package models. Ideal for biomarker analysis and
-patient stratification.
+cut-points (find_cutpoint_number()), find their precise locations
+(find_cutpoint()) using systematic or genetic algorithms (via rgenoud),
+and validate stability via bootstrapping (validate_cutpoint()). Analyses
+can be adjusted for covariates using standard survival package models.
+Ideal for biomarker analysis and patient stratification.
 
 ## See also
 

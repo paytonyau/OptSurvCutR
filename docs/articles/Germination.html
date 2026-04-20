@@ -6,6 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Analysing Rapeseed Germination Data with OptSurvCutR • OptSurvCutR</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" sizes="any" href="../favicon.ico">
+<link rel="manifest" href="../site.webmanifest">
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -20,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">OptSurvCutR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,14 +70,13 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-
-      <h1>Analysing Rapeseed Germination Data with OptSurvCutR</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>Analysing Rapeseed Germination Data with OptSurvCutR</h1>
             <h3 data-toc-skip class="subtitle">A Workflow for
 Discovering and Validating an Optimal Temperature Threshold for
 Time-To-Event Data</h3>
                         <h4 data-toc-skip class="author">Payton Yau</h4>
             
-            <h4 data-toc-skip class="date">2026-04-09</h4>
+            <h4 data-toc-skip class="date">2026-04-20</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/paytonyau/OptSurvCutR/blob/HEAD/vignettes/Germination.Rmd" class="external-link"><code>vignettes/Germination.Rmd</code></a></small>
       <div class="d-none name"><code>Germination.Rmd</code></div>
@@ -459,20 +463,6 @@ potentially multiple cuts) and the <code>"BIC"</code> criterion.</p>
 <span>  pop.size <span class="op">=</span> <span class="fl">50</span>, <span class="co"># REDUCED for vignette speed; use &gt;= 100 for real analysis</span></span>
 <span>  seed <span class="op">=</span> <span class="fl">42</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt;  num_cuts      BIC Delta_BIC BIC_Weight    Evidence</span></span>
-<span><span class="co">#&gt;         0 10878.79    421.52         0%     Minimal</span></span>
-<span><span class="co">#&gt;         1 10687.53    230.25         0%     Minimal</span></span>
-<span><span class="co">#&gt;         2 10532.11     74.83         0%     Minimal</span></span>
-<span><span class="co">#&gt;         3 10457.27      0.00      91.7% Substantial</span></span>
-<span><span class="co">#&gt;         4 10462.80      5.52       5.8%    Moderate</span></span>
-<span><span class="co">#&gt;         5 10464.44      7.16       2.5%     Minimal</span></span>
-<span><span class="co">#&gt;                              cuts</span></span>
-<span><span class="co">#&gt;                                NA</span></span>
-<span><span class="co">#&gt;                              7.82</span></span>
-<span><span class="co">#&gt;                      10.85, 30.43</span></span>
-<span><span class="co">#&gt;                9.65, 13.24, 30.83</span></span>
-<span><span class="co">#&gt;         8.23, 13.94, 25.38, 32.33</span></span>
-<span><span class="co">#&gt;  8.55, 14.54, 19.47, 26.24, 31.23</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">number_result_bic</span><span class="op">)</span></span>
 <span><span class="co">#&gt;  num_cuts      BIC Delta_BIC BIC_Weight    Evidence</span></span>
@@ -695,27 +685,6 @@ intervals.</p>
 <span>  max.generations <span class="op">=</span> <span class="fl">10</span>, <span class="co"># REDUCED; passed via ... to find_cutpoint</span></span>
 <span>  pop.size <span class="op">=</span> <span class="fl">10</span> <span class="co"># REDUCED; passed via ... to find_cutpoint</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Cut-point Stability Analysis (Bootstrap)</span></span>
-<span><span class="co">#&gt; ----------------------------------------</span></span>
-<span><span class="co">#&gt; Original Optimal Cut-point(s): 8.703, 12.804, 30.64 </span></span>
-<span><span class="co">#&gt; Successful Replicates: 48 / 50 ( 96 %)</span></span>
-<span><span class="co">#&gt; Failed Replicates: 2 </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; 95% Confidence Intervals</span></span>
-<span><span class="co">#&gt; ------------------------</span></span>
-<span><span class="co">#&gt;        Lower  Upper</span></span>
-<span><span class="co">#&gt; Cut 1  7.619 14.179</span></span>
-<span><span class="co">#&gt; Cut 2 12.617 25.205</span></span>
-<span><span class="co">#&gt; Cut 3 27.680 32.335</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Bootstrap Summary Statistics</span></span>
-<span><span class="co">#&gt; ---------------------------</span></span>
-<span><span class="co">#&gt;       Cut   Mean    SD Median     Q1     Q3</span></span>
-<span><span class="co">#&gt; 25%  Cut1 10.397 1.875 10.097  8.881 12.071</span></span>
-<span><span class="co">#&gt; 25%1 Cut2 17.500 3.757 16.400 15.356 19.326</span></span>
-<span><span class="co">#&gt; 25%2 Cut3 30.259 1.510 30.493 29.098 31.458</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Hint: Use `summary()` or `plot()` to visualise stability.</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">validation_result</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Cut-point Stability Analysis (Bootstrap)</span></span>
@@ -1001,7 +970,7 @@ version and all attached packages used to run this analysis.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; other attached packages:</span></span>
 <span><span class="co">#&gt; [1] cli_3.6.5         knitr_1.50        dplyr_1.1.4       survminer_0.5.1  </span></span>
-<span><span class="co">#&gt; [5] ggpubr_0.6.2      ggplot2_4.0.1     survival_3.8-6    OptSurvCutR_0.2.0</span></span>
+<span><span class="co">#&gt; [5] ggpubr_0.6.2      ggplot2_4.0.1     survival_3.8-6    OptSurvCutR_0.2.1</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
 <span><span class="co">#&gt;  [1] gtable_0.3.6       xfun_0.54          bslib_0.9.0        htmlwidgets_1.6.4 </span></span>

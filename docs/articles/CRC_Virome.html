@@ -6,6 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Stratifying Colorectal Cancer Patients by Gut Enterovirus Abundance • OptSurvCutR</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" sizes="any" href="../favicon.ico">
+<link rel="manifest" href="../site.webmanifest">
 <script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -20,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">OptSurvCutR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.2.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,13 +70,12 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-
-      <h1>Stratifying Colorectal Cancer Patients by Gut Enterovirus Abundance</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>Stratifying Colorectal Cancer Patients by Gut Enterovirus Abundance</h1>
             <h3 data-toc-skip class="subtitle">Survival Analysis
 Workflow with OptSurvCutR Demonstrating Covariate Adjustment</h3>
                         <h4 data-toc-skip class="author">Payton Yau</h4>
             
-            <h4 data-toc-skip class="date">2026-04-09</h4>
+            <h4 data-toc-skip class="date">2026-04-20</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/paytonyau/OptSurvCutR/blob/HEAD/vignettes/CRC_Virome.Rmd" class="external-link"><code>vignettes/CRC_Virome.Rmd</code></a></small>
       <div class="d-none name"><code>CRC_Virome.Rmd</code></div>
@@ -264,13 +268,7 @@ of groups. We use BIC and the genetic algorithm (checking if
 <span>  max.generations <span class="op">=</span> <span class="fl">50</span>, <span class="co"># Reduced for vignette speed</span></span>
 <span>  pop.size <span class="op">=</span> <span class="fl">50</span>, <span class="co"># Reduced for vignette speed</span></span>
 <span>  seed <span class="op">=</span> <span class="fl">42</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt;  num_cuts     BIC Delta_BIC BIC_Weight    Evidence                   cuts</span></span>
-<span><span class="co">#&gt;         0 1258.74     10.54       0.3%     Minimal                     NA</span></span>
-<span><span class="co">#&gt;         1 1251.79      3.59      10.7%    Moderate                   2.36</span></span>
-<span><span class="co">#&gt;         2 1248.21      0.00      64.5% Substantial             1.74, 2.35</span></span>
-<span><span class="co">#&gt;         3 1250.46      2.25      20.9%    Moderate       1.61, 1.74, 2.36</span></span>
-<span><span class="co">#&gt;         4 1254.05      5.84       3.5%    Moderate 1.42, 1.72, 1.86, 2.35</span></span></code></pre></div>
+<span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># --- Adjusted Analysis ---</span></span>
 <span><span class="va">number_result_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/find_cutpoint_number.html">find_cutpoint_number</a></span><span class="op">(</span></span>
@@ -286,13 +284,7 @@ of groups. We use BIC and the genetic algorithm (checking if
 <span>  pop.size <span class="op">=</span> <span class="fl">50</span>,</span>
 <span>  covariates <span class="op">=</span> <span class="va">covariates_to_adjust_for</span>, <span class="co"># ADDED COVARIATES</span></span>
 <span>  seed <span class="op">=</span> <span class="fl">43</span> <span class="co"># Use a different seed</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt;  num_cuts     BIC Delta_BIC BIC_Weight    Evidence                   cuts</span></span>
-<span><span class="co">#&gt;         0 1265.10     11.16       0.3%     Minimal                     NA</span></span>
-<span><span class="co">#&gt;         1 1263.47      9.54       0.6%     Minimal                   1.74</span></span>
-<span><span class="co">#&gt;         2 1253.93      0.00      67.2% Substantial             1.77, 2.35</span></span>
-<span><span class="co">#&gt;         3 1255.43      1.50      31.8% Substantial       1.61, 1.87, 2.36</span></span>
-<span><span class="co">#&gt;         4 1265.76     11.82       0.2%     Minimal 1.61, 1.72, 1.87, 2.16</span></span></code></pre></div>
+<span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">plot_num_unadj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">number_result_unadj</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"BIC vs Cuts (Unadj.)"</span><span class="op">)</span> <span class="op">+</span></span>
@@ -487,26 +479,7 @@ see how much the optimal cut-points vary.</p>
 <span>  pop.size <span class="op">=</span> <span class="fl">50</span>, <span class="co"># Passed via ... to find_cutpoint</span></span>
 <span>  seed <span class="op">=</span> <span class="fl">456</span></span>
 <span>  <span class="co"># Note: validate_cutpoint implicitly uses the covariates from cutpoint_result_adj</span></span>
-<span><span class="op">)</span></span>
-<span><span class="co">#&gt; Cut-point Stability Analysis (Bootstrap)</span></span>
-<span><span class="co">#&gt; ----------------------------------------</span></span>
-<span><span class="co">#&gt; Original Optimal Cut-point(s): 1.766, 2.355 </span></span>
-<span><span class="co">#&gt; Successful Replicates: 24 / 25 ( 96 %)</span></span>
-<span><span class="co">#&gt; Failed Replicates: 1 </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; 95% Confidence Intervals</span></span>
-<span><span class="co">#&gt; ------------------------</span></span>
-<span><span class="co">#&gt;       Lower Upper</span></span>
-<span><span class="co">#&gt; Cut 1 1.434 2.213</span></span>
-<span><span class="co">#&gt; Cut 2 1.812 2.752</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Bootstrap Summary Statistics</span></span>
-<span><span class="co">#&gt; ---------------------------</span></span>
-<span><span class="co">#&gt;       Cut  Mean    SD Median    Q1    Q3</span></span>
-<span><span class="co">#&gt; 25%  Cut1 1.825 0.207  1.806 1.736 1.895</span></span>
-<span><span class="co">#&gt; 25%1 Cut2 2.340 0.229  2.356 2.338 2.357</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Hint: Use `summary()` or `plot()` to visualise stability.</span></span></code></pre></div>
+<span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bootstrap_plot_adj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">validation_result_adj</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Bootstrap Stability of Adjusted Cut-points"</span><span class="op">)</span></span>
@@ -771,7 +744,7 @@ sessionInfo()
 #&gt; 
 #&gt; other attached packages:
 #&gt; [1] cli_3.6.5         knitr_1.50        survminer_0.5.1   ggpubr_0.6.2     
-#&gt; [5] ggplot2_4.0.1     survival_3.8-6    dplyr_1.1.4       OptSurvCutR_0.2.0
+#&gt; [5] ggplot2_4.0.1     survival_3.8-6    dplyr_1.1.4       OptSurvCutR_0.2.1
 #&gt; 
 #&gt; loaded via a namespace (and not attached):
 #&gt;  [1] gtable_0.3.6       xfun_0.54          bslib_0.9.0        htmlwidgets_1.6.4 

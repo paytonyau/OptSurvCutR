@@ -198,14 +198,4 @@ res <- find_cutpoint_number(
 #> Warning: Loglik converged before variable  1 ; coefficient may be infinite. 
 #> Warning: Loglik converged before variable  1 ; coefficient may be infinite. 
 #> Warning: Loglik converged before variable  1 ; coefficient may be infinite. 
-#> 
-#> ── Optimal Cut-point Number Analysis ───────────────────────────────────────────
-#> Method: systematic
-#> Criterion: BIC
-#>  num_cuts   BIC Delta_BIC BIC_Weight    Evidence cuts
-#>         0 58.47         4      11.9%    Moderate   NA
-#>         1 54.47         0      88.1% Substantial 4.59
-#> ✔ Conclusion: 1 cut-point(s) is best based on BIC.
-#> Optimal cuts at: 4.59
-#> Hint: Use `summary()` for details, `plot()` to visualise.
 ```
