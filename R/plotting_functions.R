@@ -481,8 +481,10 @@ plot_validation <- function(validation_result,
   return(p)
 }
 
-#' @importFrom ggplot2 ggplot aes geom_blank theme geom_vline geom_errorbarh geom_point geom_col scale_fill_manual labs element_blank margin element_line element_rect geom_text scale_color_manual xlim
+#' @importFrom ggplot2 ggplot aes geom_blank theme geom_vline geom_errorbarh geom_point geom_col scale_fill_manual labs element_blank margin element_line element_rect geom_text scale_color_manual xlim rel
 #' @importFrom patchwork wrap_plots plot_layout
+#' @importFrom stats as.formula aggregate relevel
+#' @importFrom rlang .data
 .plot_hr_forest <- function(x, df, reference_group = "G1", main = "Adjusted Clinical Risk Profile", ...) {
   if (!requireNamespace("survival", quietly = TRUE)) {
     cli::cli_abort("Package {.pkg survival} is required to compute forest metrics.")

@@ -121,7 +121,7 @@ num_res <- find_cutpoint_number(
   criterion = "BIC",             # Evaluates model fit (BIC heavily penalizes over-complexity)
   max_cuts = 3,                  # Test models ranging from 0 to 3 cuts
   nmin = 0.25,                   # SAFETY LIMIT: Minimum 10% of patients per group
-  
+  n_perm = 50,
   # ==========================================
   # 3. THE "R-GROUND" SETTINGS (Advanced Genetic Tuning)
   # ==========================================
@@ -187,7 +187,7 @@ cut_res <- find_cutpoint(
   pop.size = 100,                # SEARCH PARTY: Increase to 500+ for massive datasets
   boundary.enforcement = 1,      # EDGE CONTROL: Soft boundaries prevent the algorithm from crashing near edges
   seed = 123,                    # REPRODUCIBILITY
-  n_cores = 2                    # SPEED: Adjust based on your machine's CPU
+  n_cores = 1                    # SPEED: Adjust based on your machine's CPU
 )
 
 summary(cut_res)
@@ -223,7 +223,7 @@ val_res <- validate_cutpoint(
   # ==========================================
   cutpoint_result = cut_res, # The exact result object you generated in Step 2
   num_replicates = 100,      # BOOTSTRAP: How many times to scramble and re-test. 500+ is the gold standard
-  n_cores = 2,               # SPEED: Number of CPU cores to use
+  n_cores = 1,               # SPEED: Number of CPU cores to use
   
   # ==========================================
   # 2. THE "R-GROUND" SETTINGS (Must match Step 2)
