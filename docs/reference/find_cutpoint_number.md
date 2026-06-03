@@ -1,8 +1,8 @@
 # Find Optimal Number of Cut-points for Survival Data
 
 Finds optimal cut-point number (0 to \`max_cuts\`) for a Cox model by
-comparing AIC, AICc, or BIC. Supports systematic search (\`max_cuts \<=
-2\`) and genetic algorithm (\`rgenoud\`).
+comparing AIC, AICc, or BIC. Features hardware-accelerated grouping
+iterations via Rcpp compilation hooks and robust UX constraint warnings.
 
 ## Usage
 
@@ -20,6 +20,7 @@ find_cutpoint_number(
   seed = NULL,
   max.generations = 100,
   pop.size = 100,
+  use_cpp = TRUE,
   ...
 )
 
@@ -33,6 +34,25 @@ summary(
   show_best_model_details = TRUE,
   show_group_counts = TRUE,
   show_medians = TRUE,
+  show_ph_test = TRUE,
+  plot.it = FALSE,
+  ...
+)
+
+# S3 method for class 'find_cutpoint_number_result'
+plot(x, y, ...)
+
+# S3 method for class 'find_cutpoint_number_result'
+print(x, ...)
+
+# S3 method for class 'find_cutpoint_number_result'
+summary(
+  object,
+  show_comparison_table = TRUE,
+  show_best_model_details = TRUE,
+  show_group_counts = TRUE,
+  show_medians = TRUE,
+  show_ph_test = TRUE,
   plot.it = FALSE,
   ...
 )
@@ -91,6 +111,11 @@ plot(x, y, ...)
 
   Integer; population size for \`rgenoud\` (default 100).
 
+- use_cpp:
+
+  Logical. Automatically checks and calls compiled C++ routines via
+  \`Rcpp\`. Default is \`TRUE\`.
+
 - ...:
 
   Additional arguments passed to \`rgenoud\`.
@@ -119,6 +144,10 @@ plot(x, y, ...)
 
   Logical. Show median survival for best model?
 
+- show_ph_test:
+
+  Logical. Show Proportional Hazards assumption test?
+
 - plot.it:
 
   Logical. Display model selection plot?
@@ -137,9 +166,16 @@ An S3 object (\`find_cutpoint_number_result\`) with \`results\`,
 
 \`method = "systematic"\`: grid search respecting \`nmin\`. \`method =
 "genetic"\`: \`rgenoud\` global optimisation. Systematic search is slow
-for \`max_cuts \> 2\`; use \`genetic\`.
+for \`max_cuts \> 2\`; use \`genetic\`. Core vector partitions are
+calculated in compiled C++ via \`Rcpp\` for optimal performance.
 
 ## srrstats compliance
+
+.
+
+.
+
+.
 
 .
 
@@ -198,4 +234,5 @@ res <- find_cutpoint_number(
 #> Warning: Loglik converged before variable  1 ; coefficient may be infinite. 
 #> Warning: Loglik converged before variable  1 ; coefficient may be infinite. 
 #> Warning: Loglik converged before variable  1 ; coefficient may be infinite. 
+#> No valid cut-points found for 1 cut(s) due to model failures or constraints.
 ```

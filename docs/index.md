@@ -6,23 +6,35 @@
 rigorous, reproducible **three-step workflow** for discovering the
 optimal number and location of cut-points in time-to-event (survival)
 data. Designed for continuous predictors (e.g., gene expression, virome
-abundance, biomarkers), it moves beyond arbitrary median splits to fully
-**data-driven stratification**.
+abundance, clinical biomarkers), it moves beyond arbitrary median splits
+to fully **data-driven, covariate-adjusted stratification**.
 
-![OptSurvCutR Graphical
-Abstract](reference/figures/graphical_abstract.jpg)
+## What’s New in Version 0.9.8
 
-OptSurvCutR Graphical Abstract
+We have significantly overhauled the validation and diagnostic engines
+to ensure your discovered thresholds are mathematically stable and
+publication-ready: \* **The 4-Tier Stability Assessment:** Bootstrap
+validation now automatically grades your cut-points into four tiers
+(Optimal, Distinct, Caution, Unstable) based on confidence interval
+width and overlap metrics. \* **Automated Schoenfeld Diagnostics:** The
+package now flags time-varying effects to ensure your thresholds do not
+violate the Proportional Hazards assumption. \* **Enhanced Parameter
+Controls:** Fine-tune the genetic algorithm with `nmin` wedges and soft
+boundaries to rescue unstable thresholds and prevent overfitting. \*
+**Continuous 2D Contour Validation Landscapes:** Added native S3 routing
+support for projecting complex multi-dimensional bootstrap distribution
+horizons onto smooth contour peaks.
 
 ## Why OptSurvCutR?
 
 | Feature | Benefit |
 |----|----|
-| Optimal number of cuts | Uses AIC, AICc, or BIC to select 0–k cut-points |
-| Flexible search | Systematic grid or genetic algorithm (`rgenoud`) |
-| Covariate adjustment | Control for confounders during cut-point discovery |
-| Bootstrap validation | 95% confidence intervals for cut-point stability |
-| Publication-ready plots | Kaplan–Meier, optimisation curves, Schoenfeld residual diagnostics |
+| Optimal number of cuts | Uses AIC, AICc, or BIC to mathematically select 0–k cut-points |
+| Covariate adjustment | Prove independent prognostic value by controlling for confounders |
+| 4-Tier Bootstrap validation | 95% confidence intervals and automated stability grading for thresholds |
+| Schoenfeld Diagnostics | 2-Tier warning system to verify proportional hazards assumptions |
+| Flexible search engine | Systematic grid or multithreaded Genetic Algorithm (`rgenoud`) |
+| Publication-ready plots | Kaplan–Meier, distribution curves, forest plots, & 2D topology surfaces |
 
 ## Installation
 
@@ -32,6 +44,7 @@ Note that the genetic algorithm (`method = "genetic"`) requires the
 plan to use it.
 
 ``` r
+
 # Core dependencies
 install.packages(c("remotes", "survival"))
 
@@ -45,83 +58,91 @@ remotes::install_github("paytonyau/OptSurvCutR")
 ## Example: Quick Workflow with CRC Virome Data
 
 ``` r
+
 library(OptSurvCutR)
 library(survival)
+library(dplyr)
 
 data("crc_virome")
 
+# Quick data preparation
 crc <- crc_virome %>%
-  select(time = time_months, status, Enterovirus) %>%
-  na.omit()
+  mutate(event = as.numeric(substr(status, 1, 1))) %>% 
+  select(time = time_months, event, abundance = Enterovirus) %>%
+  filter(complete.cases(.))
 
-# Step 1: Determine optimal number of cut-points
-num_cuts <- find_cutpoint_number(
-  data = crc, predictor = "Enterovirus",
-  outcome_time = "time", outcome_event = "status",
-  max_cuts = 2, nmin = 0.15, seed = 42
+# Step 1: Determine the optimal number of cut-points
+num_res <- find_cutpoint_number(
+  data = crc, predictor = "abundance",
+  outcome_time = "time", outcome_event = "event",
+  method = "genetic", criterion = "BIC",
+  max_cuts = 3, nmin = 0.25, seed = 123
 )
-print(num_cuts)   # BIC suggests 2 cut-points
+summary(num_res)
 
 # Step 2: Find the precise cut-point locations
-cuts <- find_cutpoint(
-  data = crc, predictor = "Enterovirus",
-  outcome_time = "time", outcome_event = "status",
-  num_cuts = 2, method = "systematic", nmin = 0.15
+cut_res <- find_cutpoint(
+  data = crc, predictor = "abundance",
+  outcome_time = "time", outcome_event = "event",
+  method = "genetic", criterion = "logrank",
+  num_cuts = num_res$optimal_num_cuts,  # Dynamically pass the result from Step 1
+  nmin = 0.275,                         # Fine-tuned for stability
+  n_perm = 50, n_cores = 2, seed = 123
 )
+summary(cut_res)  # Automatically reports Hazard Ratios & Schoenfeld Diagnostics!
 
 # Step 3: Validate stability with bootstrap
-val <- validate_cutpoint(cuts, num_replicates = 200, seed = 456)
-summary(val)
+val_res <- validate_cutpoint(
+  cutpoint_result = cut_res,
+  num_replicates = 150, n_cores = 2, seed = 123
+)
+summary(val_res)  # Automatically grades threshold stability (Tiers 1-4)!
 
-# Step 4: Visualise results
-plot(cuts, type = "outcome")        # Kaplan–Meier curves
-plot(cuts, type = "distribution")  # Predictor + cuts
-plot_schoenfeld(cuts)               # Proportional hazards check
-plot(val)                           # Bootstrap density + 95% CI
+# Step 4: Visualise outcomes via atomic native plots
+plot(cut_res, type = "distribution")   # Continuous Predictor Density Split Map
+plot(cut_res, type = "outcome")        # Premium Custom Kaplan-Meier Survival Curves
+plot(cut_res, type = "forest")         # Hazard Ratio Forest Plot with Cohort Sample Sizes
+plot(cut_res, type = "diagnostic")     # Schoenfeld Residual Proportional Hazards Check
+plot_validation(val_res, focus_cuts = c(1, 2)) # 2D Contour Elevation Stability Topology
 ```
 
 ## Workflow Summary
 
-OptSurvCutR provides a three-step workflow for cut-point analysis:
+`OptSurvCutR` provides a three-step workflow for cut-point analysis:
 
 1.  [`find_cutpoint_number()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md):
-    – selects the statistically optimal number of cut-points using
-    information criteria
+    Selects the statistically optimal number of cut-points using
+    information criteria.
 2.  [`find_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint.md):
-    locates exact cut-point values (systematic or genetic search)
+    Locates exact cut-point values (systematic or genetic search) and
+    reports Schoenfeld diagnostics.
 3.  [`validate_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/validate_cutpoint.md):
-    assesses stability via bootstrapping with 95% confidence intervals
-    \## Resources
+    Assesses threshold stability via bootstrapping and assigns an
+    automated 4-Tier stability grade.
 
-- **Vignettes**: `browseVignettes("OptSurvCutR")`
+## Resources
+
+- **Vignettes & Tutorials**: `browseVignettes("OptSurvCutR")` or read
+  the [Troubleshooting & FAQ
+  Guide](https://paytonyau.github.io/OptSurvCutR/articles/troubleshooting.html).
 - **Package Website**: <https://paytonyau.github.io/OptSurvCutR/>
 - **Manuscript**: Yau, Payton T. O. “OptSurvCutR: Validated Cut-point
   Selection for Survival Analysis.” bioRxiv preprint, posted October
-  10, 2025. <https://doi.org/10.1101/2025.10.08.681246>.
+  18, 2025. <https://doi.org/10.1101/2025.10.08.681246>.
 
 ## Citation
 
-``` r
+``` bibtex
 @article{yau2025optsurvcutr,
-  author  = {Yau, Payton T. O.},
-  title   = {OptSurvCutR: Validated Cut-point Selection for Survival Analysis},
-  year    = {2025},
-  doi     = {10.1101/2025.10.08.681246},
+  author    = {Yau, Payton T. O.},
+  title     = {OptSurvCutR: Validated Cut-point Selection for Survival Analysis},
+  year      = {2025},
+  doi       = {10.1101/2025.10.08.681246},
   publisher = {Cold Spring Harbor Laboratory},
-  journal = {bioRxiv},
-  url     = {https://www.biorxiv.org/content/10.1101/2025.10.08.681246}
+  journal   = {bioRxiv},
+  url       = {[https://www.biorxiv.org/content/10.1101/2025.10.08.681246](https://www.biorxiv.org/content/10.1101/2025.10.08.681246)}
 }
 ```
-
-A JOSS submission is planned post-rOpenSci review.
-
-## Support OptSurvCutR
-
-If `OptSurvCutR` helps your research, consider buying me a coffee — it
-directly supports ongoing maintenance with no dedicated funding.
-
-[![Buy Me A
-Coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=payton.yau&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff)](https://buymeacoffee.com/payton.yau)
 
 ## License
 

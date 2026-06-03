@@ -1,3 +1,71 @@
+# OptSurvCutR 0.9.8 (3/6/2026)
+
+## New Core Features & Architecture
+
+* **Optimal Cut Number Discovery (`find_cutpoint_number`)**: Introduced a new core function to mathematically determine the optimal number of cut-points (0 to 4) before running the genetic search. It supports model selection via Information Criteria (`AIC`, `AICc`, and `BIC`) to balance accuracy against complexity, preventing overfitting to sample-specific noise.
+* **4-Tier Validation Stability System**: Completely overhauled the output of `validate_cutpoint()`. The package now automatically evaluates both the **Precision** (Maximum CI Width) and **Validity** (Interval Overlap) of bootstrapped thresholds, categorising them into four distinct tiers: OPTIMAL (Tier 1), DISTINCT (Tier 2), CAUTION (Tier 3), and UNSTABLE (Tier 4).
+
+### Stability Tier Definitions
+| Stability Tier | Criteria | Clinical Interpretation |
+| :--- | :--- | :--- |
+| **Tier 1 (OPTIMAL)** | Narrow CI Width (< 30%) AND No Overlap | High reliability; thresholds are highly consistent across different samples. |
+| **Tier 2 (DISTINCT)** | Zero Interval Overlap (Regardless of CI Width) | The threshold value may vary, but the subpopulations remain fundamentally separate. |
+| **Tier 3 (CAUTION)** | Moderate CI Width (30%–60%) WITH Overlap | Moderate instability; thresholds are likely real but sensitive to outliers. |
+| **Tier 4 (UNSTABLE)** | High CI Width (> 60%) WITH Overlap | High instability; the model is likely overfitting to sample-specific noise. |
+
+* **Modernised Console UI (`cli` Integration)**: Replaced standard `cat()` and `print()` outputs with the `cli` package. The package now features a highly readable, colour-coded, text-wrapping console UI for summaries, diagnostics, and tiered alerts, safely bypassing base R's 1,000-character warning limits.
+
+## Bare-Metal Low-Level Core Optimisation
+
+* **Rcpp Integer-Assignment Factory (`cpp_get_group_assignments`)**: Migrated the deepest internal bottlenecks from high-level R loops to a native, compiled C++ backend via `Rcpp`. Instead of relying on R's single-threaded vector copying, a high-speed C++ loop now evaluates continuous variables against candidate thresholds and constructs group partitions directly at the hardware memory layer.
+* **Elimination of `findInterval` and `as.factor` Bottlenecks**: Replaced the native R group-allocation pipeline within the exhaustive grid search (`.get_stat`) and the evolutionary objective function (`.obj`). The engine now bypasses R's high-level object allocation layers entirely, cutting memory overhead significantly during heavy permutation loops and genetic generation iterations.
+* **Vectorised `tabulate()` Constraint Evaluation**: Replaced the expensive R `table()` and `any(nlevels() < num_cuts)` validation checks with fast C++ matrix array metrics and vectorised `tabulate()` calls. Subgroup sizes are now verified instantly using raw memory pointers before any survival formula is compiled, saving thousands of microsecond allocations per evaluation cycle.
+* **Hardened S3 Attribute Anchoring**: Implemented a protected S3 structural binding using the `structure(..., class = "factor")` paradigm to map the C++ integer vectors into formula-compliant categorical fields. This prevents R's internal object-replacement methods from stripping away structural attributes when dropped into the data pipeline, ensuring seamless, crash-free interoperability with `survival::coxph` and `survival::survdiff`.
+
+## Algorithmic Optimisation & Tie-Handling (Sparse Data Data-Paths)
+
+* **Defensive Boundary Safety Buffering (The "Tie-Wedge")**: Introduced an internal 2-patient mathematical tolerance window (`nmin - 2`) into both the systematic and genetic validation layers. This architectural guardrail resolves a structural vulnerability in global optimisation routines when evaluating heavily tied or highly zero-skewed continuous vectors. When a large percentage of observations share identical values (at the lower limit of detection or zero baselines), rigid group-size partitioning constraints become mathematically impossible to fulfil. The introduction of this tolerance window prevents strict gridlock rejections (`-Inf` / `NA`), allowing the core optimisation loops to safely navigate around data ties and locate valid optimal solutions.
+* **Fail-Safe Compilation Guardrails**: Added an environment tracking verification step to identify compilation or loading failures in the compiled C++ shared libraries at runtime. If an outdated server or obscure OS distribution blocks the binary namespace, the package prints a clear warning and automatically triggers a graceful degradation path (`use_cpp = FALSE`), falling back to the transparent, native R loop structures without throwing a fatal crash.
+
+## Major Performance Improvements & Memory Protections
+
+* **C-Level Interval Math**: Replaced `cut()` with `findInterval(..., left.open = TRUE)` within the fallback mathematical engines. This eliminates expensive string manipulations, making systematic grid searches faster while perfectly preserving the mathematical boundaries of the groups.
+* **Genetic Algorithm Memoization**: Implemented a hash-based evaluation cache (`eval_cache`) inside the genetic algorithm wrapper. The algorithm now remembers previously evaluated cut-points and bypasses the `survival::coxph` model entirely for redundant guesses, drastically cutting computation time on large datasets with many generations.
+* **Pre-Allocation for Genetic Search**: Shifted text manipulation and formula generation outside the genetic algorithm loop. The algorithm now uses a pre-allocated `data.frame` template, eliminating thousands of redundant memory allocations.
+* **OS-Optimized Bootstrapping**: Upgraded the parallel processing backend in `validate_cutpoint()`. On Unix-based systems (Mac/Linux), the package now dynamically switches to **FORK clusters** (shared memory) instead of PSOCK. This drops data-transfer overhead to near-zero and drastically speeds up bootstrap validation.
+* **Environment Memory-Isolation via Explicit Binding**: Overhauled the internal execution layers to pass explicitly extracted atomic vector streams instead of raw, nested evaluations. This isolates the parent R session environments from leaking into parallel background threads, cutting down cumulative memory inflation during high-core execution.
+
+## Advanced Visualisation & Reporting (New Features)
+
+* **Unified S3 Plotting Router**: Overhauled the `plot()` method (`plot.find_cutpoint()`). It now supports full `...` argument passthrough to `survminer` functions for deep customization, and includes a `return_data = TRUE` "escape hatch" to extract the raw, stratified plotting data.
+* **Schoenfeld Diagnostic Plots & 2-Tier Alert**: Added `type = "diagnostic"` to automatically evaluate the proportional hazards assumption via `survival::cox.zph()` and plot the residuals. The `summary()` function now includes a 2-Tier diagnostic alert to warn users if predictive power shifts significantly over time, gracefully handling singular matrix edge cases.
+* **Dashboard View**: Added `type = "all"` to generate a comprehensive, stacked composite plot (powered by `patchwork`) showing both the predictor distribution and the resulting survival outcome curve in a single clinical snapshot.
+* **Interactive Web Widgets**: Introduced `optsurv_interactive()`, a wrapper function that converts any static OptSurvCutR plot into an interactive HTML widget via `plotly` (ideal for Vignettes and RMarkdown).
+* **Clinical Aesthetics**: Implemented `theme_optsurv()` and defaulted to colorblind-safe palettes (e.g., "nejm") to enforce a unified, publication-ready aesthetic across all outputs.
+
+## Bug Fixes & Edge Cases (`find_cutpoint`)
+
+* **Dynamic Log-Likelihood Extraction**: Fixed a bug where the `p_value` criterion would fail (or skip tests) when no covariates were provided. The null model log-likelihood is now extracted dynamically regardless of model length.
+* **Degenerate Data Handling**: Added a safeguard to check for zero-variance in the `time` column, ensuring the function safely returns `NA` rather than crashing on pathological datasets.
+* **Dropped Coefficients**: Added a check to safely return `-Inf` instead of `NA` if `survival::coxph` completely drops a coefficient (e.g., due to extreme collinearity) during a `hazard_ratio` search.
+
+## Structural Adjustments & Edge-Case Vulnerabilities (`find_cutpoint_number`)
+
+* **Unadjusted Profile Likelihood Fallback Engine**: Resolved a critical evolutionary calculation bottleneck inside `.obj()` when running unadjusted genetic searches (`method = "genetic"`). By adding an implicit zero-covariate structural detector, the engine now dynamically bypasses manual parameter `init` beta matrix arrays when no adjusters are present. This prevents `survival::coxph(..., iter.max = 0)` from crashing on bare categorical split factors, ensuring unadjusted model selection tables calculate 1 and 2 cuts perfectly.
+* **Harden Nmin Evaluation Sequence**: Re-ordered the parameter evaluation pipeline to calculate absolute patient sample splits (`nmin_abs`) prior to executing total data headroom matrix checks. This successfully stops proportional constraints (e.g., `nmin = 0.25`) from silently bypassing sample capacity filters.
+* **Boundary Tie Headroom Margin**: Built a 2-patient safety headroom filter into the information criteria data-capacity logic. This automatically intercepts brittle or impossible search spaces (such as requesting 3 cuts on 580 patients with a strict 25% allocation limit) and down-caps or exits gracefully before triggering genetic algorithm failures.
+
+## Stability & Parallel Processing (`validate_cutpoint`)
+
+* **CRAN-Safe Core Detector**: Built an environment check (`Sys.getenv("_R_CHECK_LIMIT_CORES_")`) into the core architecture. The package now detects when it is running on CRAN's testing servers and automatically throttles itself to 2 cores to prevent rejection, while allowing real users to utilise maximum CPU power.
+* **Parallel Variable-Name Scope Isolation**: Resolved a critical parallel clustering crash (`argument "predictor" is missing, with no default`) that occurred inside `.run_permutations()` during high-throughput bootstrap resampling. The signature now maps explicit variable text strings alongside the split memory streams, ensuring independent worker processes (`%dopar%`) can parse formulas cleanly across separate CPU nodes.
+* **Data-Stream Alignment Fix for Scoped Models**: Fixed a dataset scope conflict (`argument "data" is missing, with no default`) inside the parallel `foreach` environment. By binding the structural data components directly within the function parameter signature rather than relying on global environmental evaluations, parallel worker environments successfully execute deep iterations across any operating system without variable scope dropouts.
+* **Renamed Predictor Collision Handling**: Fixed a tracking bug inside `summary.find_cutpoint_number_result` where the function printed `"Unknown"` for the main predictor variable under specific covariate-adjusted models. The S3 summary framework now tracks original column metadata across all renaming phases to provide pristine diagnostic dashboards for clinical research reporting.
+* **Parallel Closure Fix (`...` arguments)**: Fixed a critical bug where running `validate_cutpoint` with `n_cores > 1` would instantly fail if extra arguments (like `max.generations` or `pop.size`) were passed to the `foreach` loop.
+* **Console Spam Prevention**: Bootstrapping with replacement naturally creates tied survival times, which can trigger expected model convergence warnings. Parallel model fits are now wrapped in `suppressWarnings()` to prevent these benign warnings from flooding the user's console and breaking the progress bar.
+* **Namespace Safety**: Refactored the parallel execution block to reliably call the exported `find_cutpoint()` wrapper. This guarantees that parallel worker nodes on any operating system can successfully locate the internal evaluation functions without namespace crashes.
+* **S3 Summary Parameter Printing Fix**: Resolved an unescaped string and operator evaluation syntax error within the `cli::cli_bullets` parameter tracking block inside `summary.find_cutpoint_number_result`. All named bullet outputs are now tightly mapped to explicitly bounded, single-quoted parameters (`"*" =`), guaranteeing clean console rendering.
+
 # OptSurvCutR 0.2.1 (2026-04-20)
 
 ## CRAN Compliance & Quality of Life Improvements
@@ -186,12 +254,3 @@ This patch release addresses CRAN reviewer feedback and polishes the package's c
 - Added `validate_cutpoint()` for bootstrap-based stability assessment of cut-points.
 - Supports survival models via `survival::coxph` and `survival::survdiff`.
 - Includes example usage with simulated churn data, adaptable to TCGA virome datasets (for example, Alphapapillomavirus).
-
-## BUG FIXES
-- None (initial release).
-
-## IMPROVEMENTS
-- None (initial release).
-
-## DEPRECATIONS
-- None (initial release).

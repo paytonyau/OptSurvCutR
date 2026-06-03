@@ -8,7 +8,7 @@
 \description{
 \if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
-Provides a robust 3-step workflow for optimal cut-point analysis in time-to-event (survival) data. Functions determine the optimal number of cut-points (find_cutpoint_number()), find their precise locations (find_cutpoint()) using systematic or genetic algorithms (via rgenoud), and validate stability via bootstrapping (validate_cutpoint()). Analyses can be adjusted for covariates using standard survival package models. Ideal for biomarker analysis and patient stratification.
+Provides a robust workflow for optimal cut-point analysis in time-to-event (survival) data. Functions determine the optimal number of cut-points (find_cutpoint_number()), find their precise locations (find_cutpoint()) using systematic or genetic algorithms (via rgenoud), and validate stability via bootstrapping (validate_cutpoint()). Features include covariate adjustment, OS-optimized parallel processing, and an extensible S3 plotting engine for clinical dashboards, diagnostics, and interactive web widgets. Ideal for biomarker analysis and patient stratification.
 }
 \seealso{
 Useful links:
@@ -21,6 +21,11 @@ Useful links:
 }
 \author{
 \strong{Maintainer}: Payton Yau \email{tungon@gmail.com} (\href{https://orcid.org/0000-0002-3283-0370}{ORCID}) [copyright holder]
+
+Authors:
+\itemize{
+  \item Payton Yau \email{tungon@gmail.com} (\href{https://orcid.org/0000-0002-3283-0370}{ORCID}) [copyright holder]
+}
 
 }
 \keyword{internal}

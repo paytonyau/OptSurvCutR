@@ -12,3 +12,5 @@
 ^codecov\.yml$
 ^codemeta\.json$
 ^cran-comments\.md$
+^\.positai$
+^\.claude$

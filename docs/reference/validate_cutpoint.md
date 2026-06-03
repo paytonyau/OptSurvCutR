@@ -58,37 +58,20 @@ summary(
 
 - ...:
 
-  Unused.
-
-- x:
-
-  An object of class \`validate_cutpoint_result\`.
-
-- object:
-
-  An object of class \`validate_cutpoint_result\`.
-
-- show_descriptives:
-
-  Logical. Show descriptive statistics?
-
-- show_ci:
-
-  Logical. Show confidence intervals?
-
-- show_params:
-
-  Logical. Show validation run parameters?
-
-- plot.it:
-
-  Logical. Display the density plot?
+  Additional arguments passed to \[find_cutpoint()\] (e.g.,
+  \`pop.size\`, \`max.generations\` for genetic algorithm).
 
 ## Value
 
 An object of class \`validate_cutpoint_result\` with original cuts, 95
 
 ## srrstats compliance
+
+.
+
+.
+
+.
 
 .
 
@@ -117,8 +100,7 @@ fit <- find_cutpoint(
   num_cuts = 1,
   method = "systematic"
 )
-#> ℹ Running systematic search...
-#> ℹ Testing for 1 cut-point(s)...
+#> ℹ Running systematic search for 1 cut-point(s)...
 #> ✔ Systematic search complete.
 
 if (!any(is.na(fit$optimal_cuts))) {
@@ -138,12 +120,12 @@ if (!any(is.na(fit$optimal_cuts))) {
 #> Bootstrap Distribution Summary
 #> -----------------------------
 #>      Cut  Mean    SD Median    Q1    Q3
-#> 25% Cut1 2.927 1.427  3.121 1.483 3.971
+#> 25% Cut1 2.794 1.485   3.52 1.353 3.764
 #> 
 #> 95% Confidence Intervals
 #> ------------------------
 #>       Lower Upper
-#> Cut 1 0.837 4.594
+#> Cut 1 0.826 4.594
 #> 
 #> Validation Parameters
 #> ---------------------
@@ -155,7 +137,18 @@ if (!any(is.na(fit$optimal_cuts))) {
 #> Minimum Group Size (nmin): 18 
 #> Method: systematic 
 #> Criterion: logrank 
-#> Covaricates: None 
+#> Covariates: None 
+#> 
+#> 
+#> Stability Assessment:
+#> ---------------------
+#> Maximum CI Width (Relative to 10th-90th Percentile Range): 100.3%
+#> ✖ Model Status: UNSTABLE (Tier 4)
+#> High instability detected (100.3%)! The cut-point is highly sensitive to sample
+#> changes, indicating potential over-fitting to noise.
+#> ! The primary source of instability is Cut 1.
+#> ✖ Recommendation: Reduce `num_cuts` or increase `nmin`.
+#> See the Rescue Protocol: `vignette('troubleshooting', package = 'OptSurvCutR')`
 #> 
 
 ```

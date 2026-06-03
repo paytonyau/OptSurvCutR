@@ -2,7 +2,9 @@
 
 Finds optimal cut-point(s) for a continuous predictor in a time-to-event
 (survival) analysis. Uses systematic search (1–2 cuts) or a genetic
-algorithm (any number of cuts).
+algorithm (any number of cuts). Features high-speed integer partitioning
+via compiled C++ vector assignments and automated quantile grid
+downsampling.
 
 ## Usage
 
@@ -13,13 +15,17 @@ find_cutpoint(
   outcome_time,
   outcome_event,
   num_cuts = 1,
-  method = "systematic",
-  criterion = "logrank",
+  method = c("systematic", "genetic"),
+  criterion = c("logrank", "hazard_ratio", "p_value"),
   covariates = NULL,
   nmin = 20,
   seed = NULL,
   max.generations = 100,
   pop.size = 100,
+  n_perm = 0,
+  n_cores = 1,
+  use_cpp = TRUE,
+  grid_by = 0.01,
   quiet = FALSE,
   ...
 )
@@ -39,7 +45,14 @@ summary(
 )
 
 # S3 method for class 'find_cutpoint'
-plot(x, type = "outcome", reference_group = NULL, ...)
+plot(
+  x,
+  type = c("outcome", "distribution", "forest", "surface", "trajectory", "diagnostic",
+    "landmark"),
+  return_data = FALSE,
+  landmark = NULL,
+  ...
+)
 ```
 
 ## Arguments
@@ -71,9 +84,7 @@ plot(x, type = "outcome", reference_group = NULL, ...)
 - criterion:
 
   The statistic to optimise: \`"logrank"\` (max), \`"hazard_ratio"\`
-  (max), or \`"p_value"\` (min). Note: When covariates are provided, the
-  \`"logrank"\` criterion is automatically generalised to the Cox score
-  test.
+  (max), or \`"p_value"\` (min).
 
 - covariates:
 
@@ -85,7 +96,7 @@ plot(x, type = "outcome", reference_group = NULL, ...)
 
 - seed:
 
-  Optional integer seed for \`"genetic"\` method.
+  Optional integer seed for reproducible genetic search.
 
 - max.generations:
 
@@ -95,49 +106,34 @@ plot(x, type = "outcome", reference_group = NULL, ...)
 
   Integer; population size for genetic algorithm (default 100).
 
+- n_perm:
+
+  Integer. Number of permutations to run for an adjusted p-value.
+  Default is 0. Highly recommended for \`num_cuts \>= 2\` to account for
+  optimization bias.
+
+- n_cores:
+
+  Integer. Number of CPU cores for parallel permutations. Default is 1.
+
+- use_cpp:
+
+  Logical. Automatically checks and calls compiled C++ routines via
+  \`Rcpp\`. Can be overridden if required. Default is \`TRUE\`.
+
+- grid_by:
+
+  Numeric. Percentile step increment for systematic grid downsampling
+  (e.g., 0.01 tests every 1st percentile). If \`NULL\`, tests all unique
+  values. Default is 0.01.
+
 - quiet:
 
   Logical. If \`TRUE\`, suppresses final print.
 
 - ...:
 
-  Additional arguments passed to \`rgenoud\`.
-
-- x:
-
-  An object from \[find_cutpoint()\].
-
-- object:
-
-  An object from \[find_cutpoint()\].
-
-- show_model:
-
-  Logical. Show final Cox model summary?
-
-- show_group_counts:
-
-  Logical. Show N and event counts by group?
-
-- show_medians:
-
-  Logical. Show median survival by group?
-
-- show_ph_test:
-
-  Logical. Show proportional hazards test?
-
-- show_params:
-
-  Logical. Show original function parameters?
-
-- type:
-
-  Plot type: \`"outcome"\`, \`"distribution"\`, or \`"forest"\`.
-
-- reference_group:
-
-  Reference group for forest plot (e.g., \`"G1"\`).
+  Additional arguments passed to the genetic algorithm.
 
 ## Value
 
@@ -146,11 +142,19 @@ statistic, and analysis parameters.
 
 ## Details
 
-\`method = "systematic"\`: grid search respecting \`nmin\`. \`method =
-"genetic"\`: \`rgenoud\` global optimisation. Systematic search is slow
-for \`num_cuts \> 2\`; use \`genetic\`.
+\`method = "systematic"\`: grid search respecting \`nmin\`. Optimised
+via internal quantiles. \`method = "genetic"\`: \`rgenoud\` global
+optimisation. Systematic search is slow for \`num_cuts \> 2\`; use
+\`genetic\`. Core vector partitions are calculated in compiled C++ via
+\`Rcpp\` for optimal performance.
 
 ## srrstats compliance
+
+.
+
+.
+
+.
 
 .
 
@@ -168,7 +172,7 @@ Royal Statistical Society: Series B (Methodological)\*, 34(2), 187–202.
 
 Mantel, N. (1966). Evaluation of survival data and two new rank order
 statistics arising in its consideration. \*Cancer Chemotherapy
-Reports\*, 50(3). https://pubmed.ncbi.nlm.nih.gov/5910392/
+Reports\*, 50(3).
 
 Mebane Jr, W. R., & Sekhon, J. S. (2011). Genetic Optimization Using
 Derivatives: The rgenoud Package for R. \*Journal of Statistical
@@ -178,16 +182,17 @@ Software\*, 42, 1–26.
 ## Examples
 
 ``` r
+if (FALSE) { # \dontrun{
 data(crc_virome)
+# Fast 1-cut systematic search using downsampled quantile steps
 res <- find_cutpoint(
   data = head(crc_virome, 50),
   predictor = "Alphapapillomavirus",
   outcome_time = "time_months",
   outcome_event = "status",
   num_cuts = 1,
-  method = "systematic"
+  method = "systematic",
+  grid_by = 0.01
 )
-#> ℹ Running systematic search...
-#> ℹ Testing for 1 cut-point(s)...
-#> ✔ Systematic search complete.
+} # }
 ```

@@ -94,7 +94,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     cli::cli_abort("Input must be a `find_cutpoint` object.")
   }
   if (!is.numeric(num_replicates) || num_replicates < 1 ||
-    num_replicates != round(num_replicates)) {
+      num_replicates != round(num_replicates)) {
     cli::cli_abort("`num_replicates` must be a positive integer.")
   }
   if (num_replicates < 20) {
@@ -171,7 +171,13 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
       if (!requireNamespace("doParallel", quietly = TRUE)) {
         cli::cli_abort("Package 'doParallel' is required for parallel.")
       }
-      cl <- parallel::makeCluster(cores_to_use)
+      if (.Platform$OS.type == "unix") {
+        # Mac/Linux/CRAN Servers: Zero-overhead shared memory
+        cl <- parallel::makeCluster(cores_to_use, type = "FORK")
+      } else {
+        # Windows: Standard Socket Cluster
+        cl <- parallel::makeCluster(cores_to_use, type = "PSOCK")
+      }
       doParallel::registerDoParallel(cl)
       on.exit(parallel::stopCluster(cl), add = TRUE)
       cli::cli_alert_info(
@@ -197,16 +203,21 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
       "Running {num_replicates} replicates sequentially (n_cores = 1)."
     )
   }
+
   # --- 4. Main Bootstrap Loop ---
   if (cores_to_use == 1) {
     pb <- cli::cli_progress_bar("Bootstrapping", total = num_replicates)
   }
 
   i <- NULL
+
+  # FIX: Extract '...' OUTSIDE the parallel loop to prevent closure crashes
+  extra_args <- list(...)
+
   bootstrap_results <- foreach::foreach(
     i = 1:num_replicates,
     .combine = "rbind",
-    .packages = "OptSurvCutR",
+    .packages = c("survival", "OptSurvCutR"),
     .errorhandling = "pass"
   ) %dopar% {
     if (cores_to_use == 1) {
@@ -215,9 +226,6 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
 
     boot_indices <- sample(1:n, n, replace = TRUE)
     boot_data <- original_data[boot_indices, ]
-
-    # Pass ... which now contains max.generations / pop.size
-    extra_args <- list(...)
 
     final_args <- c(
       list(
@@ -234,26 +242,28 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
       ),
       extra_args
     )
+
+    # FIX: Revert to the exported find_cutpoint() for strict namespace safety.
+    # Wrapped in suppressWarnings to prevent parallel console spam on tied data.
     res <- tryCatch(
-      {
-        suppressMessages(do.call(find_cutpoint, final_args))
-      },
+      suppressWarnings(suppressMessages(do.call(find_cutpoint, final_args))),
       error = function(e) {
-        cli::cli_inform("Bootstrap replicate {i} failed: {e$message}")
+        if (cores_to_use == 1) cli::cli_inform("Bootstrap replicate {i} failed: {e$message}")
         return(NULL)
       }
     )
-    if (is.null(res) || any(is.na(res$optimal_cuts)) ||
-      length(res$optimal_cuts) != num_cuts) {
-      return(rep(NA, num_cuts))
+
+    if (is.null(res) || any(is.na(res$optimal_cuts)) || length(res$optimal_cuts) != num_cuts) {
+      return(rep(NA_real_, num_cuts))
     }
     res$optimal_cuts
   }
+
   # --- 5. Process Results and Calculate CIs ---
   if (!is.matrix(bootstrap_results)) {
     bootstrap_matrix <- matrix(bootstrap_results,
-      nrow = num_replicates,
-      ncol = num_cuts, byrow = TRUE
+                               nrow = num_replicates,
+                               ncol = num_cuts, byrow = TRUE
     )
   } else {
     bootstrap_matrix <- bootstrap_results
@@ -282,7 +292,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   }
   bootstrap_matrix_clean <- na.omit(bootstrap_matrix)
   ci <- apply(bootstrap_matrix_clean, 2, stats::quantile,
-    probs = c(0.025, 0.975), na.rm = TRUE
+              probs = c(0.025, 0.975), na.rm = TRUE
   )
   if (is.vector(ci)) {
     ci_df <- data.frame(Lower = ci[1], Upper = ci[2])
@@ -326,179 +336,4 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   )
   class(output) <- "validate_cutpoint_result"
   return(output)
-}
-#' @param x An object of class `validate_cutpoint_result`.
-#' @param ... Unused.
-#' @rdname validate_cutpoint
-#' @srrstats {RE4.17} `print()` shows CI and success rate.
-#' @export
-print.validate_cutpoint_result <- function(x, ...) {
-  cat("Cut-point Stability Analysis (Bootstrap)\n")
-  cat("----------------------------------------\n")
-  cat(
-    "Original Optimal Cut-point(s):",
-    paste(round(x$original_cuts, 3), collapse = ", "), "\n"
-  )
-  cat(
-    "Successful Replicates:", x$parameters$successful_reps, "/",
-    x$parameters$num_replicates,
-    "(", round(100 * x$parameters$successful_reps /
-      x$parameters$num_replicates, 1), "%)\n"
-  )
-  cat("Failed Replicates:", x$parameters$failed_reps, "\n\n")
-  cat("95% Confidence Intervals\n")
-  cat("------------------------\n")
-  print(round(x$confidence_intervals, 3))
-  cat("\nBootstrap Summary Statistics\n")
-  cat("---------------------------\n")
-  summary_df <- do.call(rbind, lapply(names(x$boot_summary), function(cut) {
-    stats <- x$boot_summary[[cut]]
-    data.frame(
-      Cut = cut,
-      Mean = stats$mean,
-      SD = stats$sd,
-      Median = stats$median,
-      Q1 = stats$Q1,
-      Q3 = stats$Q3
-    )
-  }))
-  numeric_cols <- vapply(summary_df, is.numeric, FUN.VALUE = logical(1))
-  summary_df[, numeric_cols] <- round(summary_df[, numeric_cols], 3)
-  print(summary_df)
-  cat("\nHint: Use `summary()` or `plot()` to visualise stability.\n")
-}
-#' @rdname validate_cutpoint
-#' @importFrom ggplot2 ggplot aes .data geom_density geom_vline
-#' @importFrom ggplot2 labs theme_minimal facet_wrap
-#' @srrstats {RE6.0} Plot method provided for bootstrap distribution.
-#' @export
-plot.validate_cutpoint_result <- function(x, ...) {
-  dist_data <- x$bootstrap_distribution
-  num_cuts <- ncol(dist_data)
-  if (x$parameters$successful_reps == 0) {
-    cli::cli_inform("Cannot plot: 0 successful bootstrap replicates.")
-    return(invisible(NULL))
-  }
-  plot_data <- tidyr::pivot_longer(
-    dist_data,
-    cols = tidyr::everything(),
-    names_to = "Cut",
-    values_to = "Value",
-    names_prefix = "Cut_point_"
-  )
-  plot_data$Cut <- paste("Cut-point", plot_data$Cut)
-  line_data <- data.frame(
-    Cut = paste("Cut-point", 1:num_cuts),
-    original_cut = x$original_cuts,
-    ci_lower = x$confidence_intervals$Lower,
-    ci_upper = x$confidence_intervals$Upper
-  )
-  p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data$Value)) +
-    ggplot2::geom_density(
-      fill = "#56B4E9", color = "#0072B2", alpha = 0.6
-    ) +
-    ggplot2::geom_vline(
-      data = line_data, aes(xintercept = .data$original_cut),
-      color = "#D55E00", linetype = "solid", linewidth = 1
-    ) +
-    ggplot2::geom_vline(
-      data = line_data, aes(xintercept = .data$ci_lower),
-      color = "#D55E00", linetype = "dashed"
-    ) +
-    ggplot2::geom_vline(
-      data = line_data, aes(xintercept = .data$ci_upper),
-      color = "#D55E00", linetype = "dashed"
-    ) +
-    ggplot2::labs(
-      title = "Bootstrap Distribution of Optimal Cut-points",
-      subtitle = paste(x$parameters$successful_reps, "successful replicates"),
-      x = "Cut-point Value",
-      y = "Density"
-    ) +
-    ggplot2::theme_minimal(base_size = 14)
-  if (num_cuts > 1) {
-    p <- p + ggplot2::facet_wrap(~Cut, scales = "free_x")
-  }
-  return(p)
-}
-#' @param object An object of class `validate_cutpoint_result`.
-#' @param show_descriptives Logical. Show descriptive statistics?
-#' @param show_ci Logical. Show confidence intervals?
-#' @param show_params Logical. Show validation run parameters?
-#' @param plot.it Logical. Display the density plot?
-#' @rdname validate_cutpoint
-#' @srrstats {RE4.18} `summary()` shows descriptives, CI, params.
-#' @export
-summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE,
-                                             show_ci = TRUE, show_params = TRUE,
-                                             plot.it = FALSE, ...) {
-  cat("Cut-point Stability Analysis (Bootstrap)\n")
-  cat("----------------------------------------\n")
-  cat(
-    "Original Optimal Cut-point(s):",
-    paste(round(object$original_cuts, 3), collapse = ", "), "\n\n"
-  )
-  if (show_descriptives) {
-    cat("Bootstrap Distribution Summary\n")
-    cat("-----------------------------\n")
-    summary_df <- do.call(
-      rbind,
-      lapply(names(object$boot_summary), function(cut) {
-        stats <- object$boot_summary[[cut]]
-        data.frame(
-          Cut = cut,
-          Mean = stats$mean,
-          SD = stats$sd,
-          Median = stats$median,
-          Q1 = stats$Q1,
-          Q3 = stats$Q3
-        )
-      })
-    )
-    numeric_cols <- vapply(summary_df, is.numeric, FUN.VALUE = logical(1))
-    summary_df[, numeric_cols] <- round(summary_df[, numeric_cols], 3)
-    print(summary_df)
-    cat("\n")
-  }
-  if (show_ci) {
-    cat("95% Confidence Intervals\n")
-    cat("------------------------\n")
-    print(round(object$confidence_intervals, 3))
-    cat("\n")
-  }
-  if (show_params) {
-    cat("Validation Parameters\n")
-    cat("---------------------\n")
-    cat("Replicates Requested:", object$parameters$num_replicates, "\n")
-    cat(
-      "Successful Replicates:", object$parameters$successful_reps, "/",
-      object$parameters$num_replicates,
-      "(", round(100 * object$parameters$successful_reps /
-        object$parameters$num_replicates, 1), "%)\n"
-    )
-    cat("Failed Replicates:", object$parameters$failed_reps, "\n")
-    cat("Cores Used:", object$parameters$n_cores, "\n")
-    cat(
-      "Seed:",
-      ifelse(is.null(object$parameters$seed), "Not set",
-        object$parameters$seed
-      ), "\n"
-    )
-    cat("Minimum Group Size (nmin):", object$parameters$nmin, "\n")
-    cat("Method:", object$parameters$method, "\n")
-    cat("Criterion:", object$parameters$criterion, "\n")
-    cat(
-      "Covaricates:",
-      ifelse(is.null(object$parameters$covariates), "None",
-        paste(object$parameters$covariates, collapse = ", ")
-      ), "\n"
-    )
-    cat("\n")
-  }
-  if (plot.it) {
-    cat("Bootstrap Distribution Plot\n")
-    cat("--------------------------\n")
-    print(plot(object, ...))
-  }
-  invisible(object)
 }

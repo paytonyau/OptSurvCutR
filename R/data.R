@@ -174,35 +174,3 @@
 #' @keywords datasets
 #' @name crc_virome
 NULL
-
-#' Simulated Rapeseed Germination and Growth Data
-#'
-#' Simulated germination and early growth of rapeseed (Brassica napus L.)
-#' across a range of temperatures. Based on parameters from
-#' Haj Sghaier et al. (2022).
-#'
-#' @srrstats {G5.1} Exported dataset provided for examples and testing.
-#'
-#' @format A data frame with 1040 rows and 5 variables:
-#' \describe{
-#'   \item{temperature}{Experimental temperature (Celsius) (numeric).}
-#'   \item{replicate}{Experimental replicate number (integer).}
-#'   \item{time}{Day of measurement (integer).}
-#'   \item{growth}{Simulated seedling growth (numeric).}
-#'   \item{germinated}{Germination status: 1 = germinated,
-#'      0 = not germinated (integer).}
-#' }
-#'
-#' @source Computationally simulated based on parameters derived from
-#'   Haj Sghaier et al. (2022) \doi{10.3390/plants11212819}.
-#'
-#' @references
-#' Haj Sghaier, A., Tarnawa, Á., Khaeim, H., Kovács, G. P.,
-#' Gyuricza, C., & Kende, Z. (2022). The Effects of Temperature and
-#' Water on the Seed Germination and Seedling Development of Rapeseed
-#' (Brassica napus L.). *Plants*, 11(21), 2819.
-#' \doi{10.3390/plants11212819}
-#'
-#' @keywords datasets
-#' @name germination
-NULL

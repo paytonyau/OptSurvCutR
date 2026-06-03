@@ -2,7 +2,7 @@
 
 ## Core Workflow Functions
 
-The main functions for the 3-step analysis.
+The primary 3-step mathematical engine for discovery and validation.
 
 - [`find_cutpoint_number()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md)
   [`print(`*`<find_cutpoint_number_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md)
@@ -22,17 +22,10 @@ The main functions for the 3-step analysis.
 
 ## Plotting & Diagnostics
 
-Functions for visualising results and checking model assumptions.
+The S3 plotting suite for clinical dashboards and model verification.
 
-- [`plot_optimisation_curve()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_optimisation_curve.md)
-  : Plot Optimisation Curve from a Systematic Search
-- [`plot_cutpoint_residuals()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_cutpoint_residuals.md)
-  : Diagnostic Plot of Schoenfeld Residuals
-- [`find_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint.md)
-  [`print(`*`<find_cutpoint>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint.md)
-  [`summary(`*`<find_cutpoint>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint.md)
-  [`plot(`*`<find_cutpoint>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint.md)
-  : Find Optimal Cut-points for Survival Data
+- [`plot(`*`<find_cutpoint>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/plot.find_cutpoint.md)
+  : Master S3 Plot Router for find_cutpoint
 - [`find_cutpoint_number()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md)
   [`print(`*`<find_cutpoint_number_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md)
   [`summary(`*`<find_cutpoint_number_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md)
@@ -43,10 +36,27 @@ Functions for visualising results and checking model assumptions.
   [`plot(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/validate_cutpoint.md)
   [`summary(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/validate_cutpoint.md)
   : Validate an Optimal Cut-point Using Bootstrapping
+- [`plot_validation()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
+  : Plot Cut-point Optimization Stability Surface
+- [`plot_optimisation_curve()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_optimisation_curve.md)
+  : Plot Optimisation Curve or Surface from Search
+- [`plot_cutpoint_residuals()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_cutpoint_residuals.md)
+  : Diagnostic Plot of Schoenfeld Residuals
+- [`plot_landmark_stratification()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_landmark_stratification.md)
+  : Plot Landmark Stratification
+
+## Interactive Widgets & Aesthetics
+
+Tools for dynamic web-reporting and consistent clinical themes.
+
+- [`optsurv_interactive()`](https://paytonyau.github.io/OptSurvCutR/reference/optsurv_interactive.md)
+  : Make OptSurvCutR Plots Interactive
+- [`theme_optsurv()`](https://paytonyau.github.io/OptSurvCutR/reference/theme_optsurv.md)
+  : Custom Clinical Theme for OptSurvCutR
 
 ## Inspecting & Reporting Results
 
-Methods for summarising analysis objects and extracting results.
+Methods for summarising analysis objects and extracting raw data.
 
 - [`find_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint.md)
   [`print(`*`<find_cutpoint>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint.md)
@@ -64,11 +74,9 @@ Methods for summarising analysis objects and extracting results.
   [`summary(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/validate_cutpoint.md)
   : Validate an Optimal Cut-point Using Bootstrapping
 
-## Datasets
+## Example Datasets
 
-Example datasets included with the package.
+Pre-loaded data for the Bilirubin and CRC bioinformatics case studies.
 
 - [`crc_virome`](https://paytonyau.github.io/OptSurvCutR/reference/crc_virome.md)
   : Colon and Rectal Cancer Clinical and Virome Data
-- [`germination`](https://paytonyau.github.io/OptSurvCutR/reference/germination.md)
-  : Simulated Rapeseed Germination and Growth Data

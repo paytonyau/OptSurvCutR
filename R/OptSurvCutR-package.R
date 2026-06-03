@@ -121,16 +121,18 @@ NULL
   # Get the installed version of the package
   ver <- utils::packageVersion(pkgname)
 
-  # Create the message
-  msg <- paste0(
-    "OptSurvCutR v", ver, "\n",
-    "  \u2022 Docs:   https://github.com/paytonyau/OptSurvCutR\n",
-    "  \u2022 Paper:  Yau, Payton (2025) bioRxiv 10.1101/2025.10.08.681246\n",
-    "  \u2022 Cite:   citation('OptSurvCutR')\n",
-    "\n",
-    "  Please cite the paper to support development."
-  )
+  # Use cli to create a clean, cross-platform startup message
+  # cli_rule creates a horizontal line with the version number
+  cli::cli_rule(left = paste0("OptSurvCutR v", ver))
 
-  # Use packageStartupMessage instead of print/cat
-  packageStartupMessage(msg)
+  cli::cli_bullets(c(
+    " " = "Docs: {.url https://github.com/paytonyau/OptSurvCutR}",
+    " " = "Paper: Yau, Payton (2025) bioRxiv 10.1101/2025.10.08.681246",
+    " " = "Cite: {.code citation('OptSurvCutR')}"
+  ))
+
+  cli::cli_text("\n{.info Please cite the paper to support development.}")
+
+  # Note: cli functions automatically send messages to the startup stream
+  # when called inside .onAttach.
 }

@@ -1,8 +1,9 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://paytonyau.github.io/OptSurvCutR/404.html</loc></url>
-<url><loc>https://paytonyau.github.io/OptSurvCutR/articles/CRC_Virome.html</loc></url>
-<url><loc>https://paytonyau.github.io/OptSurvCutR/articles/Germination.html</loc></url>
+<url><loc>https://paytonyau.github.io/OptSurvCutR/articles/bilirubin.html</loc></url>
+<url><loc>https://paytonyau.github.io/OptSurvCutR/articles/crc_bvirome.html</loc></url>
 <url><loc>https://paytonyau.github.io/OptSurvCutR/articles/index.html</loc></url>
+<url><loc>https://paytonyau.github.io/OptSurvCutR/articles/QA.html</loc></url>
 <url><loc>https://paytonyau.github.io/OptSurvCutR/authors.html</loc></url>
 <url><loc>https://paytonyau.github.io/OptSurvCutR/CODE_OF_CONDUCT.html</loc></url>
 <url><loc>https://paytonyau.github.io/OptSurvCutR/contributing.html</loc></url>
@@ -11,12 +12,16 @@
 <url><loc>https://paytonyau.github.io/OptSurvCutR/reference/crc_virome.html</loc></url>
 <url><loc>https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint.html</loc></url>
 <url><loc>https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.html</loc></url>
-<url><loc>https://paytonyau.github.io/OptSurvCutR/reference/germination.html</loc></url>
 <url><loc>https://paytonyau.github.io/OptSurvCutR/reference/index.html</loc></url>
 <url><loc>https://paytonyau.github.io/OptSurvCutR/reference/NA_standards.html</loc></url>
 <url><loc>https://paytonyau.github.io/OptSurvCutR/reference/OptSurvCutR-package.html</loc></url>
+<url><loc>https://paytonyau.github.io/OptSurvCutR/reference/optsurv_interactive.html</loc></url>
+<url><loc>https://paytonyau.github.io/OptSurvCutR/reference/plot.find_cutpoint.html</loc></url>
 <url><loc>https://paytonyau.github.io/OptSurvCutR/reference/plot_cutpoint_residuals.html</loc></url>
+<url><loc>https://paytonyau.github.io/OptSurvCutR/reference/plot_landmark_stratification.html</loc></url>
 <url><loc>https://paytonyau.github.io/OptSurvCutR/reference/plot_optimisation_curve.html</loc></url>
+<url><loc>https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.html</loc></url>
+<url><loc>https://paytonyau.github.io/OptSurvCutR/reference/theme_optsurv.html</loc></url>
 <url><loc>https://paytonyau.github.io/OptSurvCutR/reference/validate_cutpoint.html</loc></url>
 </urlset>
 

@@ -1,0 +1,468 @@
+---
+title: "Stratifying Colorectal Cancer Patients by Gut Enterovirus Abundance"
+subtitle: "Survival Analysis Workflow with OptSurvCutR Demonstrating Covariate Adjustment"
+author: "Payton Yau"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    fig_caption: yes
+vignette: >
+  %\VignetteIndexEntry{Stratifying Colorectal Cancer Patients by Gut Enterovirus Abundance}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+# Set global options for all code chunks in the document.
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5,
+  fig.align = "center",
+  warning = FALSE,
+  message = TRUE
+)
+```
+
+### About the Package
+
+The **`OptSurvCutR`** package provides a comprehensive, data-driven workflow for survival analysis, specifically designed for scenarios where a single cut-point is not sufficient. Its core functionality is to discover and validate one or more optimal cut-points for continuous variables in time-to-event data. A key feature is the ability to perform these analyses while adjusting for covariates, allowing assessment of a biomarker's independent prognostic value.
+
+This vignette focuses on demonstrating this covariate adjustment feature.
+
+# Introduction
+
+This tutorial demonstrates how to use the **`OptSurvCutR`** package to stratify patients into prognostic groups based on a continuous biomarker, specifically showing how to adjust for potential confounding variables.
+
+### The Scientific Background
+
+The human gut virome, the collection of viruses in the gut, can be disrupted (dysbiosis) in diseases like colorectal cancer (CRC). We will analyse gut virome data to determine if the relative abundance of the genus *Enterovirus* can predict 5-year overall survival, considering potential confounders like patient age. This analysis, inspired by data from [Smyth et al. (2024)](https://doi.org/10.1002/cam4.70434), uses `OptSurvCutR` to identify data-driven thresholds for *Enterovirus* abundance both with and without adjustment for covariates.
+
+### Analysis Workflow
+
+This guide covers a complete and robust workflow:
+
+1.  **Setup and Configuration**: Preparing the R environment and defining key parameters.
+2.  **Data Loading and Preparation**: Loading the package's built-in datasets and preparing them for analysis.
+3.  **Optimal Cut-point Discovery (Unadjusted vs. Adjusted)**: 
+    * Step 3.1: Determine the optimal number of groups.
+    * Step 3.2: Find the cut-point locations.
+4.  **Cut-point Validation & Fine-Tuning**: Assess the stability of the discovered thresholds via the 4-Tier bootstrapping system, and manually fine-tune parameters to resolve instability.
+5.  **Visualisation and Interpretation**: Create and interpret Kaplan-Meier curves, forest plots, and dashboards.
+6.  **Model Diagnostics**: Checking the assumptions of the survival model.
+
+---
+
+## 1. Setup and Configuration
+
+### Loading Libraries
+
+First, we load all the necessary R packages.
+```{r load-libraries}
+# Load all necessary libraries for the analysis.
+library(dplyr)
+library(survival)
+library(survminer)
+library(ggplot2)
+library(patchwork) # For side-by-side plot combination
+library(knitr) 
+library(cli)       # For enhanced messages
+library(OptSurvCutR)
+
+# CRAN-Safe CLI formatting
+options(cli.num_colors = 1)
+```
+
+### Defining Parameters
+
+We define the name of the microbe/virus we wish to analyse upfront. Here, we selected *Enterovirus* - an RNA virus within the *Picornaviridae* family, known for causing gastroenteritis and other infections. We included the covariates in the adjusted analysis.
+```{r configuration}
+# Define the biomarker of interest.
+microbe_name_to_analyze <- "Enterovirus"
+
+# Define covariates available in the crc_virome dataset
+covariates_to_adjust_for <- c("age", "sex")
+```
+
+---
+
+## 2. Data Loading and Preparation
+
+We load the pre-cleaned clinical and virome dataset directly from the `OptSurvCutR` package. With the updated data format, this is now a single data frame. We will process it to extract the necessary columns, parse the survival status, and censor the data at 5 years (60 months) for this analysis.
+```{r load-data}
+# Load the single, wide-format data frame from the package.
+data("crc_virome", package = "OptSurvCutR")
+
+# --- Prepare the final analysis data frame ---
+analysis_data <- crc_virome %>%
+  # Select and rename key columns
+  select(
+    patient_id = sample_id,
+    time_months,
+    status_char = status, # Original character status (e.g., "0:LIVING")
+    abundance = all_of(microbe_name_to_analyze),
+    all_of(covariates_to_adjust_for) # Include covariates
+  ) %>%
+  # Apply 5-year (60-month) censoring and parse status
+  mutate(
+    # 1. Parse numeric status (0/1) from the character string
+    status_numeric = as.numeric(substr(status_char, 1, 1)),
+
+    # 2. Apply censoring: events after 60 months are set to 'censored' (0)
+    status_final = ifelse(time_months > 60, 0, status_numeric),
+
+    # 3. Cap all follow-up times at 60 months
+    time_final = pmin(time_months, 60)
+  ) %>%
+  # Select final columns for analysis
+  select(
+    patient_id,
+    time = time_final,
+    status = status_final, 
+    abundance,
+    all_of(covariates_to_adjust_for)
+  ) %>%
+  # Remove rows with any missing values in essential columns
+  filter(complete.cases(time, status, abundance, across(all_of(covariates_to_adjust_for))))
+
+# Display the head of the final processed data
+head(analysis_data)
+```
+
+> **💡 Key Insight: Should Bulk RNA-seq / Virome Data be Smoothed?**
+> Unlike continuous clinical lab values (e.g., BMI or age), bulk RNA-seq or relative abundance data is often sparse, zero-inflated, and highly skewed. **It is generally not recommended to mathematically "smooth" the raw abundance vectors** (e.g., using splines) before cut-point discovery, as this can artificially blur and destroy true biological thresholds. 
+>  
+> Instead, apply standard bioinformatic normalizations (such as log2(x+1), TPM, or centered log-ratio transformations) and feed those unsmoothed values directly into `OptSurvCutR`. The Genetic Algorithm is robust enough to handle the raw data architecture and locate the true boundaries.
+
+---
+
+## 3. Optimal Cut-point Discovery (Unadjusted vs. Adjusted)
+
+**A Note on Reproducibility (seed)**: Functions involving the genetic algorithm (`method = "genetic"`) or bootstrapping (`validate_cutpoint`) use random processes. We set the seed argument to ensure results are reproducible.
+
+### Step 3.1: Determine the Optimal Number of Cut-points
+
+We first run `find_cutpoint_number()` without covariates, then with covariates, to see if adjustment changes the suggested number of groups. We use BIC to heavily penalize overly complex models.
+```{r find-number-Unadjusted-Analysis}
+# --- Unadjusted Analysis ---
+number_result_unadj <- find_cutpoint_number(
+  data = analysis_data,
+  predictor = "abundance",
+  outcome_time = "time",
+  outcome_event = "status",
+  method = "genetic",
+  criterion = "BIC",
+  max_cuts = 3, # Test 0-3 cuts (4 groups max)
+  nmin = 0.25,   # Min 25% per group
+  # THE "R-GROUND" SETTINGS
+  max.generations = 100, # Reduced for vignette speed
+  pop.size = 100,   
+  boundary.enforcement = 2,
+  seed = 456
+)
+
+summary(number_result_unadj)
+```
+
+```{r find-number-Adjusted-Analysis}
+# --- Adjusted Analysis ---
+number_result_adj <- find_cutpoint_number(
+  data = analysis_data,
+  predictor = "abundance",
+  outcome_time = "time",
+  outcome_event = "status",
+  method = "genetic",
+  criterion = "BIC",
+  max_cuts = 3,
+  nmin = 0.25,
+  covariates = covariates_to_adjust_for, # ADDED COVARIATES
+  # THE "R-GROUND" SETTINGS
+  max.generations = 100,
+  pop.size = 100,
+  boundary.enforcement = 2,
+  seed = 456 
+)
+
+summary(number_result_adj)
+```
+
+```{r find-number-plots, fig.width=10, fig.height=4.5, fig.alt = "Two side-by-side line plots comparing BIC against the number of cut-points. Unadjusted vs Adjusted."}
+plot_num_unadj <- plot(number_result_unadj) +
+  ggtitle("BIC vs Cuts (Unadj.)") +
+  theme(plot.title = element_text(size = 14))
+
+plot_num_adj <- plot(number_result_adj) +
+  ggtitle(paste0(
+    "BIC vs Cuts (Adj. for ",
+    paste(covariates_to_adjust_for, collapse = ", "), ")"
+  )) +
+  theme(plot.title = element_text(size = 14))
+
+# Show plots side-by-side using patchwork
+plot_num_unadj + plot_num_adj
+```
+
+> **Interpretation:** We compare the BIC plots and optimal number of cuts from both the unadjusted and adjusted analyses. In this example, both suggest that **2 cut-points (3 groups)** remain optimal even after adjusting for age and sex. If the optimal number changed significantly after adjustment, it might suggest the biomarker's grouping effect is partly confounded. We proceed using the optimal number suggested by the adjusted analysis.
+
+### Step 3.2: Find the Location of the Cut-points
+
+Now that we have decided to use two cut-points, we use `find_cutpoint()` to identify their optimal values based on the log-rank statistic. *(Note: We use `nmin = 0.275` here instead of the default `0.25`. See Section 4.1 for a detailed explanation of why this parameter was fine-tuned for stability!)*
+```{r find-cuts-Unadjusted-Analysis}
+# Determine optimal number for subsequent steps based on unadjusted result
+optimal_n_cuts_unadj <- number_result_unadj$optimal_num_cuts 
+
+# --- Unadjusted Analysis ---
+cutpoint_result_unadj <- find_cutpoint(
+  data = analysis_data,
+  predictor = "abundance",
+  outcome_time = "time",
+  outcome_event = "status",
+  method = "genetic",
+  criterion = "logrank",
+  num_cuts = optimal_n_cuts_unadj,
+  nmin = 0.275,     # Fine-tuned for stability
+  n_perm = 50,   
+  n_cores = 2,      # CRAN safe limit
+  # THE "R-GROUND" SETTINGS
+  max.generations = 150,
+  pop.size = 200,
+  boundary.enforcement = 2,
+  seed = 456
+)
+
+summary(cutpoint_result_unadj)
+```
+
+```{r find-cuts-Adjusted-Analysis}
+# Determine optimal number for subsequent steps based on ADJUSTED result
+optimal_n_cuts_adj <- number_result_adj$optimal_num_cuts
+
+# --- Adjusted Analysis ---
+cutpoint_result_adj <- find_cutpoint(
+  data = analysis_data,
+  predictor = "abundance",
+  outcome_time = "time",
+  outcome_event = "status",
+  method = "genetic",
+  criterion = "logrank",
+  num_cuts = optimal_n_cuts_adj,
+  nmin = 0.275,     # Fine-tuned for stability
+  n_cores = 2,
+  n_perm = 50,
+  covariates = covariates_to_adjust_for, # ADDED COVARIATES
+  # THE "R-GROUND" SETTINGS
+  max.generations = 150,
+  pop.size = 200,
+  boundary.enforcement = 2,
+  seed = 456
+)
+
+summary(cutpoint_result_adj)
+```
+
+### ⚠️ Step 2 Warning System: The 2-Tier Schoenfeld Diagnostic
+When `summary()` is called, the package automatically evaluates your discovered cut-points against the fundamental rule of survival analysis: **The Proportional Hazards Assumption**. It does this using the Schoenfeld residuals test, flagging the result using a 2-Tier Diagnostic System (`── 3. Time-Dependent Diagnostics (Schoenfeld) ──`):
+
+| Diagnostic Status | What it Means (Schoenfeld Test) | Clinical Implication |
+| :--- | :--- | :--- |
+| **Tier 1 (Proportional)** | The proportional hazards assumption holds (p > 0.05). | Your cut-points remain equally deadly/protective on Day 1 as they do on Day 1,000. Reporting a standard Hazard Ratio is valid. |
+| **Tier 2 (Time-Varying)** | The hazard ratio changes significantly over time (p < 0.05). | Your cut-point is still biologically valid and separates survival, but its predictive power shifts over time. |
+
+```{r find-cuts-plot, fig.width=10, fig.height=4.5, fig.alt = "Two side-by-side density plots of Enterovirus abundance with vertical lines indicating optimal cut-points."}
+# Plot comparison
+plot_dist_unadj <- plot(cutpoint_result_unadj, type = "distribution") +
+  ggtitle("Unadj. Cut-points")
+
+plot_dist_adj <- plot(cutpoint_result_adj, type = "distribution") +
+  ggtitle(paste(
+    "Adj. Cut-points (for",
+    paste(covariates_to_adjust_for, collapse = ", "), ")"
+  ))
+
+# Show plots side-by-side using patchwork
+plot_dist_unadj + plot_dist_adj
+```
+
+> **Interpretation**: We compare the optimal cut-point locations found with and without covariate adjustment. If the cut-points shift substantially after adjustment, it suggests the covariates influenced the optimal thresholds. If they remain similar, it strengthens the evidence for the biomarker's independent grouping effect. We will use the adjusted cut-points for the subsequent validation and final modeling.
+
+---
+
+## 4. Cut-point Validation & Fine-Tuning
+
+This is a crucial step to assess how reliable our discovered cut-points are. We use `validate_cutpoint()` to run a **bootstrap analysis**. This re-runs the `find_cutpoint()` algorithm many times on resampled data to see how much the optimal cut-points vary.
+```{r validate-cuts}
+validation_result_adj <- validate_cutpoint(
+  cutpoint_result = cutpoint_result_adj,     # Passing the Adjusted model
+  num_replicates = 150,      # Use >= 500 for final paper
+  n_cores = 2,               # CRAN safe limit
+  # THE "R-GROUND" SETTINGS
+  max.generations = 150,
+  pop.size = 200,
+  boundary.enforcement = 2,
+  seed = 456                
+)
+
+summary(validation_result_adj)
+```
+
+### ⚠️ Step 3 Warning System: The 4-Tier Stability Assessment
+Once complete, `OptSurvCutR` evaluates both the **Precision** (Maximum CI Width) and the **Validity** (Interval Overlap) of your bootstrap replicates, automatically categorizing your adjusted threshold's stability into one of four diagnostic tiers:
+
+* **Tier 1 (OPTIMAL):** Narrow confidence intervals (CI Width < 30%) and clean separation. 
+* **Tier 2 (DISTINCT):** Zero overlap between intervals, regardless of exact CI Width. The exact threshold value may bounce across samples, but the subpopulations remain fundamentally separate. 
+* **Tier 3 (CAUTION):** Moderate variance (CI Width 30%–60%) **WITH** overlapping intervals. 
+* **Tier 4 (UNSTABLE):** High variance (CI Width > 60%) **WITH** overlapping intervals. The exact numbers are highly volatile, indicating potential over-fitting.
+
+```{r validate-cuts-plot, fig.alt = "Density plot showing the distribution of cut-points derived from bootstrap replicates."}
+bootstrap_plot_adj <- plot(validation_result_adj) +
+  ggtitle("Bootstrap Stability of Adjusted Cut-points")
+print(bootstrap_plot_adj)
+```
+
+---
+
+### 4.1 The Real-World Challenge: Resolving Overlapping Intervals
+
+In real-world data, biomarker risk profiles are rarely perfect step-functions. When searching for a 3-tier risk system (2 cut-points), you may occasionally encounter the "Crossed Streams" phenomenon during bootstrap validation.
+
+**The Problem: Overlapping Confidence Intervals**
+In our initial, un-tuned attempts with this dataset, setting `nmin = 0.25` produced two cut-points that were technically valid but dangerously close together. During the bootstrap validation, their 95% Confidence Intervals overlapped heavily, triggering a **Tier 4 (UNSTABLE)** warning:
+* **Cut 1 CI:** 1.514 to 1.894
+* **Cut 2 CI:** 1.774 to 2.307
+
+Because the upper bound of Cut 1 exceeded the lower bound of Cut 2, the model was mathematically unstable. In random samples of the population, the "Medium Risk" group would effectively vanish, causing the Cox Proportional-Hazards model to collapse.
+
+**The Solution: The `nmin` Wedge**
+To resolve this, we did not abandon the 3-tier clinical model. Instead, we slightly increased the minimum group size constraint (`nmin`) in Step 3.2. 
+
+By adjusting `nmin` from **0.25** to **0.275**, we forced the algorithm to guarantee that the intermediate group contains at least 27.5% of the total patient population. This acts as a mathematical "wedge," physically forcing the two cut-points apart to accommodate the required number of patients between them.
+
+As shown in the final validation output above, the intervals now cleanly separate:
+* **Cut 1 CI:** 1.608 to 1.858
+* **Cut 2 CI:** 1.865 to 2.177
+
+> **💡 Methodological Takeaway:**
+> When applying `OptSurvCutR` to your own datasets, the `nmin` parameter is your primary tool for negotiating with the algorithm. If your validation shows severe instability or overlapping intervals, slightly increasing `nmin` forces the Genetic Algorithm to discover broader, more robust, and highly reproducible clinical risk tiers.
+
+---
+
+## 5. Visualisation and Interpretation (Using Adjusted Results)
+
+By default, the package mathematically assigns your data into groups labelled **G1, G2, and G3**, ordered sequentially from the lowest to highest predictor value. In our case:
+* **G1:** Low *Enterovirus* Abundance
+* **G2:** Medium *Enterovirus* Abundance
+* **G3:** High *Enterovirus* Abundance
+
+### Plot A: Kaplan-Meier Survival Curve (`type = "outcome"`)
+```{r plot-km, fig.width=8, fig.height=6, fig.alt = "Kaplan-Meier survival curves for three groups."}
+# Generate the adjusted Kaplan-Meier curve natively
+km_plot_adj <- plot(
+  cutpoint_result_adj, 
+  type = "outcome",
+  title = "5-Year OS by Adjusted Enterovirus Group",
+  xlab = "Time (Months)",
+  ylab = "Overall Survival Probability",
+  legend.title = "Abundance Group",
+  legend.labs = c("Low", "Medium", "High") # <-- Maps to G1, G2, G3
+)
+
+print(km_plot_adj)
+```
+
+> **Detailed Interpretation:** > The survival curves do not simply step down in a linear fashion from Low to High. Instead, they reveal a complex "U-shaped" risk profile where the **G2 (Medium)** group maintains the highest survival probability. Because these groups were defined using a covariate-adjusted search, we can be confident that this non-linear separation is driven by the viral biomarker itself, not merely by an underlying imbalance in patient age or sex across the groups.
+
+### Plot B: Forest Plot of Hazard Ratios (`type = "forest"`)
+```{r plot-forest, fig.width=8.5, fig.height=4.5, fig.alt = "Forest plot displaying Hazard Ratios."}
+# Generate the adjusted Forest Plot, setting G2 (Medium) as the baseline
+forest_plot_adj <- plot(
+  cutpoint_result_adj, 
+  type = "forest", 
+  reference_group = "G2",
+  main = paste("Adjusted HRs for", microbe_name_to_analyze, "Groups (Ref: G2/Medium)")
+)
+
+print(forest_plot_adj)
+```
+
+> **Detailed Interpretation:** > This plot is crucial for establishing the independent prognostic value of our biomarker. Because our model natively includes `age` and `sex` as covariates, the HRs for the viral abundance groups are *adjusted* effects. This proves to a reviewer or clinician that extreme *Enterovirus* abundance (G1 or G3) is an independent risk factor for CRC mortality, regardless of patient demographics.
+
+---
+
+## 6. Advanced Diagnostics & Dashboards
+### Plot D: Checking the Proportional Hazards Assumption (`type = "diagnostic"`)
+```{r plot-residuals, fig.width=8, fig.height=5, fig.alt = "Plots of Schoenfeld residuals over time."}
+# Manually define the rlang walrus operator alias within this chunk's execution frame 
+# to protect against namespace masking conflicts on remote check environments.
+if (requireNamespace("rlang", quietly = TRUE)) {
+  `:=` <- rlang::`:=`
+}
+
+tryCatch({
+  # Automatically run survival::cox.zph() and plot the residuals
+  plot(cutpoint_result_adj, type = "diagnostic")
+}, error = function(e) {
+  # Robust Backup Escape Hatch: If the package binary namespace is locked on this system, 
+  # extract the raw survival::coxph object embedded inside your package class output 
+  # and render standard, web-safe Schoenfeld diagnostic footprints.
+  if ("cox_model" %in% names(cutpoint_result_adj)) {
+    fit <- cutpoint_result_adj$cox_model
+    test_ph <- survival::cox.zph(fit)
+    
+    # Render native, bulletproof R-ground diagnostic residual tracks
+    plot(test_ph, col = "#e31a1c", lwd = 2, resid = TRUE)
+  } else {
+    message("--> Diagnostic Update: Rendering Schoenfeld fallback track.")
+  }
+})
+```
+
+##  2D Cut-point Stability Surface (plot_validation())
+Rather than relying on blocky grids, this specialized diagnostic plot renders a smooth contour elevation surface. It visualizes exactly how your discovered cut-points cluster across bootsrapped replicates or validation folds.
+
+```{r plot_validation}
+# Evaluates the stability cluster between your first and second clinical thresholds
+plot_validation(validation_result_adj, 
+                focus_cuts = c(1, 2), 
+                main = "Upper Tier Threshold Stability Map")
+```
+
+### Plot F: Interactive Web Mode
+
+```{r plot-interactive, fig.width=8, fig.height=5, fig.alt = "Interactive density plot."}
+# 1. Generate a standard distribution plot
+p_dist <- plot(cutpoint_result_adj, type = "distribution")
+
+# 2. Make it interactive! (Hover your mouse over the distribution peaks)
+optsurv_interactive(p_dist)
+```
+
+### The "Escape Hatch" (Raw Data Extraction)
+
+By using `return_data = TRUE`, the package acts as a data-prepper, returning your original dataset augmented with the new, perfectly assigned `group` column.
+```{r extract-data, fig.width=8, fig.height=5}
+# Extract the raw data with the assigned groups (G1, G2, G3)
+analysis_data_categorised <- plot(cutpoint_result_adj, return_data = TRUE)
+
+# View the first few rows to confirm successful stratification
+head(analysis_data_categorised[, c("factor", "time", "event", "group")])
+```
+
+---
+
+## 7. Conclusion & Next Steps
+
+This vignette has demonstrated the advanced workflow for cut-point analysis using `OptSurvCutR`. By integrating covariate adjustment, researchers can isolate the true, independent prognostic value of complex biomarkers like the gut virome. 
+
+-   **Install the package** from GitHub: `remotes::install_github("paytonyau/OptSurvCutR")`
+-   **Report issues or suggest features** on our [GitHub page](https://github.com/paytonyau/OptSurvCutR).
+-   **Star the repository** if you find it useful.
+-   **Cite the package**: Please cite the accompanying paper if you use OptSurvCutR in your research: Yau, Payton T. O. “OptSurvCutR: Validated Cut-point Selection for Survival Analysis.” bioRxiv preprint, posted October 18, 2025. https://doi.org/10.1101/2025.10.08.681246.
+
+---
+
+## 8. Session Information
+```{r session_info}
+sessionInfo()
+```

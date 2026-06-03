@@ -3,10 +3,10 @@ url: https://paytonyau.github.io/OptSurvCutR/
 
 template:
   bootstrap: 5
-  bootswatch: "litera"
+  bootswatch: litera
   light-switch: true
   theme: gruvbox-light
-  theme-dark: gruvbox-dark 
+  theme-dark: gruvbox-dark
   highlight: default
   params:
     logo: man/figures/logo.png
@@ -27,11 +27,12 @@ home:
   links:
     - text: Support my work ☕
       href: https://www.buymeacoffee.com/payton.yau
+
 # -------------------------------------------------------
 
 navbar:
   structure:
-    left:  [intro, reference, articles, news, manuscript]
+    left: [intro, reference, articles, news, manuscript]
     right: [search, github]
   components:
     intro:
@@ -49,41 +50,53 @@ navbar:
     articles:
       text: Vignettes
       menu:
-        - text: "CRC Virome Workflow" 
-          href: articles/CRC_Virome.html
-        - text: "Rapeseed Germination Workflow" 
-          href: articles/Germination.html
+        - text: "CRC Virome Workflow"
+          href: articles/crc_virome.html
+        - text: "Bilirubin Workflow"
+          href: articles/bilirubin.html
+        - text: "Q&A and Troubleshooting"
+          href: articles/QA.html
     news:
       text: Changelog
       href: news/index.html
     manuscript:
-       text: Manuscript
-       href: https://doi.org/10.1101/2025.10.08.681246
-       target: _blank
+      text: Manuscript
+      href: https://doi.org/10.1101/2025.10.08.681246
+      target: _blank
     github:
       icon: fab fa-github fa-lg
       href: https://github.com/paytonyau/OptSurvCutR/
       aria-label: "GitHub repository"
 
+# -------------------------------------------------------
+
 reference:
   - title: "Core Workflow Functions"
-    desc: "The main functions for the 3-step analysis."
+    desc: "The primary 3-step mathematical engine for discovery and validation."
     contents:
       - find_cutpoint_number
       - find_cutpoint
       - validate_cutpoint
 
   - title: "Plotting & Diagnostics"
-    desc: "Functions for visualising results and checking model assumptions."
+    desc: "The S3 plotting suite for clinical dashboards and model verification."
     contents:
-      - plot_optimisation_curve
-      - plot_cutpoint_residuals
       - plot.find_cutpoint
       - plot.find_cutpoint_number_result
       - plot.validate_cutpoint_result
+      - plot_validation
+      - plot_optimisation_curve
+      - plot_cutpoint_residuals
+      - plot_landmark_stratification
+
+  - title: "Interactive Widgets & Aesthetics"
+    desc: "Tools for dynamic web-reporting and consistent clinical themes."
+    contents:
+      - optsurv_interactive
+      - theme_optsurv
 
   - title: "Inspecting & Reporting Results"
-    desc: "Methods for summarising analysis objects and extracting results."
+    desc: "Methods for summarising analysis objects and extracting raw data."
     contents:
       - summary.find_cutpoint
       - print.find_cutpoint
@@ -92,11 +105,12 @@ reference:
       - summary.validate_cutpoint_result
       - print.validate_cutpoint_result
 
-  - title: "Datasets"
-    desc: "Example datasets included with the package."
+  - title: "Example Datasets"
+    desc: "Pre-loaded data for the Bilirubin and CRC bioinformatics case studies."
     contents:
       - crc_virome
-      - germination
+
+# -------------------------------------------------------
 
 footer:
   left: "Developed by Payton Yau."
@@ -109,7 +123,6 @@ footer:
 toc:
   depth: 3
 
-# Simplified sidebar (relies on 'home' for links now)
 sidebar:
   structure: [links, vignettes, reference, license, community, dev]
   components:
@@ -117,9 +130,11 @@ sidebar:
       title: Vignettes
       links:
         - text: "CRC Virome Workflow"
-          href: articles/CRC_Virome.html
-        - text: "Germination Workflow"
-          href: articles/Germination.html
+          href: articles/crc_virome.html
+        - text: "Bilirubin Workflow"
+          href: articles/bilirubin.html
+        - text: "Q&A and Troubleshooting"
+          href: articles/QA.html
     community:
       title: Community & Help
       links:
@@ -129,5 +144,3 @@ sidebar:
           href: contributing.html
         - text: Code of Conduct
           href: CODE_OF_CONDUCT.html
-
-# Ensure a blank line at the end

@@ -2,263 +2,7 @@
 # INTERNAL HELPER FUNCTIONS
 # Support for `find_cutpoint()` and `find_cutpoint_number()`.
 # ===================================================================
-#' Objective Function for Genetic Algorithm
-#'
-#' @description
-#' Called by `rgenoud::genoud`. Calculates fitness (log-likelihood,
-#' log-rank stat, etc.) for a given set of cut-points.
-#' `rgenoud` always maximises, so all criteria are framed as such.
-#'
-#' @param params Numeric vector. First `numcut` are cut-points; remaining (if
-#'   `criterion = "loglik"`) are initial betas.
-#' @param time,censor,target,confound Survival data and predictor.
-#' @param numcut Number of cut-points.
-#' @param gap Minimum distance between cut-points.
-#' @param nmin Minimum observations per group.
-#' @param criterion `"logrank"`, `"p_value"`, `"hazard_ratio"` or `"loglik"`.
-#' @param loglik0 Log-likelihood of the null model (for `"p_value"`).
-#'
-#' @return Single numeric fitness value.
-#'
-#' @references
-#' Cox, D. R. (1972). Regression Models and Life-Tables.
-#' *Journal of the Royal Statistical Society: Series B*, **34**(2),
-#' 187–202. \doi{10.1111/j.2517-6161.1972.tb00899.x}
-#'
-#' Mantel, N. (1966). Evaluation of survival data and two new rank order
-#' statistics arising in its consideration. *Cancer Chemotherapy Reports*,
-#' **50**(3). <https://pubmed.ncbi.nlm.nih.gov/5910392/>
-#'
-#' @section srrstats compliance:
-#' .
-#' @srrstats {G2.3} `na.rm = TRUE` used in quantile calculations.
-#' @srrstats {G2.4a} `make.names()` sanitises covariate names.
-#' @srrstats {G2.13} Invalid gaps or insufficient N return `-Inf`.
-#' @srrstats {G5.8} Edge cases (zero gap, infinite domain) return `-Inf`.
-#' @srrstats {G1.4a} Internal use only (`@noRd`).
-#'
-#' @noRd
-.obj <- function(params, time, censor, target, confound, numcut, gap, nmin,
-                 criterion, loglik0 = NA_real_) {
-  cutoff <- params[1:numcut]
-  if (numcut > 1 && min(diff(sort(cutoff))) < gap) {
-    return(-Inf)
-  }
-  #' @srrstats {G2.4d} Explicit conversion to factor used for group creation.
-  cut_design <- factor(cut(target,
-    breaks = c(-Inf, sort(cutoff), Inf),
-    labels = FALSE, include.lowest = TRUE
-  ))
-  if (length(table(cut_design)) != (numcut + 1)) {
-    return(-Inf)
-  }
-  if (min(table(cut_design)) < nmin) {
-    return(-Inf)
-  }
-  data_for_fit <- data.frame(
-    time = time, censor = censor,
-    cut_design = cut_design
-  )
-  if (!is.null(confound) && ncol(confound) > 0) {
-    colnames(confound) <- make.names(colnames(confound))
-    data_for_fit <- cbind(data_for_fit, confound)
-  }
-  formula_str <- "survival::Surv(time, censor) ~ cut_design"
-  if (!is.null(confound) && ncol(confound) > 0) {
-    formula_str <- paste(
-      formula_str, "+",
-      paste(colnames(confound), collapse = " + ")
-    )
-  }
-  fit_formula <- as.formula(formula_str)
-  stat_value <- switch(criterion,
-    "logrank" = {
-      fit <- tryCatch(survival::survdiff(fit_formula, data = data_for_fit),
-        error = function(e) NULL
-      )
-      if (is.null(fit)) -Inf else fit$chisq
-    },
-    "hazard_ratio" = {
-      fit <- tryCatch(survival::coxph(fit_formula, data = data_for_fit),
-        error = function(e) NULL
-      )
-      if (is.null(fit)) {
-        return(-Inf)
-      } # <-- REQUIRED FIX (early exit)
-      coefs <- fit$coefficients
-      target_coef <- paste0("cut_design", numcut + 1) # e.g. "cut_design2"
-      if (is.null(coefs) || !(target_coef %in% names(coefs)) ||
-        is.na(coefs[target_coef])) {
-        return(-Inf) # <-- REQUIRED FIX
-      }
-      exp(coefs[target_coef])
-    },
-    "p_value" = {
-      fit <- tryCatch(survival::coxph(fit_formula, data = data_for_fit),
-        error = function(e) NULL
-      )
-      if (is.null(fit) || is.null(fit$loglik)) {
-        return(-Inf)
-      }
-      if (!is.na(loglik0)) {
-        loglik1 <- fit$loglik[2]
-        statistic <- -2 * (loglik0 - loglik1)
-        df <- numcut
-        pval <- stats::pchisq(statistic, df, lower.tail = FALSE)
-        return(1 - pval)
-      } else {
-        sfit <- tryCatch(summary(fit), error = function(e) NULL)
-        if (is.null(sfit) || is.null(sfit$logtest)) {
-          -Inf
-        } else {
-          1 - sfit$logtest["pvalue"]
-        }
-      }
-    },
-    "loglik" = {
-      beta_init <- params[(numcut + 1):length(params)]
-      fit <- tryCatch(
-        survival::coxph(fit_formula,
-          data = data_for_fit,
-          init = beta_init, iter.max = 0
-        ),
-        error = function(e) NULL
-      )
-      if (is.null(fit) || is.null(fit$loglik)) -Inf else fit$loglik[2]
-    },
-    -Inf
-  )
-  return(stat_value)
-}
-#' Wrapper for the rgenoud Genetic Algorithm
-#'
-#' @description
-#' Sets up and runs `rgenoud::genoud` to find optimal cut-points.
-#'
-#' @param target Continuous predictor vector.
-#' @param numcut Number of cut-points.
-#' @param criterion Optimisation criterion.
-#' @param max.generations Max generations (native rgenoud arg).
-#' @param pop.size Population size (native rgenoud arg).
-#' @param ... Additional arguments passed to `.obj` and `genoud`.
-#'
-#' @return A `genoud` object (or `NULL` on failure).
-#'
-#' @references
-#' Mebane Jr, W. R., & Sekhon, J. S. (2011). Genetic Optimization Using
-#' Derivatives: The rgenoud Package for R. *Journal of Statistical Software*,
-#' **42**, 1–26. \doi{10.18637/jss.v042.i11}
-#'
-#' @section srrstats compliance:
-#' .
-#' @srrstats {G2.0} `requireNamespace("rgenoud")` check.
-#' @srrstats {G5.8} Edge cases (zero gap, infinite range) return `NULL`.
-#' @srrstats {G1.4a} Internal use only (`@noRd`).
-#'
-#' @noRd
-.run_genetic_search <- function(target, numcut, time, censor, confound, nmin,
-                                criterion, max.generations = 100,
-                                pop.size = 100,
-                                gap = NULL,
-                                print.level = 0, ...) {
-  num_confound_vars <- if (is.null(confound) || all(is.na(confound))) {
-    0
-  } else {
-    ncol(confound)
-  }
 
-  # --- British Spelling Update for Variable Name ---
-  optimising_betas <- (criterion == "loglik")
-
-  nvars <- if (optimising_betas) {
-    numcut + numcut + num_confound_vars
-  } else {
-    numcut
-  }
-  domain_cuts <- matrix(rep(range(target, na.rm = TRUE), numcut),
-    ncol = 2, byrow = TRUE
-  )
-  if (any(is.infinite(domain_cuts))) {
-    return(NULL)
-  }
-  domain <- if (optimising_betas) {
-    domain_betas <- matrix(rep(c(-5, 5), nvars - numcut),
-      ncol = 2,
-      byrow = TRUE
-    )
-    rbind(domain_cuts, domain_betas)
-  } else {
-    domain_cuts
-  }
-  initial_cuts <- stats::quantile(target,
-    probs = seq(0, 1, length.out = numcut + 2),
-    na.rm = TRUE
-  )[2:(numcut + 1)]
-  initial_values <- if (optimising_betas) {
-    initial_betas <- rep(0, nvars - numcut)
-    c(initial_cuts, initial_betas)
-  } else {
-    initial_cuts
-  }
-  if (any(is.na(initial_values))) {
-    return(NULL)
-  }
-  if (is.null(gap)) {
-    gap <- stats::quantile(sort(diff(sort(unique(na.omit(target))))),
-      probs = 0.5, na.rm = TRUE
-    )
-    if (is.na(gap) || gap == 0) gap <- 1e-4
-  }
-  loglik0 <- NA_real_
-  if (criterion == "p_value") {
-    null_formula_str <- "survival::Surv(time, censor) ~ 1"
-    data_for_null_fit <- data.frame(time = time, censor = censor)
-    if (!is.null(confound) && ncol(confound) > 0) {
-      confound_null <- confound
-      colnames(confound_null) <- make.names(colnames(confound_null))
-      data_for_null_fit <- cbind(data_for_null_fit, confound_null)
-      null_formula_str <- paste(
-        null_formula_str, "+",
-        paste(colnames(confound_null),
-          collapse = " + "
-        )
-      )
-    }
-    null_fit <- tryCatch(
-      survival::coxph(as.formula(null_formula_str), data = data_for_null_fit),
-      error = function(e) NULL
-    )
-    if (!is.null(null_fit) && !is.null(null_fit$loglik)) {
-      loglik0 <- null_fit$loglik[length(null_fit$loglik)]
-    }
-  }
-  if (!requireNamespace("rgenoud", quietly = TRUE)) {
-    stop("The 'rgenoud' package is required. Please install it.", call. = FALSE)
-  }
-
-  optim_result <- tryCatch(rgenoud::genoud(
-    fn = .obj,
-    nvars = nvars,
-    max = TRUE,
-    pop.size = pop.size, # Explicitly passed
-    max.generations = max.generations, # Explicitly passed
-    wait.generations = 10,
-    hard.generation.limit = TRUE,
-    starting.values = initial_values,
-    Domains = domain,
-    print.level = print.level,
-    time = time,
-    censor = censor,
-    target = target,
-    confound = confound,
-    numcut = numcut,
-    gap = gap,
-    nmin = nmin,
-    criterion = criterion,
-    loglik0 = loglik0
-  ), error = function(e) NULL)
-  return(optim_result)
-}
 #' Calculate Information Criterion (AIC, AICc, or BIC)
 #'
 #' @description
@@ -291,7 +35,6 @@
 #'
 #' @noRd
 .calc_ic <- function(model, k, n, criterion) {
-  ## Return NA for any case where the IC cannot be computed
   if (is.null(model) || !is.list(model) || is.null(model$loglik)) {
     return(NA_real_)
   }
@@ -299,7 +42,6 @@
   if (is.na(logL)) {
     return(NA_real_)
   }
-  # BIC requires a valid sample size
   if (criterion == "BIC" && (is.na(n) || n <= 0)) {
     return(NA_real_)
   }
@@ -312,13 +54,15 @@
     aic <- -2 * logL + 2 * k
     aicc <- aic + (2 * k * (k + 1)) / (n - k - 1)
     return(aicc)
-  } else { # "AIC"
+  } else {
     return(-2 * logL + 2 * k)
   }
 }
+
 # ===================================================================
 # Validation & Prep Helpers for find_cutpoint()
 # ===================================================================
+
 #' Validate inputs for find_cutpoint()
 #'
 #' @description
@@ -345,14 +89,14 @@
                                            criterion, covariates) {
   method <- match.arg(method, choices = c("systematic", "genetic"))
   criterion <- match.arg(criterion,
-    choices = c("logrank", "hazard_ratio", "p_value")
+                         choices = c("logrank", "hazard_ratio", "p_value")
   )
   if (!is.numeric(num_cuts) || num_cuts < 0 || num_cuts != round(num_cuts)) {
     stop("num_cuts must be a non-negative integer.", call. = FALSE)
   }
   if (criterion == "hazard_ratio" && num_cuts > 1) {
     stop("'hazard_ratio' is only supported for num_cuts = 1.",
-      call. = FALSE
+         call. = FALSE
     )
   }
   if (method == "genetic" && !requireNamespace("rgenoud", quietly = TRUE)) {
@@ -366,7 +110,7 @@
   }
   if (method == "systematic" && !num_cuts %in% c(1, 2)) {
     stop("Systematic search only supports num_cuts = 1 or 2.",
-      call. = FALSE
+         call. = FALSE
     )
   }
   if (is.null(predictor)) {
@@ -374,7 +118,7 @@
   }
   if (is.null(outcome_time) || is.null(outcome_event)) {
     stop("Both 'outcome_time' and 'outcome_event' are required.",
-      call. = FALSE
+         call. = FALSE
     )
   }
   required_vars <- c(predictor, outcome_time, outcome_event, covariates)
@@ -390,6 +134,7 @@
   }
   invisible(TRUE)
 }
+
 #' Prepare data for cut-point analysis
 #'
 #' @description
@@ -419,6 +164,7 @@
   names(userdata)[names(userdata) == outcome_event] <- "event"
   return(userdata)
 }
+
 #' Validate event column (0/1)
 #'
 #' @description
@@ -452,6 +198,7 @@
   }
   invisible(TRUE)
 }
+
 #' Validate data conditions for cut-point analysis
 #'
 #' @description
@@ -477,9 +224,7 @@
     stop("Time variable must be non-negative.", call. = FALSE)
   }
 
-  # --- MODIFICATION: Replaced duplicated code with call to new helper ---
   .validate_event_column(userdata$event, outcome_event)
-  # --- END MODIFICATION ---
 
   if (nmin > 0 && nmin < 1) {
     nmin_abs <- floor(nmin * nrow(userdata))
@@ -515,6 +260,7 @@
   }
   return(list(valid = TRUE, nmin_abs = nmin_abs))
 }
+
 #' Infix operator for NULL default
 #'
 #' @param a The value to check.

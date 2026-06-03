@@ -2,49 +2,19 @@
 % Please edit documentation in R/plotting_functions.R
 \name{plot_optimisation_curve}
 \alias{plot_optimisation_curve}
-\title{Plot Optimisation Curve from a Systematic Search}
+\title{Plot Optimisation Curve or Surface from Search}
 \usage{
-plot_optimisation_curve(cutpoint_result)
+plot_optimisation_curve(cutpoint_result, ...)
 }
 \arguments{
-\item{cutpoint_result}{A `find_cutpoint` object
-(`method = "systematic"`, `num_cuts = 1`).}
+\item{cutpoint_result}{A `find_cutpoint` object.}
+
+\item{...}{Unused dots.}
 }
 \value{
-A `ggplot` object. The optimal cut-point is marked with a
-  vertical dashed line.
+A `ggplot` object.
 }
 \description{
-Plots the metric from a `find_cutpoint()` systematic search
-(`num_cuts = 1`). It plots the statistic (e.g., Log-Rank, HR,
-p-value) against all evaluated cut-points.
-
-Helps confirm the optimum and assess sensitivity.
-}
-\section{srrstats compliance}{
-
-.
-}
-
-\examples{
-data(crc_virome)
-fit <- find_cutpoint(
-  data = head(crc_virome, 40),
-  predictor = "Alphapapillomavirus",
-  outcome_time = "time_months",
-  outcome_event = "status",
-  num_cuts = 1,
-  method = "systematic"
-)
-
-if (!any(is.na(fit$optimal_cuts))) {
-  plot_optimisation_curve(fit)
-}
-
-}
-\references{
-Altman, D. G., Lausen, B., Sauerbrei, W., & Schumacher,
-M. (1994). Dangers of Using "Optimal" Cutpoints in the Evaluation of
-Prognostic Factors. *JNCI: Journal of the National Cancer Institute*,
-86(11), 829-835. \doi{10.1093/jnci/86.11.829}
+Plots the metric landscape evaluated across coordinates. Maps a 1D optimization line
+for 1-cut systematic setups, or a 2D topographic grid profile for 2-cut layouts.
 }
