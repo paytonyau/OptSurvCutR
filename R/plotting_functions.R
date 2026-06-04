@@ -643,8 +643,13 @@ plot_validation <- function(validation_result,
       plot.margin = ggplot2::margin(5, 0, 5, 5)
     ) +
     ggplot2::geom_vline(xintercept = 1.0, linetype = "dotted", linewidth = 0.9, color = "gray30") +
-    ggplot2::geom_errorbarh(ggplot2::aes(xmin = .data$Lower, xmax = .data$Upper, color = .data$Type),
-                            height = 0.12, linewidth = 0.7) +
+    # --- Modern ggplot2 >= 4.0.0 Replacement ---
+    ggplot2::geom_errorbar(
+      ggplot2::aes(xmin = .data$Lower, xmax = .data$Upper, color = .data$Type),
+      width = 0.12,
+      linewidth = 0.7,
+      orientation = "y" # Forces geom_errorbar to lay out horizontally along the y-axis
+    ) +
     ggplot2::geom_point(ggplot2::aes(x = .data$HR, color = .data$Type), shape = 16, size = 3.5) +
     ggplot2::scale_color_manual(values = c("Biomarker" = "black", "Covariate" = "#7f8c8d")) +
     ggplot2::xlim(0, x_limit_upper) +

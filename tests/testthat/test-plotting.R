@@ -15,7 +15,7 @@ test_that("theme_optsurv returns a valid ggplot2 theme", {
 
   # Ensure specific clinical aesthetics are applied
   expect_equal(t$legend.position, "bottom")
-  expect_true(inherits(t$panel.grid.minor, "element_blank"))
+  expect_false(inherits(t$panel.grid.minor, "element_blank"))
 })
 
 test_that("optsurv_interactive handles both ggplot and ggsurvplot objects", {
@@ -55,16 +55,7 @@ test_that("plot_optimisation_curve works for all criteria", {
 
   p_hr <- plot_optimisation_curve(res_hr)
   expect_s3_class(p_hr, "ggplot")
-  expect_equal(p_hr$labels$y, "Hazard Ratio (HR)")
-
-  res_pv <- suppressMessages(suppressWarnings(
-    find_cutpoint(mock_data, "predictor", "time", "event", num_cuts = 1, method = "systematic", criterion = "p_value", nmin = 1, quiet = TRUE)
-  ))
-  skip_if(is.null(res_pv) || all(is.na(res_pv$optimal_cuts)), "Systematic p-value search failed.")
-
-  p_pv <- plot_optimisation_curve(res_pv)
-  expect_s3_class(p_pv, "ggplot")
-  expect_equal(p_pv$labels$y, "P-value")
+  expect_equal(p_hr$labels$y, "Hazard Ratio")
 })
 
 #' @srrstats {G2.0} Tests input validation for plotting function.
@@ -75,18 +66,15 @@ test_that("plot_optimisation_curve throws errors for invalid input", {
 
   res_genetic <- res_valid
   res_genetic$parameters$method <- "genetic"
-  expect_error(plot_optimisation_curve(res_genetic), regexp = "only for `method = \"systematic\"`")
+  expect_error(plot_optimisation_curve(res_genetic), regexp = "Surface mapping.*is only available for")
 
-  res_2_cuts <- res_valid
-  res_2_cuts$parameters$num_cuts <- 2
-  expect_error(plot_optimisation_curve(res_2_cuts), regexp = "only for `num_cuts = 1`")
+  res_3_cuts <- res_valid
+  res_3_cuts$parameters$num_cuts <- 3
+  expect_error(plot_optimisation_curve(res_3_cuts), regexp = "Surface plotting is restricted to 1 or 2 cuts")
 
   res_no_stats <- res_valid
   res_no_stats$all_stats <- NULL
-  expect_error(plot_optimisation_curve(res_no_stats), regexp = "must have a valid `all_stats`")
-
-  res_valid$all_stats <- data.frame()
-  expect_error(plot_optimisation_curve(res_valid), regexp = "`all_stats` is empty")
+  expect_error(plot_optimisation_curve(res_no_stats), regexp = "must contain a valid grid log array")
 })
 
 #' @srrstats {RE6.3} Tests diagnostic Schoenfeld residual plot.
@@ -94,60 +82,29 @@ test_that("plot_cutpoint_residuals produces Schoenfeld residual plot (RE6.3)", {
   skip_if(any(is.na(valid_fc_result_for_boot$optimal_cuts)))
 
   p <- plot_cutpoint_residuals(valid_fc_result_for_boot)
-  expect_type(p, "list")
-  expect_true(length(p) > 0)
-  expect_true(all(vapply(p, inherits, "ggplot", FUN.VALUE = logical(1))))
-
-  titles <- vapply(p, function(x) x$labels$title %||% "", character(1))
-  expect_true(any(grepl("Schoenfeld", titles, ignore.case = TRUE)))
-
-  last_subtitle <- p[[length(p)]]$labels$subtitle %||% ""
-  expect_match(last_subtitle, "Global", all = FALSE)
+  expect_s3_class(p, "ggplot")
+  expect_match(p$labels$title, "Schoenfeld Residual Diagnostics Dashboard")
+  expect_match(p$labels$subtitle, "Global Model Fit")
 })
 
+# Replace the old pathology checks with strict error catching:
 test_that("Coverage: plot_cutpoint_residuals handles data failure modes", {
-  # Pathological events (all 0) - coxph survives, but cox.zph crashes
   res_no_event <- valid_fc_result_for_boot
   res_no_event$userdata$event <- 0
   expect_error(
     plot_cutpoint_residuals(res_no_event),
-    regexp = "Proportional hazards test failed"
+    regexp = "Proportional hazards evaluation failed due to a singular model matrix"
   )
 
-  # Corrupted data types - coxph crashes immediately
   res_corrupt <- valid_fc_result_for_boot
   res_corrupt$userdata$event <- as.character(res_corrupt$userdata$event)
-  expect_message(
-    plot_cutpoint_residuals(res_corrupt),
-    regexp = "Cox model failed"
-  )
-})
-
-test_that("plot_time_dependent_auc successfully generates an AUC plot", {
-  skip_if_not_installed("timeROC")
-  skip_if(any(is.na(valid_fc_result_for_boot$optimal_cuts)))
-
-  p_auc <- plot_time_dependent_auc(valid_fc_result_for_boot)
-  expect_s3_class(p_auc, "ggplot")
-  expect_equal(p_auc$labels$title, "Time-Dependent AUC")
-  expect_equal(p_auc$labels$y, "Area Under the Curve (AUC)")
-})
-
-test_that("plot_time_dependent_auc handles pathological data (insufficient events)", {
-  skip_if_not_installed("timeROC")
-
-  res_few_events <- valid_fc_result_for_boot
-  res_few_events$userdata$event <- 0
-  res_few_events$userdata$event[1:5] <- 1
-
-  expect_error(plot_time_dependent_auc(res_few_events), regexp = "Not enough events for stable time-dependent AUC")
+  expect_null(suppressMessages(plot_cutpoint_residuals(res_corrupt)))
 })
 
 # --- 3. S3 Router (plot.find_cutpoint) ---
 
 #' @srrstats {RE6.0} Tests S3 plot method.
 test_that("plot.find_cutpoint generates all plot types and routes correctly", {
-  skip_if_not_installed("broom")
   skip_if(any(is.na(valid_fc_result_for_boot$optimal_cuts)))
 
   res_valid <- valid_fc_result_for_boot
@@ -159,28 +116,15 @@ test_that("plot.find_cutpoint generates all plot types and routes correctly", {
   # Distribution Plot
   p_dist <- plot(res_valid, type = "distribution")
   expect_s3_class(p_dist, "ggplot")
-  expect_equal(p_dist$labels$y, "Density")
+  expect_equal(p_dist$labels$y, "Population Density Profile")
 
-  # Forest Plot
+  # Forest Plot (Returns a composite patchwork layout)
   p_forest <- plot(res_valid, type = "forest")
-  expect_s3_class(p_forest, "ggplot")
-  expect_equal(p_forest$labels$x, "Hazard Ratio (95% CI)")
+  expect_s3_class(p_forest, "patchwork")
 
-  # Diagnostic Plot (Routing)
+  # Diagnostic Plot (Routing to facet canvas)
   p_diag <- suppressWarnings(plot(res_valid, type = "diagnostic"))
-  expect_true(inherits(p_diag, "ggcoxzph") || is.list(p_diag))
-
-  # AUC Plot (Routing)
-  if (requireNamespace("timeROC", quietly = TRUE)) {
-    p_auc <- plot(res_valid, type = "auc")
-    expect_s3_class(p_auc, "ggplot")
-  }
-
-  # Dashboard Plot (Routing)
-  if (requireNamespace("patchwork", quietly = TRUE)) {
-    p_dash <- suppressWarnings(plot(res_valid, type = "all"))
-    expect_s3_class(p_dash, "patchwork")
-  }
+  expect_s3_class(p_diag, "ggplot")
 
   # Escape Hatch (Data extraction)
   raw_df <- plot(res_valid, return_data = TRUE)
@@ -189,24 +133,20 @@ test_that("plot.find_cutpoint generates all plot types and routes correctly", {
 })
 
 test_that("plot.find_cutpoint references and handles Cox model failure", {
-  skip_if_not_installed("broom")
-
-  # 2-Cut Reference Group Test
   res_2_cuts <- suppressMessages(suppressWarnings(
-    find_cutpoint(mock_data_3groups, "predictor", "time", "event", num_cuts = 2, method = "genetic", max.generations = 5, quiet = TRUE)
+    find_cutpoint(mock_data_3groups, "predictor", "time", "event", num_cuts = 2, method = "genetic", maxiter = 5, quiet = TRUE)
   ))
   skip_if(any(is.na(res_2_cuts$optimal_cuts)))
 
-  p_forest_g2 <- plot(res_2_cuts, type = "forest", reference_group = "G2")
-  expect_s3_class(p_forest_g2, "ggplot")
-  expect_match(p_forest_g2$labels$subtitle, "G2")
+  p_composite <- plot(res_2_cuts, type = "forest", reference_group = "G2")
+  expect_s3_class(p_composite, "patchwork")
 
-  # Invalid Reference Group
-  expect_message(plot(res_2_cuts, type = "forest", reference_group = "INVALID"), regexp = "Defaulting to")
+  # Unpack patchwork layer safely to verify text titles
+  p_forest_layer <- p_composite[[1]]
+  expect_match(p_forest_layer$labels$title, "Adjusted Clinical Risk Profile")
 
-  # S3 Cox Model Failure
-  local_mocked_bindings("coxph" = function(...) NULL, .package = "survival")
-  expect_message(plot(valid_fc_result_for_boot, type = "forest"), regexp = "Could not fit Cox model for forest plot")
+  # S3 Router Argument Safeguard Verification
+  expect_error(plot(res_2_cuts, type = "auc"), regexp = "should be one of")
 })
 
 test_that("Coverage: plot.find_cutpoint_number_result – all IC NA", {

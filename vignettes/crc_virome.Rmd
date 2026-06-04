@@ -292,6 +292,20 @@ By default, the package maps the patient cohort into numeric groups ordered sequ
 
 ### Plot A: Covariate-Adjusted Kaplan-Meier Curves (`type = "outcome"`)
 ```{r plot-km, fig.width=8, fig.height=6, fig.cap = "Adjusted Kaplan-Meier overall survival estimates stratified by optimal Enterovirus abundance cohorts."}
+# 1. Inspect how many cut-points the Genetic Engine actually discovered
+optimal_cuts <- sort(cutpoint_result_adj$optimal_cuts)
+num_cuts <- length(optimal_cuts)
+
+# 2. Dynamically assign matching label cohorts
+if (num_cuts == 1) {
+  dynamic_labels <- c("Low Abundance", "High Abundance")
+} else if (num_cuts == 2) {
+  dynamic_labels <- c("Low", "Medium", "High")
+} else {
+  dynamic_labels <- paste("Cohort Group", 1:(num_cuts + 1))
+}
+
+# 3. Generate the adjusted Kaplan-Meier curve natively safely
 plot(
   cutpoint_result_adj, 
   type = "outcome",
@@ -299,7 +313,7 @@ plot(
   xlab = "Time (Months)",
   ylab = "Overall Survival Probability",
   legend.title = "Abundance Group",
-  legend.labs = c("Low", "Medium", "High") # Seamlessly maps to G1, G2, G3
+  legend.labs = dynamic_labels # <-- Pass the self-correcting vector here
 )
 ```
 

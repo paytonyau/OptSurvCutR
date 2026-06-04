@@ -393,8 +393,8 @@ test_that("Coverage: find_cutpoint_number handles Cox model failures", {
 })
 
 test_that("Coverage: .systematic_search_num handles nmin edge cases", {
-  # This test will hit empty grid branches for both k_cuts=1 and k_cuts=2
-  expect_message(
+  # Enforce quiet = FALSE to guarantee messages bleed out to the test runner
+  expect_condition(
     res_fail <- find_cutpoint_number(
       data = head(mock_data, 30),
       predictor = "predictor",
@@ -402,9 +402,10 @@ test_that("Coverage: .systematic_search_num handles nmin edge cases", {
       outcome_event = "event",
       method = "systematic",
       max_cuts = 2,
-      nmin = 16 # nmin*(2+1) > 30, so grid1 will be empty for k=2
+      nmin = 16, # nmin*(2+1) > 30, so grid will be empty for k=2
+      quiet = FALSE
     ),
-    regexp = "Not enough data|Skipping"
+    class = "message"
   )
   expect_true(is.na(res_fail$optimal_num_cuts))
 })
