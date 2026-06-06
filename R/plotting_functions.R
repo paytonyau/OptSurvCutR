@@ -11,10 +11,16 @@
 #' background gridlines for high-precision tracing.
 #'
 #' @param base_size Base font size, default is 14.
-#' @return A \code{ggplot2} theme object.
+#' @return A \code{ggplot2} theme object containing customized layout parameters.
 #'
 #' @importFrom ggplot2 theme_minimal theme element_text element_line rel element_rect
 #' @export
+#' @examples
+#' library(ggplot2)
+#' mock_df <- data.frame(x = 1:10, y = 1:10)
+#' ggplot(mock_df, aes(x, y)) +
+#'   geom_point() +
+#'   theme_optsurv()
 theme_optsurv <- function(base_size = 14) {
   ggplot2::theme_minimal(base_size = base_size) +
     ggplot2::theme(
@@ -43,11 +49,13 @@ theme_optsurv <- function(base_size = 14) {
 #'
 #' @param x A \code{find_cutpoint} result object.
 #' @param type Plot framework type: \code{"outcome"}, \code{"distribution"}, \code{"forest"},
-#'    \code{"surface"}, \code{"trajectory"}, \code{"diagnostic"}, or \code{"landmark"}.
+#'     \code{"surface"}, \code{"trajectory"}, \code{"diagnostic"}, or \code{"landmark"}.
 #' @param return_data Logical. If \code{TRUE}, exits the router early and returns the
-#'    assigned underlying data frame template.
+#'     assigned underlying data frame template.
 #' @param landmark Numeric. The operational milestone timestamp used if \code{type = "landmark"}.
 #' @param ... Additional arguments passed down to downstream rendering pipelines.
+#' @return A \code{ggplot} canvas object, a multi-panel \code{patchwork} collection, or
+#'     a \code{data.frame} if \code{return_data = TRUE}.
 #'
 #' @section srrstats compliance:
 #' .
@@ -56,9 +64,16 @@ theme_optsurv <- function(base_size = 14) {
 #'
 #' @importFrom cli cli_abort
 #' @export
-plot.find_cutpoint <- function(x, type = c("outcome", "distribution", "forest",
-                                           "surface", "trajectory",
-                                           "diagnostic", "landmark"),
+#' @examples
+#' # Build clean local simulation objects for quick validation runs
+#' mock_df <- data.frame(time = 1:30, event = rep(c(0, 1), 15), factor = rnorm(30, 10, 2))
+#' res <- find_cutpoint(mock_df, "factor", "time", "event", num_cuts = 1, method = "systematic", quiet = TRUE)
+#' p <- plot(res, type = "distribution")
+plot.find_cutpoint <- function(x, type = c(
+                                 "outcome", "distribution", "forest",
+                                 "surface", "trajectory",
+                                 "diagnostic", "landmark"
+                               ),
                                return_data = FALSE, landmark = NULL, ...) {
   type <- match.arg(type)
 
@@ -77,16 +92,18 @@ plot.find_cutpoint <- function(x, type = c("outcome", "distribution", "forest",
     df$group <- as.factor(findInterval(df$factor, cuts, left.open = TRUE) + 1L)
   }
 
-  if (return_data) return(df)
+  if (return_data) {
+    return(df)
+  }
 
   switch(type,
-         "outcome"      = .plot_km_curve(x, df, ...),
-         "distribution" = .plot_density_cuts(x, df, ...),
-         "forest"       = .plot_hr_forest(x, df, ...),
-         "surface"      = plot_optimisation_curve(x, ...),
-         "trajectory"   = .plot_genetic_trajectory(x, ...),
-         "diagnostic"   = plot_cutpoint_residuals(x, ...),
-         "landmark"     = plot_landmark_stratification(x, landmark = landmark, ...)
+    "outcome"      = .plot_km_curve(x, df, ...),
+    "distribution" = .plot_density_cuts(x, df, ...),
+    "forest"       = .plot_hr_forest(x, df, ...),
+    "surface"      = plot_optimisation_curve(x, ...),
+    "trajectory"   = .plot_genetic_trajectory(x, ...),
+    "diagnostic"   = plot_cutpoint_residuals(x, ...),
+    "landmark"     = plot_landmark_stratification(x, landmark = landmark, ...)
   )
 }
 
@@ -98,7 +115,7 @@ plot.find_cutpoint <- function(x, type = c("outcome", "distribution", "forest",
 #'
 #' @param cutpoint_result A \code{find_cutpoint} object.
 #' @param ... Unused dots.
-#' @return A \code{ggplot} object.
+#' @return A valid \code{ggplot} object detailing evaluation statistics vs coordinates.
 #'
 #' @section srrstats compliance:
 #' .
@@ -108,6 +125,10 @@ plot.find_cutpoint <- function(x, type = c("outcome", "distribution", "forest",
 #' @importFrom rlang .data
 #' @importFrom cli cli_abort
 #' @export
+#' @examples
+#' mock_df <- data.frame(time = 1:20, event = rep(c(0, 1), 10), factor = rnorm(20, 10, 2))
+#' res <- find_cutpoint(mock_df, "factor", "time", "event", num_cuts = 1, method = "systematic", quiet = TRUE)
+#' p <- plot_optimisation_curve(res)
 plot_optimisation_curve <- function(cutpoint_result, ...) {
   if (!inherits(cutpoint_result, "find_cutpoint")) {
     cli::cli_abort("Input must be an object from the {.fn find_cutpoint} function.")
@@ -125,23 +146,28 @@ plot_optimisation_curve <- function(cutpoint_result, ...) {
   criterion <- params$criterion
 
   y_label <- switch(criterion,
-                    "logrank" = "Log-Rank Statistic",
-                    "hazard_ratio" = "Hazard Ratio",
-                    "p_value" = "P-value",
-                    criterion)
+    "logrank" = "Log-Rank Statistic",
+    "hazard_ratio" = "Hazard Ratio",
+    "p_value" = "P-value",
+    criterion
+  )
 
   if (params$num_cuts == 1) {
     optimal_cut <- cutpoint_result$optimal_cuts[1]
     p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data$cut1, y = .data$stat)) +
       ggplot2::geom_line(color = "#0072B2", linewidth = 1.2) +
-      ggplot2::labs(title = paste(y_label, "vs. Cut-point Coordinate"),
-                    subtitle = paste("Optimal cut-point discovered at:", round(optimal_cut, 3)),
-                    x = "Cut-point Threshold Location", y = y_label) +
+      ggplot2::labs(
+        title = paste(y_label, "vs. Cut-point Coordinate"),
+        subtitle = paste("Optimal cut-point discovered at:", round(optimal_cut, 3)),
+        x = "Cut-point Threshold Location", y = y_label
+      ) +
       theme_optsurv()
 
     if (!is.na(optimal_cut)) {
-      p <- p + ggplot2::geom_vline(xintercept = optimal_cut, linetype = "dashed",
-                                   color = "#D55E00", linewidth = 1.2)
+      p <- p + ggplot2::geom_vline(
+        xintercept = optimal_cut, linetype = "dashed",
+        color = "#D55E00", linewidth = 1.2
+      )
     }
     if (criterion == "hazard_ratio") {
       p <- p + ggplot2::geom_hline(yintercept = 1, linetype = "dotted")
@@ -151,9 +177,11 @@ plot_optimisation_curve <- function(cutpoint_result, ...) {
     p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data$c1, y = .data$c2, fill = .data$stat)) +
       ggplot2::geom_tile() +
       ggplot2::scale_fill_viridis_c(name = y_label, option = "viridis") +
-      ggplot2::labs(title = paste("Systematic Objective Surface:", y_label),
-                    subtitle = paste("Optimal Matrix Peaks:", paste(round(cutpoint_result$optimal_cuts, 3), collapse = ", ")),
-                    x = "Cut-point 1 Coordinate", y = "Cut-point 2 Coordinate") +
+      ggplot2::labs(
+        title = paste("Systematic Objective Surface:", y_label),
+        subtitle = paste("Optimal Matrix Peaks:", paste(round(cutpoint_result$optimal_cuts, 3), collapse = ", ")),
+        x = "Cut-point 1 Coordinate", y = "Cut-point 2 Coordinate"
+      ) +
       theme_optsurv() +
       ggplot2::theme(panel.grid.major = ggplot2::element_blank())
     return(p)
@@ -170,13 +198,17 @@ plot_optimisation_curve <- function(cutpoint_result, ...) {
 #'
 #' @param x A \code{find_cutpoint} result object.
 #' @param ... Unused optional arguments.
-#' @return A publication-ready \code{ggplot} canvas frame.
+#' @return A publication-ready \code{ggplot} canvas frame, or \code{NULL} if the fit fails.
 #'
 #' @importFrom survival coxph cox.zph Surv
 #' @importFrom ggplot2 ggplot aes geom_hline geom_point geom_smooth facet_wrap labs element_blank element_line rel
 #' @importFrom cli cli_abort cli_inform
 #' @importFrom stats as.formula
 #' @export
+#' @examples
+#' mock_df <- data.frame(time = 1:20, event = rep(c(0, 1), 10), factor = rnorm(20, 10, 2))
+#' res <- find_cutpoint(mock_df, "factor", "time", "event", num_cuts = 1, method = "systematic", quiet = TRUE)
+#' p <- plot_cutpoint_residuals(res)
 plot_cutpoint_residuals <- function(x, ...) {
   if (is.null(x$optimal_cuts) || any(is.na(x$optimal_cuts))) {
     cli::cli_inform("No valid cut-points mapped; diagnostics skipped.")
@@ -237,8 +269,10 @@ plot_cutpoint_residuals <- function(x, ...) {
   g <- ggplot2::ggplot(plot_df, ggplot2::aes(x = .data$Time, y = .data$Residual)) +
     ggplot2::geom_hline(yintercept = 0, linetype = "dashed", color = "gray50", linewidth = 0.8) +
     ggplot2::geom_point(color = "#2c3e50", alpha = 0.40, size = 1.8, shape = 16) +
-    ggplot2::geom_smooth(color = "#D55E00", fill = "#D55E00", alpha = 0.15,
-                         linewidth = 1.2, se = TRUE, method = "loess") +
+    ggplot2::geom_smooth(
+      color = "#D55E00", fill = "#D55E00", alpha = 0.15,
+      linewidth = 1.2, se = TRUE, method = "loess"
+    ) +
     ggplot2::facet_wrap(~ .data$Cohort, scales = "free_y") +
     ggplot2::labs(
       title = "Schoenfeld Residual Diagnostics Dashboard",
@@ -260,9 +294,12 @@ plot_cutpoint_residuals <- function(x, ...) {
 #' @param landmark Numeric value indicating the landmark milestone. If NULL,
 #'    defaults to 20\% of maximum follow-up data timelines.
 #' @param ... Additional arguments passed down to downstream rendering pipelines.
-#'
-#' @return A plot object representing landmark stratification curves.
+#' @return A \code{ggplot} template or \code{survminer} survival curve asset mapping layout.
 #' @export
+#' @examples
+#' mock_df <- data.frame(time = runif(25, 5, 50), event = sample(c(0, 1), 25, replace = TRUE), factor = rnorm(25, 10, 2))
+#' res <- find_cutpoint(mock_df, "factor", "time", "event", num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 3)
+#' p <- plot_landmark_stratification(res, landmark = 10)
 plot_landmark_stratification <- function(x, landmark = NULL, ...) {
   df <- x$userdata
   cuts <- sort(x$optimal_cuts)
@@ -290,8 +327,10 @@ plot_landmark_stratification <- function(x, landmark = NULL, ...) {
   cli::cli_alert_info("Generating Landmark Survival Curve for survivors remaining at time milestone: {landmark}")
 
   title_text <- paste("Landmark Survival Analysis (T =", landmark, ")")
-  p <- .plot_km_curve(x, landmark_df, title = title_text,
-                      xlab = paste("Time Passed Post-Landmark Milestone (Marker Zero =", landmark, ")"), ...)
+  p <- .plot_km_curve(x, landmark_df,
+    title = title_text,
+    xlab = paste("Time Passed Post-Landmark Milestone (Marker Zero =", landmark, ")"), ...
+  )
   return(p)
 }
 
@@ -308,16 +347,22 @@ plot_landmark_stratification <- function(x, landmark = NULL, ...) {
 #' @param focus_cuts A numeric vector of length 2 specifying which two cut-points to map
 #'    if the model contains more than 2 cuts. Defaults to \code{c(1, 2)}.
 #' @param ... Unused optional dots.
-#' @return A publication-ready \code{ggplot} canvas object.
+#' @return A publication-ready \code{ggplot} canvas object displaying stability density bounds.
 #'
 #' @importFrom ggplot2 ggplot aes geom_density_2d_filled geom_density_2d geom_point labs scale_fill_viridis_d theme element_blank element_line rel geom_density geom_vline
 #' @importFrom rlang .data
 #' @importFrom cli cli_abort cli_inform
 #' @export
+#' @examples
+#' mock_val <- list(
+#'   bootstrap_distribution = data.frame(Cut_point_1 = rnorm(30, 10, 1)),
+#'   original_cuts = 10.2,
+#'   parameters = list(predictor = "Biomarker")
+#' )
+#' p <- plot_validation(mock_val)
 plot_validation <- function(validation_result,
                             main = "Resampling Convergence & Stability Landscape",
                             focus_cuts = c(1, 2), ...) {
-
   log_df <- validation_result$bootstrap_distribution
 
   if (is.null(log_df) || !is.data.frame(log_df)) {
@@ -354,7 +399,6 @@ plot_validation <- function(validation_result,
         x = paste0(validation_result$parameters$predictor, " Cut-point Coordinate Location"),
         y = "Bootstrap Resampling Density Profile"
       )
-
   } else {
     # --- 2D CONTOUR ENGINE: For 2, 3, or more cut-points ---
 
@@ -379,14 +423,18 @@ plot_validation <- function(validation_result,
       # Layer 2: White concentric elevation lines
       ggplot2::geom_density_2d(color = "white", alpha = 0.3, linewidth = 0.4, bins = 10) +
       # Layer 3: Target Baseline Crosshair Anchor (Tidy-evaluation compliant)
-      ggplot2::geom_point(data = data.frame(x = dot_x, y = dot_y),
-                          ggplot2::aes(x = .data$x, y = .data$y), inherit.aes = FALSE,
-                          shape = 23, size = 4.5, fill = "#D55E00", color = "white", stroke = 1.2) +
+      ggplot2::geom_point(
+        data = data.frame(x = dot_x, y = dot_y),
+        ggplot2::aes(x = .data$x, y = .data$y), inherit.aes = FALSE,
+        shape = 23, size = 4.5, fill = "#D55E00", color = "white", stroke = 1.2
+      ) +
       ggplot2::scale_fill_viridis_d(name = "Discovery Density", option = "mako") +
       ggplot2::labs(
         title = main,
-        subtitle = paste0("Evaluating Cut ", focus_cuts[1], " vs. Cut ", focus_cuts[2],
-                          " | Original Coordinates: [", round(dot_x, 2), ", ", round(dot_y, 2), "]"),
+        subtitle = paste0(
+          "Evaluating Cut ", focus_cuts[1], " vs. Cut ", focus_cuts[2],
+          " | Original Coordinates: [", round(dot_x, 2), ", ", round(dot_y, 2), "]"
+        ),
         x = paste0(validation_result$parameters$predictor, " Cut-point ", focus_cuts[1], " Threshold"),
         y = paste0(validation_result$parameters$predictor, " Cut-point ", focus_cuts[2], " Threshold")
       )
@@ -429,9 +477,11 @@ plot_validation <- function(validation_result,
     grDevices::colorRampPalette(c("#0072B2", "#009E73", "#D55E00", "#CC79A7"))(num_strata)
   }
 
-  p <- survminer::ggsurvplot(fit_km, data = df, title = title, xlab = xlab, ylab = ylab,
-                             palette = dynamic_palette,
-                             pval = TRUE, ggtheme = theme_optsurv(), ...)
+  p <- survminer::ggsurvplot(fit_km,
+    data = df, title = title, xlab = xlab, ylab = ylab,
+    palette = dynamic_palette,
+    pval = TRUE, ggtheme = theme_optsurv(), ...
+  )
 
   if (!is.null(p$plot)) p$plot <- p$plot + theme_optsurv()
   if (!is.null(p$table)) p$table <- p$table + theme_optsurv()
@@ -443,8 +493,10 @@ plot_validation <- function(validation_result,
 .plot_density_cuts <- function(x, df, title = "Predictor Cohort Distribution Map", ...) {
   p <- ggplot2::ggplot(df, ggplot2::aes(x = .data$factor)) +
     ggplot2::geom_density(fill = "#0072B2", alpha = 0.15, color = "#0072B2", linewidth = 1) +
-    ggplot2::labs(title = title, subtitle = paste("Marker:", x$parameters$predictor),
-                  x = paste(x$parameters$predictor, "(Continuous Range)"), y = "Population Density Profile") +
+    ggplot2::labs(
+      title = title, subtitle = paste("Marker:", x$parameters$predictor),
+      x = paste(x$parameters$predictor, "(Continuous Range)"), y = "Population Density Profile"
+    ) +
     theme_optsurv()
 
   stagger_vjust <- c(1.5, 3.8, 6.1, 8.4)
@@ -454,12 +506,16 @@ plot_validation <- function(validation_result,
     current_vjust <- stagger_vjust[((idx - 1) %% length(stagger_vjust)) + 1]
 
     p <- p +
-      ggplot2::geom_vline(xintercept = cut_val, linetype = "dashed",
-                          color = "#D55E00", linewidth = 0.8, alpha = 0.5) +
-      ggplot2::annotate("text", x = cut_val, y = Inf,
-                        label = paste0("Cut ", idx, ": ", round(cut_val, 2)),
-                        vjust = current_vjust, hjust = -0.1,
-                        color = "#2c3e50", fontface = "bold", size = 3.5)
+      ggplot2::geom_vline(
+        xintercept = cut_val, linetype = "dashed",
+        color = "#D55E00", linewidth = 0.8, alpha = 0.5
+      ) +
+      ggplot2::annotate("text",
+        x = cut_val, y = Inf,
+        label = paste0("Cut ", idx, ": ", round(cut_val, 2)),
+        vjust = current_vjust, hjust = -0.1,
+        color = "#2c3e50", fontface = "bold", size = 3.5
+      )
     idx <- idx + 1
   }
   return(p)
@@ -498,7 +554,7 @@ plot_validation <- function(validation_result,
 
   sum_cox <- summary(fit)
   coefs <- as.data.frame(sum_cox$coefficients)
-  conf  <- as.data.frame(sum_cox$conf.int)
+  conf <- as.data.frame(sum_cox$conf.int)
 
   # Identify model coefficients
   biomarker_rows <- grep("^group", rownames(coefs))
@@ -538,9 +594,9 @@ plot_validation <- function(validation_result,
     pval <- coefs[rname, "Pr(>|z|)"]
     p_text <- if (pval < 0.001) "p < 0.001" else paste0("p = ", round(pval, 3))
 
-    hr_val  <- conf[r_idx, "exp(coef)"]
+    hr_val <- conf[r_idx, "exp(coef)"]
     low_val <- conf[r_idx, "lower .95"]
-    up_val  <- conf[r_idx, "upper .95"]
+    up_val <- conf[r_idx, "upper .95"]
 
     forest_list[[idx]] <- data.frame(
       Variable  = paste0("Cohort ", g_id, " (", p_text, ")"),
@@ -562,9 +618,9 @@ plot_validation <- function(validation_result,
       pval <- coefs[r_idx, "Pr(>|z|)"]
       p_text <- if (pval < 0.001) "p < 0.001" else paste0("p = ", round(pval, 3))
 
-      hr_val  <- conf[r_idx, "exp(coef)"]
+      hr_val <- conf[r_idx, "exp(coef)"]
       low_val <- conf[r_idx, "lower .95"]
-      up_val  <- conf[r_idx, "upper .95"]
+      up_val <- conf[r_idx, "upper .95"]
 
       forest_list[[idx]] <- data.frame(
         Variable  = paste0(rname, " (", p_text, ")"),
@@ -609,7 +665,7 @@ plot_validation <- function(validation_result,
 
   bar_df <- do.call(rbind, bar_list)
   bar_df$Variable <- factor(bar_df$Variable, levels = levels(forest_df$Variable))
-  bar_df$Metric   <- factor(bar_df$Metric, levels = c("Survivors/Censored", "Observed Events (Deaths)"))
+  bar_df$Metric <- factor(bar_df$Metric, levels = c("Survivors/Censored", "Observed Events (Deaths)"))
 
   max_upper <- max(forest_df$Upper, na.rm = TRUE)
   x_limit_upper <- max_upper * 1.05

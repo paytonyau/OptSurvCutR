@@ -104,12 +104,35 @@
 #' @param quiet Logical. If `TRUE`, suppresses final print.
 #' @param ... Additional arguments passed to the genetic algorithm.
 #'
+#' @return An object of class `find_cutpoint` containing the
+#'   optimal cut-points, statistic, and analysis parameters.
+#' @useDynLib OptSurvCutR, .registration = TRUE
+#' @importFrom Rcpp sourceCpp
+#' @export
 #' @examples
-#' \dontrun{
-#' data(crc_virome)
-#' # Fast 1-cut systematic search using downsampled quantile steps
+#' # Fast 1-cut systematic search example using local mock data for testing
+#' mock_df <- data.frame(
+#'   time = c(12, 34, 5, 18, 22, 45, 7, 14, 29, 38, 11, 24, 8, 17, 21),
+#'   status = c(1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0),
+#'   marker = c(2.1, 4.5, 1.2, 3.8, 4.0, 5.2, 1.8, 2.9, 3.1, 4.9, 2.0, 4.2, 1.5, 3.0, 3.9)
+#' )
+#'
 #' res <- find_cutpoint(
-#'   data = head(crc_virome, 50),
+#'   data = mock_df,
+#'   predictor = "marker",
+#'   outcome_time = "time",
+#'   outcome_event = "status",
+#'   num_cuts = 1,
+#'   method = "systematic",
+#'   nmin = 3,
+#'   grid_by = 0.05
+#' )
+#'
+#' \dontrun{
+#' # Heavier analysis example using package-supplied datasets
+#' data(crc_virome)
+#' res_virome <- find_cutpoint(
+#'   data = crc_virome,
 #'   predictor = "Alphapapillomavirus",
 #'   outcome_time = "time_months",
 #'   outcome_event = "status",
@@ -118,12 +141,6 @@
 #'   grid_by = 0.01
 #' )
 #' }
-#'
-#' @return An object of class `find_cutpoint` containing the
-#'   optimal cut-points, statistic, and analysis parameters.
-#' @useDynLib OptSurvCutR, .registration = TRUE
-#' @importFrom Rcpp sourceCpp
-#' @export
 find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
                           num_cuts = 1, method = c("systematic", "genetic"),
                           criterion = c("logrank", "hazard_ratio", "p_value"),
@@ -131,7 +148,6 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
                           max.generations = 100, pop.size = 100,
                           n_perm = 0, n_cores = 1, use_cpp = TRUE,
                           grid_by = 0.01, quiet = FALSE, ...) {
-
   method <- match.arg(method)
   criterion <- match.arg(criterion)
 
@@ -176,9 +192,11 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
 
   if (method == "systematic") {
     real_res <- do.call(.systematic_search, c(
-      list(userdata = userdata, num_cuts = num_cuts, criterion = criterion,
-           covariates = covariates, nmin = nmin_abs, predictor_name = predictor,
-           use_cpp = use_cpp, grid_by = grid_by, quiet = quiet),
+      list(
+        userdata = userdata, num_cuts = num_cuts, criterion = criterion,
+        covariates = covariates, nmin = nmin_abs, predictor_name = predictor,
+        use_cpp = use_cpp, grid_by = grid_by, quiet = quiet
+      ),
       extra_args
     ))
   } else {
@@ -186,10 +204,12 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
     confound_df <- if (!is.null(covariates)) userdata[, covariates, drop = FALSE] else NULL
 
     real_res <- do.call(.run_genetic_search, c(
-      list(target = userdata$factor, numcut = num_cuts, time = userdata$time,
-           censor = userdata$event, confound = confound_df, nmin = nmin_abs,
-           criterion = criterion, max.generations = max.generations, pop.size = pop.size,
-           use_cpp = use_cpp, print.level = 0),
+      list(
+        target = userdata$factor, numcut = num_cuts, time = userdata$time,
+        censor = userdata$event, confound = confound_df, nmin = nmin_abs,
+        criterion = criterion, max.generations = max.generations, pop.size = pop.size,
+        use_cpp = use_cpp, print.level = 0
+      ),
       extra_args
     ))
 

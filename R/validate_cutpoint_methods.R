@@ -22,8 +22,10 @@ print.validate_cutpoint_result <- function(x, ...) {
   cat("Cut-point Stability Analysis (Bootstrap)\n")
   cat("----------------------------------------\n")
   cat("Original Optimal Cut-point(s):", paste(round(x$original_cuts, 3), collapse = ", "), "\n")
-  cat("Successful Replicates:", x$parameters$successful_reps, "/", x$parameters$num_replicates,
-      "(", round(100 * x$parameters$successful_reps / x$parameters$num_replicates, 1), "%)\n")
+  cat(
+    "Successful Replicates:", x$parameters$successful_reps, "/", x$parameters$num_replicates,
+    "(", round(100 * x$parameters$successful_reps / x$parameters$num_replicates, 1), "%)\n"
+  )
   cat("Failed Replicates:", x$parameters$failed_reps, "\n\n")
   cat("95% Confidence Intervals\n")
   cat("------------------------\n")
@@ -78,9 +80,11 @@ plot.validate_cutpoint_result <- function(x, ...) {
     ggplot2::geom_vline(data = line_data, ggplot2::aes(xintercept = .data$original_cut), color = "#D55E00", linetype = "solid", linewidth = 1) +
     ggplot2::geom_vline(data = line_data, ggplot2::aes(xintercept = .data$ci_lower), color = "#D55E00", linetype = "dashed") +
     ggplot2::geom_vline(data = line_data, ggplot2::aes(xintercept = .data$ci_upper), color = "#D55E00", linetype = "dashed") +
-    ggplot2::labs(title = "Bootstrap Distribution of Optimal Cut-points",
-                  subtitle = paste(x$parameters$successful_reps, "successful replicates"),
-                  x = "Cut-point Value", y = "Density") +
+    ggplot2::labs(
+      title = "Bootstrap Distribution of Optimal Cut-points",
+      subtitle = paste(x$parameters$successful_reps, "successful replicates"),
+      x = "Cut-point Value", y = "Density"
+    ) +
     ggplot2::theme_minimal(base_size = 14)
   if (num_cuts > 1) {
     p <- p + ggplot2::facet_wrap(~Cut, scales = "free_x")
@@ -134,8 +138,10 @@ summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE, s
   if (show_params) {
     cat("Validation Parameters\n---------------------\n")
     cat("Replicates Requested:", object$parameters$num_replicates, "\n")
-    cat("Successful Replicates:", object$parameters$successful_reps, "/", object$parameters$num_replicates,
-        "(", round(100 * object$parameters$successful_reps / object$parameters$num_replicates, 1), "%)\n")
+    cat(
+      "Successful Replicates:", object$parameters$successful_reps, "/", object$parameters$num_replicates,
+      "(", round(100 * object$parameters$successful_reps / object$parameters$num_replicates, 1), "%)\n"
+    )
     cat("Failed Replicates:", object$parameters$failed_reps, "\n")
     cat("Cores Used:", object$parameters$n_cores, "\n")
     cat("Seed:", ifelse(is.null(object$parameters$seed), "Not set", object$parameters$seed), "\n")
@@ -170,7 +176,9 @@ summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE, s
   medians <- vapply(cut_names, function(n) {
     clean_n <- gsub("[^0-9]", "", n)
     match_idx <- grep(clean_n, names(object$boot_summary))
-    if(length(match_idx) == 0) return(NA)
+    if (length(match_idx) == 0) {
+      return(NA)
+    }
     object$boot_summary[[match_idx]]$median
   }, FUN.VALUE = numeric(1))
 

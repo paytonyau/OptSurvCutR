@@ -12,7 +12,8 @@ test_that("find_cutpoint_number executes stepwise criterion selection loops comp
   for (crit in c("AIC", "AICc", "BIC")) {
     res_num <- suppressMessages(suppressWarnings(
       find_cutpoint_number(mock_data, "predictor", "time", "event",
-                           max_cuts = 2, method = "systematic", criterion = crit, quiet = TRUE, nmin = 3)
+        max_cuts = 2, method = "systematic", criterion = crit, quiet = TRUE, nmin = 3
+      )
     ))
     expect_s3_class(res_num, "find_cutpoint_number_result")
   }
@@ -24,7 +25,8 @@ test_that("find_cutpoint_number executes stepwise criterion selection loops comp
 test_that("find_cutpoint_number utilizes approximate numeric tolerances for floating equality checks", {
   res_base <- suppressMessages(suppressWarnings(
     find_cutpoint_number(mock_data, "predictor", "time", "event",
-                         max_cuts = 2, method = "systematic", criterion = "BIC", quiet = TRUE, nmin = 3)
+      max_cuts = 2, method = "systematic", criterion = "BIC", quiet = TRUE, nmin = 3
+    )
   ))
 
   expect_s3_class(res_base, "find_cutpoint_number_result")
@@ -51,7 +53,8 @@ test_that("Exhaustive multi-cut genetic search optimization for step sizing", {
   # Forces open the genetic dimension loops inside find_cutpoint_number.R
   res_num_gen <- suppressMessages(suppressWarnings(
     find_cutpoint_number(
-      mock_data, predictor = "predictor", outcome_time = "time", outcome_event = "event",
+      mock_data,
+      predictor = "predictor", outcome_time = "time", outcome_event = "event",
       max_cuts = 2, method = "genetic", criterion = "BIC", quiet = TRUE,
       nmin = 3, max.generations = 3, pop.size = 15
     )
@@ -105,7 +108,8 @@ test_that("Exhaustive edge-case branches for find_cutpoint_number dimension path
 test_that("S3 methods for find_cutpoint_number provide exhaustive branch coverage via explicit namespace targeting", {
   res_num <- suppressMessages(suppressWarnings(
     find_cutpoint_number(mock_data, "predictor", "time", "event",
-                         max_cuts = 2, method = "systematic", criterion = "BIC", quiet = TRUE, nmin = 3)
+      max_cuts = 2, method = "systematic", criterion = "BIC", quiet = TRUE, nmin = 3
+    )
   ))
 
   res_sum <- OptSurvCutR:::summary.find_cutpoint_number_result(res_num)
@@ -120,9 +124,11 @@ test_that("S3 methods for find_cutpoint_number provide exhaustive branch coverag
 
 test_that("S3 routers for find_cutpoint_number handle incomplete optimizations cleanly", {
   res_empty <- structure(
-    list(optimal_num_cuts = NA_integer_,
-         stats_summary = data.frame(num_cuts = 0:2, BIC = NA_real_, stringsAsFactors = FALSE),
-         parameters = list(method = "systematic", criterion = "BIC", predictor = "predictor")),
+    list(
+      optimal_num_cuts = NA_integer_,
+      stats_summary = data.frame(num_cuts = 0:2, BIC = NA_real_, stringsAsFactors = FALSE),
+      parameters = list(method = "systematic", criterion = "BIC", predictor = "predictor")
+    ),
     class = "find_cutpoint_number_result"
   )
 

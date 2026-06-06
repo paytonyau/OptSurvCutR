@@ -74,8 +74,8 @@ library(survival)
 library(survminer)
 library(ggplot2)
 library(patchwork)
-library(knitr) 
-library(cli)       
+library(knitr)
+library(cli)
 library(OptSurvCutR)
 
 # Enforce uniform CRAN-safe text formatting logs
@@ -123,7 +123,7 @@ analysis_data <- crc_virome %>%
   select(
     patient_id,
     time = time_final,
-    status = status_final, 
+    status = status_final,
     abundance,
     all_of(covariates_to_adjust_for)
   ) %>%
@@ -158,18 +158,18 @@ number_result_adj <- find_cutpoint_number(
   # ==========================================
   # 2. SEARCH ENGINE SETTINGS
   # ==========================================
-  method = "genetic",            # The evolutionary search engine
-  criterion = "BIC",             # Evaluates model fit (BIC heavily penalizes over-complexity)
-  max_cuts = 3,                  # Test models ranging from 0 to 3 cuts
-  nmin = 0.25,                   # SAFETY LIMIT: Minimum 10% of patients per group
+  method = "genetic", # The evolutionary search engine
+  criterion = "BIC", # Evaluates model fit (BIC heavily penalizes over-complexity)
+  max_cuts = 3, # Test models ranging from 0 to 3 cuts
+  nmin = 0.25, # SAFETY LIMIT: Minimum 10% of patients per group
   n_perm = 50,
   # ==========================================
   # 3. THE "R-GROUND" SETTINGS (Advanced Genetic Tuning)
   # ==========================================
-  max.generations = 100,         # LIFESPAN: How many evolutionary cycles to run
-  pop.size = 100,                # SEARCH PARTY: Number of random guesses per generation
-  boundary.enforcement = 1,      # EDGE CONTROL: 1 = Soft boundary (allows safe edge exploration)
-  seed = 123                     # REPRODUCIBILITY: Locks the random number generator
+  max.generations = 100, # LIFESPAN: How many evolutionary cycles to run
+  pop.size = 100, # SEARCH PARTY: Number of random guesses per generation
+  boundary.enforcement = 1, # EDGE CONTROL: 1 = Soft boundary (allows safe edge exploration)
+  seed = 123 # REPRODUCIBILITY: Locks the random number generator
 )
 
 summary(number_result_adj)
@@ -205,16 +205,16 @@ cutpoint_result_adj <- find_cutpoint(
   # ==========================================
   method = "genetic",
   criterion = "logrank",
-  nmin = 0.275, 
+  nmin = 0.275,
   n_perm = 20, # Scaled for swift vignette building
   # ==========================================
   # 3. THE "R-GROUND" SETTINGS (Advanced Genetic Tuning)
   # ==========================================
-  max.generations = 150,         # LIFESPAN: Increase if the algorithm fails to converge
-  pop.size = 100,                # SEARCH PARTY: Increase to 500+ for massive datasets
-  boundary.enforcement = 1,      # EDGE CONTROL: Soft boundaries prevent the algorithm from crashing near edges
-  seed = 123,                    # REPRODUCIBILITY
-  n_cores = 1                    # SPEED: Adjust based on your machine's CPU
+  max.generations = 150, # LIFESPAN: Increase if the algorithm fails to converge
+  pop.size = 100, # SEARCH PARTY: Increase to 500+ for massive datasets
+  boundary.enforcement = 1, # EDGE CONTROL: Soft boundaries prevent the algorithm from crashing near edges
+  seed = 123, # REPRODUCIBILITY
+  n_cores = 1 # SPEED: Adjust based on your machine's CPU
 )
 
 summary(cutpoint_result_adj)
@@ -240,16 +240,16 @@ validation_result_adj <- validate_cutpoint(
   # ==========================================
   # 1. VALIDATION INPUTS
   # ==========================================
-  cutpoint_result = cutpoint_result_adj,     
-  num_replicates = 30,       # Scaled for vignette performance; use >= 500 for publication
+  cutpoint_result = cutpoint_result_adj,
+  num_replicates = 30, # Scaled for vignette performance; use >= 500 for publication
   n_cores = 1,
   # ==========================================
   # 2. THE "R-GROUND" SETTINGS (Must match Step 2)
   # ==========================================
-  max.generations = 150,     # Must match or exceed Step 2 to ensure stability during bootstrap
-  pop.size = 100,            # Must match or exceed Step 2
-  boundary.enforcement = 1,  # Must match Step 2
-  seed = 123                 # REPRODUCIBILITY        
+  max.generations = 150, # Must match or exceed Step 2 to ensure stability during bootstrap
+  pop.size = 100, # Must match or exceed Step 2
+  boundary.enforcement = 1, # Must match Step 2
+  seed = 123 # REPRODUCIBILITY
 )
 
 summary(validation_result_adj)
@@ -307,7 +307,7 @@ if (num_cuts == 1) {
 
 # 3. Generate the adjusted Kaplan-Meier curve natively safely
 plot(
-  cutpoint_result_adj, 
+  cutpoint_result_adj,
   type = "outcome",
   title = "5-Year OS by Adjusted Enterovirus Group",
   xlab = "Time (Months)",
@@ -322,8 +322,8 @@ plot(
 ### Plot B: Adjusted Hazard Ratio Forest Plots (`type = "forest"`)
 ```{r plot-forest, fig.width=8.5, fig.height=4.5, fig.cap = "Multivariate Forest plot displaying adjusted biomarker Hazard Ratios alongside baseline clinical adjusters."}
 plot(
-  cutpoint_result_adj, 
-  type = "forest", 
+  cutpoint_result_adj,
+  type = "forest",
   reference_group = "G2",
   main = paste("Adjusted HRs for", microbe_name_to_analyze, "Groups (Ref: G2/Medium)")
 )
@@ -341,18 +341,21 @@ if (requireNamespace("rlang", quietly = TRUE)) {
   `:=` <- rlang::`:=`
 }
 
-tryCatch({
-  plot(cutpoint_result_adj, type = "diagnostic")
-}, error = function(e) {
-  # Backup fallback logic if package binary system calls encounter environment locks
-  if ("cox_model" %in% names(cutpoint_result_adj)) {
-    fit <- cutpoint_result_adj$cox_model
-    test_ph <- survival::cox.zph(fit)
-    plot(test_ph, col = "#e31a1c", lwd = 2, resid = TRUE)
-  } else {
-    message("--> Diagnostic Track: Processing Schoenfeld fallback footprint.")
+tryCatch(
+  {
+    plot(cutpoint_result_adj, type = "diagnostic")
+  },
+  error = function(e) {
+    # Backup fallback logic if package binary system calls encounter environment locks
+    if ("cox_model" %in% names(cutpoint_result_adj)) {
+      fit <- cutpoint_result_adj$cox_model
+      test_ph <- survival::cox.zph(fit)
+      plot(test_ph, col = "#e31a1c", lwd = 2, resid = TRUE)
+    } else {
+      message("--> Diagnostic Track: Processing Schoenfeld fallback footprint.")
+    }
   }
-})
+)
 ```
 
 ### 2D Continuous Stability Surfaces (`plot_validation()`)
@@ -360,8 +363,8 @@ Rather than relying on blocky grids, `plot_validation()` allows us to project hi
 
 ```{r plot_validation}
 plot_validation(
-  validation_result_adj, 
-  focus_cuts = c(1, 2), 
+  validation_result_adj,
+  focus_cuts = c(1, 2),
   main = "Adjusted Discovered Threshold Topology Landscape"
 )
 ```

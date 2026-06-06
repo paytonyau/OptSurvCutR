@@ -25,10 +25,11 @@ print.find_cutpoint <- function(x, ...) {
   cli::cli_h1(paste("Optimal Cut-point Analysis for Survival Data ({method_name})"))
 
   stat_label <- switch(x$parameters$criterion,
-                       "logrank" = "Optimal Log-Rank Statistic",
-                       "hazard_ratio" = "Optimal Hazard Ratio",
-                       "p_value" = "Optimal P-value",
-                       "Optimal Statistic") # Fallback
+    "logrank" = "Optimal Log-Rank Statistic",
+    "hazard_ratio" = "Optimal Hazard Ratio",
+    "p_value" = "Optimal P-value",
+    "Optimal Statistic"
+  ) # Fallback
 
   if (x$parameters$criterion == "p_value" && x$parameters$method == "genetic") {
     stat_label <- "Optimal LRT Statistic"
@@ -78,7 +79,6 @@ print.find_cutpoint <- function(x, ...) {
 #' @export
 summary.find_cutpoint <- function(object, show_model = TRUE, show_group_counts = TRUE,
                                   show_medians = TRUE, show_ph_test = TRUE, show_params = TRUE, ...) {
-
   # --- HEADER & CONCLUSION ---
   cli::cli_h1(paste("Optimal Cut-point Analysis for Survival Data ({tools::toTitleCase(object$parameters$method)})"))
 
@@ -153,9 +153,11 @@ summary.find_cutpoint <- function(object, show_model = TRUE, show_group_counts =
 
       landmark_df <- data.frame(
         Group = gsub("group=", "", summary_horizon$strata),
-        Surv_Rate = paste0(round(summary_horizon$surv * 100, 1), "% (",
-                           round(summary_horizon$lower * 100, 1), "-",
-                           round(summary_horizon$upper * 100, 1), ")")
+        Surv_Rate = paste0(
+          round(summary_horizon$surv * 100, 1), "% (",
+          round(summary_horizon$lower * 100, 1), "-",
+          round(summary_horizon$upper * 100, 1), ")"
+        )
       )
 
       # Bind all variables cleanly by Group Name
@@ -197,9 +199,11 @@ summary.find_cutpoint <- function(object, show_model = TRUE, show_group_counts =
           P_Value = round(coefs[, "Pr(>|z|)"], 3)
         )
 
-        cox_df$Signif <- as.character(stats::symnum(cox_df$P_Value, corr = FALSE, na = FALSE,
-                                                    cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1),
-                                                    symbols = c("***", "**", "*", ".", " ")))
+        cox_df$Signif <- as.character(stats::symnum(cox_df$P_Value,
+          corr = FALSE, na = FALSE,
+          cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1),
+          symbols = c("***", "**", "*", ".", " ")
+        ))
 
         print(cox_df, row.names = FALSE, right = TRUE)
         cat("\n")

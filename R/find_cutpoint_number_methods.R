@@ -93,18 +93,18 @@ print.find_cutpoint_number_result <- function(x, ...) {
 #' @importFrom survival Surv coxph cox.zph survfit
 #' @export
 summary.find_cutpoint_number_result <- function(
-    object, show_comparison_table = TRUE,
-    show_best_model_details = TRUE,
-    show_group_counts = TRUE, show_medians = TRUE,
-    show_ph_test = TRUE, plot.it = FALSE, ...
+  object, show_comparison_table = TRUE,
+  show_best_model_details = TRUE,
+  show_group_counts = TRUE, show_medians = TRUE,
+  show_ph_test = TRUE, plot.it = FALSE, ...
 ) {
   criterion_text <- object$parameters$criterion %||% "IC"
 
   cli::cli_h1(paste("Optimal Cut-point Number Analysis ({tools::toTitleCase(object$parameters$method %||% \"Unknown\")})"))
 
   if (is.null(object) || is.null(object$results) ||
-      nrow(object$results) == 0 ||
-      all(is.na(object$results[[criterion_text]]))) {
+    nrow(object$results) == 0 ||
+    all(is.na(object$results[[criterion_text]]))) {
     cli::cli_inform("Cannot summarise: no valid model was found.")
     return(invisible(object))
   }
@@ -139,7 +139,7 @@ summary.find_cutpoint_number_result <- function(
     cols_to_print <- c("Marker", "num_cuts", criterion_text, paste0("Delta_", criterion_text), weight_col[1], "Evidence")
     cols_exist <- cols_to_print[cols_to_print %in% names(comp_df)]
 
-    is_num <- vapply(comp_df[, cols_exist, drop=FALSE], is.numeric, FUN.VALUE = logical(1))
+    is_num <- vapply(comp_df[, cols_exist, drop = FALSE], is.numeric, FUN.VALUE = logical(1))
     comp_df[, cols_exist][is_num] <- lapply(comp_df[, cols_exist][is_num], round, 2)
 
     print(comp_df[, cols_exist, drop = FALSE], row.names = FALSE, right = TRUE)
@@ -228,9 +228,11 @@ summary.find_cutpoint_number_result <- function(
           P_Value = round(coefs[, "Pr(>|z|)"], 3)
         )
 
-        cox_df$Signif <- as.character(stats::symnum(cox_df$P_Value, corr = FALSE, na = FALSE,
-                                                    cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1),
-                                                    symbols = c("***", "**", "*", ".", " ")))
+        cox_df$Signif <- as.character(stats::symnum(cox_df$P_Value,
+          corr = FALSE, na = FALSE,
+          cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1),
+          symbols = c("***", "**", "*", ".", " ")
+        ))
 
         print(cox_df, row.names = FALSE, right = TRUE)
         cat("\n")
@@ -304,7 +306,7 @@ plot.find_cutpoint_number_result <- function(x, y, ...) {
   criterion_text <- x$parameters$criterion %||% "IC"
 
   if (is.null(results) || nrow(results) == 0 ||
-      all(is.na(results[[criterion_text]]))) {
+    all(is.na(results[[criterion_text]]))) {
     cli::cli_inform("Cannot generate plot: no valid IC values found.")
     return(invisible(NULL))
   }

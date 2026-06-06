@@ -52,65 +52,79 @@
                  base_df = NULL, precompiled_formula = NULL) {
   if (!is.null(cache)) {
     key <- paste(round(params, 6), collapse = "_")
-    if (exists(key, envir = cache, inherits = FALSE)) return(cache[[key]])
+    if (exists(key, envir = cache, inherits = FALSE)) {
+      return(cache[[key]])
+    }
   }
 
-  if (length(unique(time)) <= 1) return(-Inf)
+  if (length(unique(time)) <= 1) {
+    return(-Inf)
+  }
   cutoff <- params[1:numcut]
   sorted_cuts <- sort(cutoff)
 
-  if (numcut > 1 && min(diff(sorted_cuts)) < gap) return(-Inf)
-  if (sorted_cuts[1] <= min(target, na.rm = TRUE) || sorted_cuts[numcut] >= max(target, na.rm = TRUE)) return(-Inf)
+  if (numcut > 1 && min(diff(sorted_cuts)) < gap) {
+    return(-Inf)
+  }
+  if (sorted_cuts[1] <= min(target, na.rm = TRUE) || sorted_cuts[numcut] >= max(target, na.rm = TRUE)) {
+    return(-Inf)
+  }
 
   cut_design <- as.factor(findInterval(target, sorted_cuts, left.open = TRUE) + 1L)
-  if (length(table(cut_design)) != (numcut + 1) || min(table(cut_design)) < nmin) return(-Inf)
+  if (length(table(cut_design)) != (numcut + 1) || min(table(cut_design)) < nmin) {
+    return(-Inf)
+  }
 
   data_for_fit <- base_df
   data_for_fit$cut_design <- cut_design
 
   stat_value <- switch(criterion,
-                       "logrank" = {
-                         if (is.null(confound) || ncol(confound) == 0) {
-                           fit <- tryCatch(survival::survdiff(precompiled_formula, data = data_for_fit), error = function(e) NULL)
-                           if (is.null(fit)) -Inf else fit$chisq
-                         } else {
-                           fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
-                           if (is.null(fit) || is.null(fit$score)) -Inf else fit$score
-                         }
-                       },
-                       "hazard_ratio" = {
-                         fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
-                         if (is.null(fit) || isTRUE(fit$nevent == 0)) -Inf else {
-                           target_coef <- paste0("cut_design", numcut + 1)
-                           if (!(target_coef %in% names(fit$coefficients)) || is.na(fit$coefficients[target_coef])) -Inf else exp(fit$coefficients[target_coef])
-                         }
-                       },
-                       "p_value" = {
-                         fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
-                         if (is.null(fit) || is.null(fit$loglik) || isTRUE(fit$nevent == 0)) -Inf else {
-                           if (!is.na(loglik0)) {
-                             pval <- stats::pchisq(-2 * (loglik0 - fit$loglik[2]), numcut, lower.tail = FALSE)
-                             1 - pval
-                           } else {
-                             sfit <- tryCatch(summary(fit), error = function(e) NULL)
-                             if (is.null(sfit) || is.null(sfit$logtest)) -Inf else 1 - sfit$logtest["pvalue"]
-                           }
-                         }
-                       },
-                       "loglik" = {
-                         beta_init <- params[(numcut + 1):length(params)]
+    "logrank" = {
+      if (is.null(confound) || ncol(confound) == 0) {
+        fit <- tryCatch(survival::survdiff(precompiled_formula, data = data_for_fit), error = function(e) NULL)
+        if (is.null(fit)) -Inf else fit$chisq
+      } else {
+        fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
+        if (is.null(fit) || is.null(fit$score)) -Inf else fit$score
+      }
+    },
+    "hazard_ratio" = {
+      fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
+      if (is.null(fit) || isTRUE(fit$nevent == 0)) {
+        -Inf
+      } else {
+        target_coef <- paste0("cut_design", numcut + 1)
+        if (!(target_coef %in% names(fit$coefficients)) || is.na(fit$coefficients[target_coef])) -Inf else exp(fit$coefficients[target_coef])
+      }
+    },
+    "p_value" = {
+      fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
+      if (is.null(fit) || is.null(fit$loglik) || isTRUE(fit$nevent == 0)) {
+        -Inf
+      } else {
+        if (!is.na(loglik0)) {
+          pval <- stats::pchisq(-2 * (loglik0 - fit$loglik[2]), numcut, lower.tail = FALSE)
+          1 - pval
+        } else {
+          sfit <- tryCatch(summary(fit), error = function(e) NULL)
+          if (is.null(sfit) || is.null(sfit$logtest)) -Inf else 1 - sfit$logtest["pvalue"]
+        }
+      }
+    },
+    "loglik" = {
+      beta_init <- params[(numcut + 1):length(params)]
 
-                         # DEFENSIVE ENGINE BACKSTOP: If running an unadjusted model,
-                         # bypass manual init arrays to let coxph resolve loglik natively
-                         if (length(beta_init) == 0 || is.null(confound) || ncol(confound) == 0) {
-                           fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
-                           if (is.null(fit) || is.null(fit$loglik) || isTRUE(fit$nevent == 0)) -Inf else fit$loglik[2]
-                         } else {
-                           fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit, init = beta_init, iter.max = 0), error = function(e) NULL)
-                           if (is.null(fit) || is.null(fit$loglik) || isTRUE(fit$nevent == 0)) -Inf else fit$loglik[2]
-                         }
-                       },
-                       -Inf
+      # DEFENSIVE ENGINE BACKSTOP: If running an unadjusted model,
+      # bypass manual init arrays to let coxph resolve loglik natively
+      if (length(beta_init) == 0 || is.null(confound) || ncol(confound) == 0) {
+        fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
+        if (is.null(fit) || is.null(fit$loglik) || isTRUE(fit$nevent == 0)) -Inf else fit$loglik[2]
+      } else {
+        fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit, init = beta_init, iter.max = 0), error = function(e) NULL)
+        if (is.null(fit) || is.null(fit$loglik) || isTRUE(fit$nevent == 0)) -Inf else fit$loglik[2]
+      }
+    },
+    -Inf
   )
 
   if (!is.null(cache)) cache[[key]] <- stat_value
@@ -164,7 +178,9 @@
   nvars <- if (optimising_betas) numcut * 2 + num_confound_vars else numcut
 
   domain_cuts <- matrix(rep(range(target, na.rm = TRUE), numcut), ncol = 2, byrow = TRUE)
-  if (any(is.infinite(domain_cuts))) return(NULL)
+  if (any(is.infinite(domain_cuts))) {
+    return(NULL)
+  }
   domain <- if (optimising_betas) rbind(domain_cuts, matrix(rep(c(-5, 5), nvars - numcut), ncol = 2, byrow = TRUE)) else domain_cuts
 
   initial_cuts <- stats::quantile(target, probs = seq(0, 1, length.out = numcut + 2), na.rm = TRUE)[2:(numcut + 1)]
@@ -241,13 +257,16 @@
   cov_part <- if (!is.null(covariates)) paste(" +", paste(covariates, collapse = " + ")) else ""
   base_formula_str <- paste("survival::Surv(time, event) ~ factor", cov_part)
 
-  ic0 <- tryCatch({
-    fit0 <- survival::coxph(stats::as.formula(base_formula_str), data = userdata)
-    .calc_ic(fit0, k = 1 + length(covariates), n = n, criterion = criterion)
-  }, error = function(e) {
-    if (requireNamespace("cli", quietly = TRUE)) cli::cli_inform(paste("Could not calculate IC for base model (0 cuts):", e$message))
-    NA_real_
-  })
+  ic0 <- tryCatch(
+    {
+      fit0 <- survival::coxph(stats::as.formula(base_formula_str), data = userdata)
+      .calc_ic(fit0, k = 1 + length(covariates), n = n, criterion = criterion)
+    },
+    error = function(e) {
+      if (requireNamespace("cli", quietly = TRUE)) cli::cli_inform(paste("Could not calculate IC for base model (0 cuts):", e$message))
+      NA_real_
+    }
+  )
 
   results <- data.frame(num_cuts = 0, IC = ic0)
   results$cuts <- I(list(NULL))
@@ -255,16 +274,19 @@
   for (k_cuts in 1:max_cuts) {
     if (requireNamespace("cli", quietly = TRUE)) cli::cli_alert_info(paste("Running genetic algorithm for", k_cuts, "cut-point(s)..."))
 
-    ga_result <- tryCatch({
-      .run_genetic_search(
-        target = userdata$factor, numcut = k_cuts, time = userdata$time, censor = userdata$event,
-        confound = if (!is.null(covariates)) userdata[, covariates, drop = FALSE] else NULL,
-        nmin = nmin, criterion = "loglik", max.generations = max.generations, pop.size = pop.size, ...
-      )
-    }, error = function(e) {
-      if (requireNamespace("cli", quietly = TRUE)) cli::cli_inform(paste("Genetic algorithm failed for", k_cuts, "cut(s):", e$message))
-      NULL
-    })
+    ga_result <- tryCatch(
+      {
+        .run_genetic_search(
+          target = userdata$factor, numcut = k_cuts, time = userdata$time, censor = userdata$event,
+          confound = if (!is.null(covariates)) userdata[, covariates, drop = FALSE] else NULL,
+          nmin = nmin, criterion = "loglik", max.generations = max.generations, pop.size = pop.size, ...
+        )
+      },
+      error = function(e) {
+        if (requireNamespace("cli", quietly = TRUE)) cli::cli_inform(paste("Genetic algorithm failed for", k_cuts, "cut(s):", e$message))
+        NULL
+      }
+    )
 
     if (!is.null(ga_result) && is.finite(ga_result$value) && ga_result$value > -.Machine$double.xmax) {
       ic_val <- .calc_ic(list(loglik = c(NA, ga_result$value)), k = k_cuts + length(covariates), n = n, criterion = criterion)

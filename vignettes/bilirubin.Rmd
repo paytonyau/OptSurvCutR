@@ -66,7 +66,7 @@ library(dplyr)
 library(ggplot2)
 library(patchwork)
 library(knitr)
-library(cli) 
+library(cli)
 library(OptSurvCutR)
 ```
 
@@ -109,26 +109,26 @@ num_res <- find_cutpoint_number(
   # ==========================================
   # 1. CORE DATA INPUTS
   # ==========================================
-  data = pbc_clean,              # The patient dataset
-  predictor = "bili",            # The continuous biomarker
-  outcome_time = "time",         # Survival time column
-  outcome_event = "event",       # Survival event column
-  
+  data = pbc_clean, # The patient dataset
+  predictor = "bili", # The continuous biomarker
+  outcome_time = "time", # Survival time column
+  outcome_event = "event", # Survival event column
+
   # ==========================================
   # 2. SEARCH ENGINE SETTINGS
   # ==========================================
-  method = "genetic",            # The evolutionary search engine
-  criterion = "BIC",             # Evaluates model fit (BIC heavily penalizes over-complexity)
-  max_cuts = 3,                  # Test models ranging from 0 to 3 cuts
-  nmin = 0.25,                   # SAFETY LIMIT: Minimum 10% of patients per group
+  method = "genetic", # The evolutionary search engine
+  criterion = "BIC", # Evaluates model fit (BIC heavily penalizes over-complexity)
+  max_cuts = 3, # Test models ranging from 0 to 3 cuts
+  nmin = 0.25, # SAFETY LIMIT: Minimum 10% of patients per group
   n_perm = 50,
   # ==========================================
   # 3. THE "R-GROUND" SETTINGS (Advanced Genetic Tuning)
   # ==========================================
-  max.generations = 100,         # LIFESPAN: How many evolutionary cycles to run
-  pop.size = 100,                # SEARCH PARTY: Number of random guesses per generation
-  boundary.enforcement = 1,      # EDGE CONTROL: 1 = Soft boundary (allows safe edge exploration)
-  seed = 123                     # REPRODUCIBILITY: Locks the random number generator
+  max.generations = 100, # LIFESPAN: How many evolutionary cycles to run
+  pop.size = 100, # SEARCH PARTY: Number of random guesses per generation
+  boundary.enforcement = 1, # EDGE CONTROL: 1 = Soft boundary (allows safe edge exploration)
+  seed = 123 # REPRODUCIBILITY: Locks the random number generator
 )
 
 plot(num_res) +
@@ -166,28 +166,28 @@ cut_res <- find_cutpoint(
   # ==========================================
   # 1. CORE DATA INPUTS
   # ==========================================
-  data = pbc_clean,              
-  predictor = "bili",            
-  outcome_time = "time",         
-  outcome_event = "event",       
-  
+  data = pbc_clean,
+  predictor = "bili",
+  outcome_time = "time",
+  outcome_event = "event",
+
   # ==========================================
   # 2. SEARCH ENGINE SETTINGS
   # ==========================================
-  method = "genetic",            # Crucial for finding >1 cut-point
-  criterion = "logrank",         # Maximizes survival difference between groups
-  num_cuts = 2,                  # Forcing 2 cuts (3 groups) for demonstration and stability
-  nmin = 0.25,                   # SAFETY LIMIT: Forces every group to contain >= 25% of patients
-  n_perm = 100,                  # PERMUTATION TEST: Scrambles the data to calculate an honest p-value
-  
+  method = "genetic", # Crucial for finding >1 cut-point
+  criterion = "logrank", # Maximizes survival difference between groups
+  num_cuts = 2, # Forcing 2 cuts (3 groups) for demonstration and stability
+  nmin = 0.25, # SAFETY LIMIT: Forces every group to contain >= 25% of patients
+  n_perm = 100, # PERMUTATION TEST: Scrambles the data to calculate an honest p-value
+
   # ==========================================
   # 3. THE "R-GROUND" SETTINGS (Advanced Genetic Tuning)
   # ==========================================
-  max.generations = 100,         # LIFESPAN: Increase if the algorithm fails to converge
-  pop.size = 100,                # SEARCH PARTY: Increase to 500+ for massive datasets
-  boundary.enforcement = 1,      # EDGE CONTROL: Soft boundaries prevent the algorithm from crashing near edges
-  seed = 123,                    # REPRODUCIBILITY
-  n_cores = 1                    # SPEED: Adjust based on your machine's CPU
+  max.generations = 100, # LIFESPAN: Increase if the algorithm fails to converge
+  pop.size = 100, # SEARCH PARTY: Increase to 500+ for massive datasets
+  boundary.enforcement = 1, # EDGE CONTROL: Soft boundaries prevent the algorithm from crashing near edges
+  seed = 123, # REPRODUCIBILITY
+  n_cores = 1 # SPEED: Adjust based on your machine's CPU
 )
 
 summary(cut_res)
@@ -222,16 +222,16 @@ val_res <- validate_cutpoint(
   # 1. VALIDATION INPUTS
   # ==========================================
   cutpoint_result = cut_res, # The exact result object you generated in Step 2
-  num_replicates = 100,      # BOOTSTRAP: How many times to scramble and re-test. 500+ is the gold standard
-  n_cores = 1,               # SPEED: Number of CPU cores to use
-  
+  num_replicates = 100, # BOOTSTRAP: How many times to scramble and re-test. 500+ is the gold standard
+  n_cores = 1, # SPEED: Number of CPU cores to use
+
   # ==========================================
   # 2. THE "R-GROUND" SETTINGS (Must match Step 2)
   # ==========================================
-  max.generations = 100,     # Must match or exceed Step 2 to ensure stability during bootstrap
-  pop.size = 100,            # Must match or exceed Step 2
-  boundary.enforcement = 1,  # Must match Step 2
-  seed = 123                 # REPRODUCIBILITY
+  max.generations = 100, # Must match or exceed Step 2 to ensure stability during bootstrap
+  pop.size = 100, # Must match or exceed Step 2
+  boundary.enforcement = 1, # Must match Step 2
+  seed = 123 # REPRODUCIBILITY
 )
 
 summary(val_res)
@@ -276,8 +276,10 @@ knitr::kable(composition_table, caption = "Composition of Discovered Bilirubin R
 
 ## 3.2 Hazard Ratio Forest Plot (`type = "forest"`)
 ```{r plot-forest, fig.width=7, fig.height=3.5}
-plot(cut_res, type = "forest",
-     main = "Mortality Hazard Ratios Relative to Group 1 (Baseline)")
+plot(cut_res,
+  type = "forest",
+  main = "Mortality Hazard Ratios Relative to Group 1 (Baseline)"
+)
 ```
 
 > **⚠️ Important: The Hazard Ratio**
@@ -293,18 +295,21 @@ Rather than relying on blocky grids, this specialized diagnostic plot renders a 
 
 ```{r plot_validation}
 # Evaluates the stability cluster between your second and third clinical thresholds
-plot_validation(val_res, 
-                focus_cuts = c(1, 2), 
-                main = "Upper Tier Threshold Stability Map")
+plot_validation(val_res,
+  focus_cuts = c(1, 2),
+  main = "Upper Tier Threshold Stability Map"
+)
 ```
 
 ## 3.6 Standalone Kaplan-Meier Survival Curves (`type = "outcome"`)
 ```{r plot-km, fig.width=8, fig.height=6}
-plot(cut_res, type = "outcome",
-     title = "PBC Survival by Bilirubin Tier",
-     xlab = "Follow-up Time (Days)",
-     ylab = "Overall Survival Probability",
-     legend.title = "Bilirubin Tier")
+plot(cut_res,
+  type = "outcome",
+  title = "PBC Survival by Bilirubin Tier",
+  xlab = "Follow-up Time (Days)",
+  ylab = "Overall Survival Probability",
+  legend.title = "Bilirubin Tier"
+)
 ```
 
 > **💡 Key Insight: The Kaplan-Meier Step Function**

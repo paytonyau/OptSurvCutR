@@ -84,9 +84,11 @@ if (is.null(valid_fc_result_for_boot) || any(is.na(valid_fc_result_for_boot$opti
     optimal_stat = 12.5,
     all_stats = data.frame(cut = 30:70, stat = rnorm(41, 10, 2)),
     userdata = mock_data_for_boot,
-    parameters = list(predictor = "predictor", outcome_time = "time",
-                      outcome_event = "event", num_cuts = 1, nmin = 5,
-                      method = "systematic", criterion = "logrank", quiet = TRUE)
+    parameters = list(
+      predictor = "predictor", outcome_time = "time",
+      outcome_event = "event", num_cuts = 1, nmin = 5,
+      method = "systematic", criterion = "logrank", quiet = TRUE
+    )
   )
   class(valid_fc_result_for_boot) <- "find_cutpoint"
 }

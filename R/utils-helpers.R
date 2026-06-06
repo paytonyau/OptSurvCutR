@@ -90,14 +90,14 @@
                                            criterion, covariates) {
   method <- match.arg(method, choices = c("systematic", "genetic"))
   criterion <- match.arg(criterion,
-                         choices = c("logrank", "hazard_ratio", "p_value")
+    choices = c("logrank", "hazard_ratio", "p_value")
   )
   if (!is.numeric(num_cuts) || num_cuts < 0 || num_cuts != round(num_cuts)) {
     stop("num_cuts must be a non-negative integer.", call. = FALSE)
   }
   if (criterion == "hazard_ratio" && num_cuts > 1) {
     stop("'hazard_ratio' is only supported for num_cuts = 1.",
-         call. = FALSE
+      call. = FALSE
     )
   }
   if (method == "genetic" && !requireNamespace("rgenoud", quietly = TRUE)) {
@@ -111,7 +111,7 @@
   }
   if (method == "systematic" && !num_cuts %in% c(1, 2)) {
     stop("Systematic search only supports num_cuts = 1 or 2.",
-         call. = FALSE
+      call. = FALSE
     )
   }
   if (is.null(predictor)) {
@@ -119,7 +119,7 @@
   }
   if (is.null(outcome_time) || is.null(outcome_event)) {
     stop("Both 'outcome_time' and 'outcome_event' are required.",
-         call. = FALSE
+      call. = FALSE
     )
   }
   required_vars <- c(predictor, outcome_time, outcome_event, covariates)

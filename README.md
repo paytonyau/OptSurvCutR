@@ -100,7 +100,7 @@ plot_validation(val_res, focus_cuts = c(1, 2)) # 2D Contour Elevation Stability 
 3. `validate_cutpoint()`: Assesses threshold stability via bootstrapping and assigns an automated 4-Tier stability grade.
 
 ## Resources
-- **Vignettes & Tutorials**: `browseVignettes("OptSurvCutR")` or read the [Troubleshooting & FAQ Guide](https://paytonyau.github.io/OptSurvCutR/articles/troubleshooting.html).
+- **Vignettes & Tutorials**: `browseVignettes("OptSurvCutR")` or read the [Troubleshooting & FAQ Guide](https://github.com/paytonyau/OptSurvCutR/blob/main/vignettes/troubleshooting.Rmd).
 - **Package Website**: https://paytonyau.github.io/OptSurvCutR/
 - **Manuscript**: Yau, Payton T. O. "OptSurvCutR: Validated Cut-point Selection for Survival Analysis." bioRxiv preprint, posted October 18, 2025. https://doi.org/10.1101/2025.10.08.681246.
 

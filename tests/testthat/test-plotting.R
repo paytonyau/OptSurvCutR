@@ -111,12 +111,14 @@ test_that("Exhaustive layout matrix testing for S3 plot routers across engine ty
 
   res_with_covars <- suppressMessages(suppressWarnings(
     find_cutpoint(fixtures$df, "predictor", "time", "event",
-                  covariates = "covariate1", num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 5)
+      covariates = "covariate1", num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 5
+    )
   ))
 
   res_2cuts_gen <- suppressMessages(suppressWarnings(
     find_cutpoint(fixtures$df_3groups, "predictor", "time", "event",
-                  num_cuts = 2, method = "systematic", quiet = TRUE, nmin = 5)
+      num_cuts = 2, method = "systematic", quiet = TRUE, nmin = 5
+    )
   ))
 
   # CRITICAL ACTION: Force an alternative copy of your models to flag use_cpp = FALSE
@@ -144,8 +146,10 @@ test_that("Exhaustive layout matrix testing for S3 plot routers across engine ty
 
 test_that("Plot routines fail safely on empty search structures", {
   obj_empty <- structure(
-    list(optimal_cuts = NA_real_, optimal_stat = NA_real_,
-         parameters = list(method = "systematic", criterion = "logrank")),
+    list(
+      optimal_cuts = NA_real_, optimal_stat = NA_real_,
+      parameters = list(method = "systematic", criterion = "logrank")
+    ),
     class = "find_cutpoint"
   )
 
@@ -186,7 +190,8 @@ test_that("Force plot_optimisation_curve to render 3D/2-cut surface logic or tra
 
   res_2cuts_surf <- suppressMessages(suppressWarnings(
     find_cutpoint(fixtures$df_3groups, "predictor", "time", "event",
-                  num_cuts = 2, method = "systematic", nmin = 5, quiet = TRUE)
+      num_cuts = 2, method = "systematic", nmin = 5, quiet = TRUE
+    )
   ))
 
   expect_error(
@@ -200,7 +205,8 @@ test_that("Exhaustive S3 method and plot sweep for find_cutpoint_number results"
 
   res_num <- suppressMessages(suppressWarnings(
     find_cutpoint_number(fixtures$df, "predictor", "time", "event",
-                         max_cuts = 2, method = "systematic", criterion = "BIC", quiet = TRUE, nmin = 5)
+      max_cuts = 2, method = "systematic", criterion = "BIC", quiet = TRUE, nmin = 5
+    )
   ))
 
   sink_file <- tempfile()
@@ -208,12 +214,15 @@ test_that("Exhaustive S3 method and plot sweep for find_cutpoint_number results"
   sink(sink_con)
   sink(sink_con, type = "message")
 
-  on.exit({
-    sink(type = "message")
-    sink()
-    close(sink_con)
-    unlink(sink_file)
-  }, add = TRUE)
+  on.exit(
+    {
+      sink(type = "message")
+      sink()
+      close(sink_con)
+      unlink(sink_file)
+    },
+    add = TRUE
+  )
 
   OptSurvCutR:::print.find_cutpoint_number_result(res_num)
 

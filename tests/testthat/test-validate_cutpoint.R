@@ -13,8 +13,10 @@ test_that("validate_cutpoint parameter variations across different seed splits",
 
   for (cfg in configs) {
     res <- suppressMessages(suppressWarnings(
-      validate_cutpoint(valid_fc_result_for_boot, num_replicates = cfg$reps,
-                        n_cores = cfg$cores, nmin = 5, seed = 42)
+      validate_cutpoint(valid_fc_result_for_boot,
+        num_replicates = cfg$reps,
+        n_cores = cfg$cores, nmin = 5, seed = 42
+      )
     ))
     expect_s3_class(res, "validate_cutpoint_result")
   }
@@ -68,7 +70,8 @@ test_that("Stress test validate_cutpoint with row shuffle permutations to verify
   # Generate a clean systematic base object to pass into validation engines
   base_fc <- suppressMessages(suppressWarnings(
     find_cutpoint(mock_data, "predictor", "time", "event",
-                  covariates = "covariate1", num_cuts = 1, method = "systematic", quiet = TRUE)
+      covariates = "covariate1", num_cuts = 1, method = "systematic", quiet = TRUE
+    )
   ))
 
   skip_if(is.null(base_fc) || any(is.na(base_fc$optimal_cuts)))
@@ -78,7 +81,8 @@ test_that("Stress test validate_cutpoint with row shuffle permutations to verify
   shuffled_data <- mock_data[sample(nrow(mock_data)), ]
   base_fc_shuffled <- suppressMessages(suppressWarnings(
     find_cutpoint(shuffled_data, "predictor", "time", "event",
-                  covariates = "covariate1", num_cuts = 1, method = "systematic", quiet = TRUE)
+      covariates = "covariate1", num_cuts = 1, method = "systematic", quiet = TRUE
+    )
   ))
 
   # Assert that baseline calculations are completely invariant before passing to the validation step
@@ -140,10 +144,12 @@ test_that("Run sequential overrides to log parallel blocks safely", {
   # 3. PATH C: Direct Genetic Adjustments Checklist Sweep
   # Triggers the covariate drop framework matrix inside engine-genetic.R directly
   res_gen_adj <- suppressMessages(suppressWarnings(
-    find_cutpoint(mock_data, predictor = "predictor", outcome_time = "time",
-                  outcome_event = "event", covariates = "covariate1", num_cuts = 1,
-                  method = "genetic", criterion = "hazard_ratio", quiet = TRUE,
-                  seed = 42, n_cores = 1, nmin = 3, max.generations = 5, pop.size = 20)
+    find_cutpoint(mock_data,
+      predictor = "predictor", outcome_time = "time",
+      outcome_event = "event", covariates = "covariate1", num_cuts = 1,
+      method = "genetic", criterion = "hazard_ratio", quiet = TRUE,
+      seed = 42, n_cores = 1, nmin = 3, max.generations = 5, pop.size = 20
+    )
   ))
   expect_s3_class(res_gen_adj, "find_cutpoint")
 })

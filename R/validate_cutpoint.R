@@ -52,17 +52,17 @@
 #' data(crc_virome)
 #'
 #' fit <- find_cutpoint(
-#'     data = head(crc_virome, 50),
-#'     predictor = "Alphapapillomavirus",
-#'     outcome_time = "time_months",
-#'     outcome_event = "status",
-#'     num_cuts = 1,
-#'     method = "systematic"
+#'   data = head(crc_virome, 50),
+#'   predictor = "Alphapapillomavirus",
+#'   outcome_time = "time_months",
+#'   outcome_event = "status",
+#'   num_cuts = 1,
+#'   method = "systematic"
 #' )
 #'
 #' if (!any(is.na(fit$optimal_cuts))) {
-#'    val <- validate_cutpoint(fit, num_replicates = 20, seed = 123)
-#'    print(val)
+#'   val <- validate_cutpoint(fit, num_replicates = 20, seed = 123)
+#'   print(val)
 #' }
 #'
 #' @references
@@ -94,7 +94,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     cli::cli_abort("Input must be a `find_cutpoint` object.")
   }
   if (!is.numeric(num_replicates) || num_replicates < 1 ||
-      num_replicates != round(num_replicates)) {
+    num_replicates != round(num_replicates)) {
     cli::cli_abort("`num_replicates` must be a positive integer.")
   }
   if (num_replicates < 20) {
@@ -250,8 +250,8 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   # --- 5. Process Results and Calculate CIs ---
   if (!is.matrix(bootstrap_results)) {
     bootstrap_matrix <- matrix(bootstrap_results,
-                               nrow = num_replicates,
-                               ncol = num_cuts, byrow = TRUE
+      nrow = num_replicates,
+      ncol = num_cuts, byrow = TRUE
     )
   } else {
     bootstrap_matrix <- bootstrap_results
@@ -280,7 +280,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   }
   bootstrap_matrix_clean <- na.omit(bootstrap_matrix)
   ci <- apply(bootstrap_matrix_clean, 2, stats::quantile,
-              probs = c(0.025, 0.975), na.rm = TRUE
+    probs = c(0.025, 0.975), na.rm = TRUE
   )
   if (is.vector(ci)) {
     ci_df <- data.frame(Lower = ci[1], Upper = ci[2])
