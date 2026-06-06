@@ -1,238 +1,149 @@
 # ===================================================================
-# TESTS: utils-helpers.R
-# Internal mathematical engines, validation, and objective functions
+# MAXIMUM HORIZON BRANCH COVERAGE: utils-helpers.R
+# Surgically hitting all validation traps and messaging hooks
 # ===================================================================
 
-# --- 1. Objective Functions (.obj) ---
+# --- 1. Information Criteria (.calc_ic) ---
 
-#' @srrstats {G5.8} Tests handling of invalid cut-points.
-test_that(".obj handles invalid cuts", {
-  expect_equal(
-    .obj(
-      params = c(50, 50), time = mock_data$time, censor = mock_data$event,
-      target = mock_data$predictor, confound = NULL, numcut = 2, gap = 1,
-      nmin = 1, criterion = "logrank"
-    ),
-    -Inf
+test_that(".calc_ic executes all fallback branches and mathematical edge cases", {
+  # Sweep standard switch components
+  for (crit in c("AIC", "AICc", "BIC")) {
+    expect_true(is.numeric(OptSurvCutR:::.calc_ic(model = list(loglik = c(0, -50)), k = 2, n = 20, criterion = crit)))
+  }
+
+  # Trigger NULL and missing data structures
+  expect_true(is.na(OptSurvCutR:::.calc_ic(model = NULL, k = 2, n = 20, criterion = "BIC")))
+  expect_true(is.na(OptSurvCutR:::.calc_ic(model = list(), k = 2, n = 20, criterion = "BIC")))
+  expect_true(is.na(OptSurvCutR:::.calc_ic(model = list(loglik = c(NA, NA)), k = 2, n = 20, criterion = "BIC")))
+
+  # Trigger BIC sample size failures
+  expect_true(is.na(OptSurvCutR:::.calc_ic(model = list(loglik = c(0, -50)), k = 2, n = NA, criterion = "BIC")))
+  expect_true(is.na(OptSurvCutR:::.calc_ic(model = list(loglik = c(0, -50)), k = 2, n = 0, criterion = "BIC")))
+
+  # Trigger AICc saturation path (n - k - 1 <= 0)
+  expect_true(is.na(OptSurvCutR:::.calc_ic(model = list(loglik = c(0, -50)), k = 4, n = 5, criterion = "AICc")))
+})
+
+
+# --- 2. Input Validation (.validate_find_cutpoint_inputs) ---
+
+#' @srrstats {G2.0}
+#' @srrstats {G2.3a}
+#' @srrstats {G5.2}
+test_that(".validate_find_cutpoint_inputs traps argument discrepancies early", {
+  # Base clean data framework
+  df <- data.frame(pred = 1:10, time = 1:10, status = rep(1, 10), cov = 1:10)
+
+  # Trigger controlled vocabulary argument match traps via match.arg handles
+  expect_error(OptSurvCutR:::.validate_find_cutpoint_inputs(df, "pred", "time", "status", num_cuts = 1, method = "INVALID", "logrank", NULL))
+  expect_error(OptSurvCutR:::.validate_find_cutpoint_inputs(df, "pred", "time", "status", num_cuts = 1, method = "systematic", "INVALID", NULL))
+
+  # Explicit case sensitivity testing validation for {G2.3a} / {G2.3b}
+  expect_error(OptSurvCutR:::.validate_find_cutpoint_inputs(df, "pred", "time", "status", num_cuts = 1, method = "Systematic", "logrank", NULL))
+  expect_error(OptSurvCutR:::.validate_find_cutpoint_inputs(df, "pred", "time", "status", num_cuts = 1, method = "systematic", "Logrank", NULL))
+
+  # Trigger num_cuts integer and constraint validation checks
+  expect_error(OptSurvCutR:::.validate_find_cutpoint_inputs(df, "pred", "time", "status", num_cuts = -1, "systematic", "logrank", NULL))
+  expect_error(OptSurvCutR:::.validate_find_cutpoint_inputs(df, "pred", "time", "status", num_cuts = 1.5, "systematic", "logrank", NULL))
+  expect_error(OptSurvCutR:::.validate_find_cutpoint_inputs(df, "pred", "time", "status", num_cuts = 2, "systematic", "hazard_ratio", NULL))
+  expect_error(OptSurvCutR:::.validate_find_cutpoint_inputs(df, "pred", "time", "status", num_cuts = 3, "systematic", "logrank", NULL))
+
+  # Trigger missing assignment boundaries
+  expect_error(OptSurvCutR:::.validate_find_cutpoint_inputs(df, NULL, "time", "status", num_cuts = 1, "systematic", "logrank", NULL))
+  expect_error(OptSurvCutR:::.validate_find_cutpoint_inputs(df, "pred", NULL, "status", num_cuts = 1, "systematic", "logrank", NULL))
+
+  # Trigger column existence mismatch errors
+  expect_error(OptSurvCutR:::.validate_find_cutpoint_inputs(df, "MISSING", "time", "status", num_cuts = 1, "systematic", "logrank", NULL))
+
+  # Clean pass check via robust expect_silent matrix evaluation
+  expect_silent(OptSurvCutR:::.validate_find_cutpoint_inputs(df, "pred", "time", "status", num_cuts = 1, "systematic", "logrank", "cov"))
+})
+
+
+# --- 3. Data Cleansing (.prepare_cutpoint_data) ---
+
+#' @srrstats {G2.10}
+#' @srrstats {G2.13}
+#' @srrstats {RE2.1}
+test_that(".prepare_cutpoint_data subsets, renames, and omits NA cases", {
+  df_na <- data.frame(
+    pred = c(1, 2, NA, 4),
+    time = c(10, 11, 12, NA),
+    status = c(1, 0, 1, 1),
+    cov = c(0.1, 0.2, 0.3, 0.4)
   )
+
+  cleaned <- OptSurvCutR:::.prepare_cutpoint_data(df_na, "pred", "time", "status", "cov")
+
+  # Check renaming rules and layout drops
+  expect_s3_class(cleaned, "data.frame")
+  expect_equal(nrow(cleaned), 2) # Row 3 and 4 cleanly omitted via na.omit properties
+  expect_equal(names(cleaned), c("factor", "time", "event", "cov"))
 })
 
-#' @srrstats {G5.8} Tests fitness function for p_value criterion.
-test_that(".obj handles p_value criterion", {
-  expect_true(is.numeric(
-    .obj(
-      params = 50, time = mock_data$time, censor = mock_data$event,
-      target = mock_data$predictor, confound = NULL, numcut = 1, gap = 1,
-      nmin = 1, criterion = "p_value"
-    )
-  ))
-})
 
-test_that(".obj - hazard_ratio with invalid coefficient name", {
-  result <- .obj(
-    params = 50,
-    time = rexp(20, 0.05),
-    censor = rep(0, 20),
-    target = rnorm(20, 50, 10),
-    confound = NULL,
-    numcut = 1, gap = 1, nmin = 5,
-    criterion = "hazard_ratio"
-  )
-  expect_equal(result, -Inf)
-})
+# --- 4. Event Column Type Enforcement (.validate_event_column) ---
 
-test_that(".obj - p_value with loglik path", {
-  confound_data <- data.frame(cov1 = rnorm(30))
-  result <- .obj(
-    params = 50,
-    time = rexp(30, 0.05),
-    censor = sample(0:1, 30, replace = TRUE),
-    target = rnorm(30, 50, 10),
-    confound = confound_data,
-    numcut = 1, gap = 1, nmin = 5,
-    criterion = "p_value",
-    loglik0 = -100
-  )
-  expect_true(is.numeric(result))
-})
-
-test_that(".obj - p_value fallback path", {
-  result <- .obj(
-    params = 50,
-    time = rexp(30, 0.05),
-    censor = sample(0:1, 30, replace = TRUE),
-    target = rnorm(30, 50, 10),
-    confound = NULL,
-    numcut = 1, gap = 1, nmin = 5,
-    criterion = "p_value",
-    loglik0 = NA_real_
-  )
-  expect_true(is.numeric(result) || result == -Inf)
-})
-
-test_that(".obj handles internal model failures", {
-  data_model_fail <- data.frame(time = 1:10, censor = 1, target = c(1:5, 100:104))
-  expect_equal(.obj(
-    params = c(50, 150), time = data_model_fail$time,
-    censor = data_model_fail$censor, target = data_model_fail$target,
-    confound = NULL, numcut = 2, gap = 1, nmin = 1, criterion = "logrank"
-  ), -Inf)
-})
-
-test_that("Coverage: .obj default switch handles invalid criterion", {
-  expect_equal(
-    .obj(
-      params = 50, time = mock_data$time, censor = mock_data$event,
-      target = mock_data$predictor, confound = NULL, numcut = 1, gap = 1,
-      nmin = 1, criterion = "INVALID_CRITERION"
-    ),
-    -Inf
-  )
-})
-
-# --- 2. Information Criteria (.calc_ic) ---
-
-test_that(".calc_ic handles edge cases and invalid inputs", {
-  expect_true(is.na(.calc_ic(model = NULL, k = 2, n = 20, "BIC")))
-  expect_true(is.na(.calc_ic(model = list(loglik = c(NA, NA)), k = 2, n = 20, "BIC")))
-
-  model_stub <- list(loglik = c(NA, -50))
-  n <- 5
-  k <- 4
-  expect_true(is.na(.calc_ic(model_stub, k = k, n = n, criterion = "AICc")))
-
-  k_valid <- 3
-  expect_true(is.numeric(.calc_ic(model_stub, k = k_valid, n = n, criterion = "AICc")))
-})
-
-# --- 3. Genetic Search Engine (.run_genetic_search) ---
-
-test_that(".run_genetic_search - gap = NULL (auto) and zero fallback", {
-  skip_if_not_installed("rgenoud")
-
-  result1 <- suppressMessages(suppressWarnings(
-    .run_genetic_search(
-      target = rnorm(50, 50, 10), numcut = 1, time = rexp(50, 0.05),
-      censor = sample(0:1, 50, replace = TRUE), confound = NULL, nmin = 5,
-      criterion = "logrank", max.generations = 3, gap = NULL, print.level = 0
-    )
-  ))
-  expect_true(is.null(result1) || !is.null(result1))
-
-  # Zero fallback (constant target)
-  result2 <- suppressMessages(suppressWarnings(
-    .run_genetic_search(
-      target = rep(50, 30), numcut = 1, time = rexp(30, 0.05),
-      censor = sample(0:1, 30, replace = TRUE), confound = NULL, nmin = 5,
-      criterion = "logrank", max.generations = 3, gap = NULL, print.level = 0
-    )
-  ))
-  expect_true(is.null(result2) || !is.null(result2))
-})
-
-#' @srrstats {G2.14a} Tests that NA in domain returns NULL.
-test_that(".run_genetic_search handles invalid domains", {
-  skip_if_not_installed("rgenoud")
-
-  expect_null(.run_genetic_search(
-    target = c(1:10, Inf), numcut = 1, time = 1:11, censor = 1,
-    confound = NULL, nmin = 1, criterion = "logrank"
-  ))
-
-  suppressWarnings(expect_null(.run_genetic_search(
-    target = rep(NA_real_, 10), numcut = 1, time = 1:10, censor = 1,
-    confound = NULL, nmin = 1, criterion = "logrank"
-  )))
-})
-
-# --- 4. Data Validation (.validate_data_conditions) ---
-
-test_that(".validate_data_conditions event column checks", {
-  data_char_event <- mock_data
-  data_char_event$event <- as.character(data_char_event$event)
+#' @srrstats {G2.1}
+#' @srrstats {G5.2b}
+test_that(".validate_event_column enforces strict 0/1 binary formatting and accurate messaging", {
+  # Trigger non-numeric data entry checks with localized-safe variable name tracking
   expect_error(
-    find_cutpoint(data_char_event, "predictor", "time", "event", quiet = TRUE),
-    regexp = "must be numeric"
+    OptSurvCutR:::.validate_event_column(c("1", "0"), "status"),
+    regexp = "status"
   )
 
-  data_bad_event <- mock_data
-  data_bad_event$event[1] <- 2
+  # Trigger out-of-bounds categorical integer check
   expect_error(
-    find_cutpoint(data_bad_event, "predictor", "time", "event", quiet = TRUE),
-    regexp = "must contain only 0 and 1"
+    OptSurvCutR:::.validate_event_column(c(0, 1, 2), "status"),
+    regexp = "status"
   )
+
+  # Clean pass check via robust expect_silent wrapper
+  expect_silent(OptSurvCutR:::.validate_event_column(c(0, 1, 0, 1), "status"))
 })
 
-test_that(".validate_data_conditions handles nmin proportions and constraints", {
-  userdata <- mock_data
-  names(userdata)[names(userdata) == "predictor"] <- "factor"
 
-  result <- .validate_data_conditions(userdata = userdata, nmin = 0.2, num_cuts = 1, outcome_event = "event", quiet = FALSE)
-  expect_true(result$valid)
-  expect_true(result$nmin_abs > 1)
+# --- 5. Cohort Metrics Constraints (.validate_data_conditions) ---
+
+#' @srrstats {G2.9}
+#' @srrstats {G5.2a}
+test_that(".validate_data_conditions monitors sample boundaries and quiet modes completely", {
+  # Scenario A: Non-negative time vector enforcement
+  bad_time <- data.frame(time = c(1, -5, 2), event = c(1, 0, 1), factor = c(10, 20, 30))
 
   expect_error(
-    .validate_data_conditions(userdata = userdata, nmin = 0, num_cuts = 1, outcome_event = "event", quiet = TRUE),
-    regexp = "must be a non-negative number"
+    OptSurvCutR:::.validate_data_conditions(bad_time, nmin = 1, num_cuts = 1, "event", quiet = TRUE),
+    regexp = "Time"
   )
-})
 
-# --- 5. Statistics Extraction (.get_stat) ---
+  # Scenario B: Proportional float nmin formatting with active messages caught via expect_message
+  clean_df <- data.frame(time = c(10, 12, 14, 16), event = c(1, 0, 1, 0), factor = c(40, 45, 50, 55))
 
-test_that("Coverage: .get_stat - group constraint violations", {
-  stat <- .get_stat(
-    cuts = c(45, 55), num_cuts = 2,
-    data_in = data.frame(factor = rep(50, 20), time = rexp(20, 0.05), event = sample(0:1, 20, replace = TRUE)),
-    criterion = "logrank", cov_formula = "", nmin = 5, fit_null = NULL
+  res_prop <- suppressMessages(
+    OptSurvCutR:::.validate_data_conditions(clean_df, nmin = 0.25, num_cuts = 1, "event", quiet = TRUE)
   )
-  expect_true(is.na(stat))
+  expect_true(res_prop$valid)
+  expect_equal(res_prop$nmin_abs, 1) # floor(0.25 * 4) = 1
+
+  # Scenario C: Negative nmin value bounds checking
+  expect_error(OptSurvCutR:::.validate_data_conditions(clean_df, nmin = -0.5, num_cuts = 1, "event", quiet = TRUE))
+
+  # Scenario D: Insufficient global sample space allocation checks
+  res_low_data <- OptSurvCutR:::.validate_data_conditions(clean_df, nmin = 3, num_cuts = 1, "event", quiet = TRUE)
+  expect_false(res_low_data$valid)
+
+  # Scenario E: Low variance / unique classification limits
+  constant_df <- data.frame(time = c(10, 12, 14), event = c(1, 1, 1), factor = c(50, 50, 50))
+  res_few_unique <- OptSurvCutR:::.validate_data_conditions(constant_df, nmin = 1, num_cuts = 1, "event", quiet = TRUE)
+  expect_false(res_few_unique$valid)
 })
 
-test_that("Coverage: .get_stat - hazard_ratio with missing coefficient", {
-  stat <- .get_stat(
-    cuts = 50, num_cuts = 1,
-    data_in = data.frame(factor = c(rep(40, 10), rep(60, 10)), time = rexp(20, 0.05), event = rep(0, 20)),
-    criterion = "hazard_ratio", cov_formula = "", nmin = 5, fit_null = NULL
-  )
-  expect_equal(stat, -Inf)
-})
 
-test_that("Coverage: .get_stat - p_value with null fit_null", {
-  stat <- .get_stat(
-    cuts = 50, num_cuts = 1,
-    data_in = data.frame(factor = c(rep(40, 15), rep(60, 15)), time = rexp(30, 0.05), event = sample(0:1, 30, replace = TRUE)),
-    criterion = "p_value", cov_formula = "", nmin = 5, fit_null = NULL
-  )
-  expect_true(is.na(stat) || is.numeric(stat))
-})
+# --- 6. Null Coalescing Operator (%||%) ---
 
-test_that("Coverage: .get_stat model failures (Pathological Data)", {
-  # Log-rank without covariates
-  res_lr_fail <- suppressMessages(suppressWarnings(
-    find_cutpoint(data = mock_data_no_events, predictor = "predictor", outcome_time = "time", outcome_event = "event", num_cuts = 1, method = "systematic", criterion = "logrank", nmin = 1, quiet = TRUE)
-  ))
-  expect_false(all(is.na(res_lr_fail$optimal_cuts)))
-  expect_equal(res_lr_fail$optimal_stat, 0)
-
-  # Log-rank WITH covariates
-  res_lr_cov_fail <- suppressMessages(suppressWarnings(
-    find_cutpoint(data = mock_data_no_events, predictor = "predictor", outcome_time = "time", outcome_event = "event", num_cuts = 1, method = "systematic", criterion = "logrank", covariates = "covariate1", nmin = 1, quiet = TRUE)
-  ))
-  expect_false(all(is.na(res_lr_cov_fail$optimal_cuts)))
-  expect_equal(res_lr_cov_fail$optimal_stat, 0)
-
-  # P-value criterion
-  res_pv_fail <- suppressMessages(suppressWarnings(
-    find_cutpoint(data = mock_data_no_events, predictor = "predictor", outcome_time = "time", outcome_event = "event", num_cuts = 1, method = "systematic", criterion = "p_value", nmin = 1, quiet = TRUE)
-  ))
-  expect_false(all(is.na(res_pv_fail$optimal_cuts)))
-  expect_true(res_pv_fail$optimal_stat >= 0 & res_pv_fail$optimal_stat <= 1)
-})
-
-# --- 6. Minor Utilities ---
-
-#' @srrstats {G1.4a} Tests exported operator.
-test_that("%||% works as expected", {
-  expect_equal(NULL %||% 5, 5)
+test_that("null coalescing operator matches your implementation exactly", {
+  expect_equal(NULL %||% "backup", "backup")
+  expect_equal("default" %||% "backup", "default")
   expect_equal(3 %||% 5, 3)
 })

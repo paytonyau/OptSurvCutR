@@ -1,7 +1,9 @@
 # Validate an Optimal Cut-point Using Bootstrapping
 
-Assesses cut-point stability from \[find_cutpoint()\] via bootstrap
-analysis, generating 95 survival (time-to-event) analysis.
+Assesses cut-point stability from
+[`find_cutpoint`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint.md)
+via bootstrap analysis, generating 95% confidence intervals. Streamlined
+for survival (time-to-event) analysis.
 
 ## Usage
 
@@ -14,29 +16,14 @@ validate_cutpoint(
   nmin = NULL,
   ...
 )
-
-# S3 method for class 'validate_cutpoint_result'
-print(x, ...)
-
-# S3 method for class 'validate_cutpoint_result'
-plot(x, ...)
-
-# S3 method for class 'validate_cutpoint_result'
-summary(
-  object,
-  show_descriptives = TRUE,
-  show_ci = TRUE,
-  show_params = TRUE,
-  plot.it = FALSE,
-  ...
-)
 ```
 
 ## Arguments
 
 - cutpoint_result:
 
-  An object from \[find_cutpoint()\].
+  An object from
+  [`find_cutpoint`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint.md).
 
 - num_replicates:
 
@@ -53,32 +40,28 @@ summary(
 
 - nmin:
 
-  Minimum group size for bootstrap runs. Defaults to 90 of original
-  \`nmin\` to reduce failures.
+  Minimum group size for bootstrap runs. Defaults to 90% of original
+  `nmin` to reduce failures.
 
 - ...:
 
-  Additional arguments passed to \[find_cutpoint()\] (e.g.,
-  \`pop.size\`, \`max.generations\` for genetic algorithm).
+  Additional arguments passed to
+  [`find_cutpoint`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint.md)
+  (e.g., `pop.size`, `max.generations` for genetic algorithm).
 
 ## Value
 
-An object of class \`validate_cutpoint_result\` with original cuts, 95
+An object of class `validate_cutpoint_result` with original cuts, 95%
+CIs, bootstrap distribution, and parameters.
 
 ## srrstats compliance
-
-.
-
-.
-
-.
 
 .
 
 ## References
 
 Efron, B. (1979). Bootstrap Methods: Another Look at the Jackknife.
-\*The Annals of Statistics\*, 7(1), 1–26.
+\*The Annals of Statistics\*, 7(1), 1-26.
 [doi:10.1214/aos/1176344552](https://doi.org/10.1214/aos/1176344552)
 
 Rota, M., Antolini, L., & Valsecchi, M. G. (2015). Optimal cut-point
@@ -93,20 +76,19 @@ definition in biomarkers: The case of censored failure time outcome.
 data(crc_virome)
 
 fit <- find_cutpoint(
-  data = head(crc_virome, 50),
-  predictor = "Alphapapillomavirus",
-  outcome_time = "time_months",
-  outcome_event = "status",
-  num_cuts = 1,
-  method = "systematic"
+    data = head(crc_virome, 50),
+    predictor = "Alphapapillomavirus",
+    outcome_time = "time_months",
+    outcome_event = "status",
+    num_cuts = 1,
+    method = "systematic"
 )
 #> ℹ Running systematic search for 1 cut-point(s)...
 #> ✔ Systematic search complete.
 
 if (!any(is.na(fit$optimal_cuts))) {
-  val <- validate_cutpoint(fit, num_replicates = 20, seed = 123)
-  summary(val)
-  plot(val)
+   val <- validate_cutpoint(fit, num_replicates = 20, seed = 123)
+   print(val)
 }
 #> ℹ Using random seed 123 for reproducibility.
 #> ℹ Bootstrap `nmin` not set. Using 18 (90% of original) to improve stability.
@@ -116,39 +98,18 @@ if (!any(is.na(fit$optimal_cuts))) {
 #> Cut-point Stability Analysis (Bootstrap)
 #> ----------------------------------------
 #> Original Optimal Cut-point(s): 3.764 
-#> 
-#> Bootstrap Distribution Summary
-#> -----------------------------
-#>      Cut  Mean    SD Median    Q1    Q3
-#> 25% Cut1 2.794 1.485   3.52 1.353 3.764
+#> Successful Replicates: 20 / 20 ( 100 %)
+#> Failed Replicates: 0 
 #> 
 #> 95% Confidence Intervals
 #> ------------------------
 #>       Lower Upper
 #> Cut 1 0.826 4.594
 #> 
-#> Validation Parameters
-#> ---------------------
-#> Replicates Requested: 20 
-#> Successful Replicates: 20 / 20 ( 100 %)
-#> Failed Replicates: 0 
-#> Cores Used: 1 
-#> Seed: 123 
-#> Minimum Group Size (nmin): 18 
-#> Method: systematic 
-#> Criterion: logrank 
-#> Covariates: None 
+#> Bootstrap Summary Statistics
+#> ---------------------------
+#>      Cut  Mean    SD Median    Q1    Q3
+#> 25% Cut1 2.794 1.485   3.52 1.353 3.764
 #> 
-#> 
-#> Stability Assessment:
-#> ---------------------
-#> Maximum CI Width (Relative to 10th-90th Percentile Range): 100.3%
-#> ✖ Model Status: UNSTABLE (Tier 4)
-#> High instability detected (100.3%)! The cut-point is highly sensitive to sample
-#> changes, indicating potential over-fitting to noise.
-#> ! The primary source of instability is Cut 1.
-#> ✖ Recommendation: Reduce `num_cuts` or increase `nmin`.
-#> See the Rescue Protocol: `vignette('troubleshooting', package = 'OptSurvCutR')`
-#> 
-
+#> Hint: Use `summary()` or `plot()` to visualise stability.
 ```

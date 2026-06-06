@@ -10,10 +10,10 @@ theme_optsurv(base_size = 14)
 \item{base_size}{Base font size, default is 14.}
 }
 \value{
-A `ggplot2` theme object.
+A \code{ggplot2} theme object.
 }
 \description{
-A clean, publication-ready `ggplot2` theme used as the standard
-aesthetic for all OptSurvCutR plots. Now features subtle light-grey
+A clean, publication-ready \code{ggplot2} theme used as the standard
+aesthetic for all OptSurvCutR plots. Features subtle light-grey
 background gridlines for high-precision tracing.
 }

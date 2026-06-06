@@ -2,20 +2,20 @@
 % Please edit documentation in R/plotting_functions.R
 \name{plot_landmark_stratification}
 \alias{plot_landmark_stratification}
-\title{Plot Landmark Stratification}
+\title{Plot Landmark Stratification Curves}
 \usage{
 plot_landmark_stratification(x, landmark = NULL, ...)
 }
 \arguments{
-\item{x}{A `find_cutpoint` result object.}
+\item{x}{A \code{find_cutpoint} result object.}
 
 \item{landmark}{Numeric value indicating the landmark milestone. If NULL,
-defaults to 20% of maximum follow-up.}
+defaults to 20\% of maximum follow-up data timelines.}
 
-\item{...}{Additional arguments passed down to internal rendering pipelines.}
+\item{...}{Additional arguments passed down to downstream rendering pipelines.}
 }
 \value{
-A ggsurvplot or ggplot object representing landmark stratification curves.
+A plot object representing landmark stratification curves.
 }
 \description{
 Computes and visualizes conditional survival probabilities for patients

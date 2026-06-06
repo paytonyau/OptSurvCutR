@@ -78,6 +78,7 @@
 #' @srrstats {G2.0} Validates `method`, `criterion`, `num_cuts`.
 #' @srrstats {G2.1} Type checks.
 #' @srrstats {G2.4b} `match.arg()` for controlled vocabularies.
+#' @srrstats {G2.4c} Conversion mechanisms explicitly account for logical vectors during argument verification.
 #' @srrstats {G2.0} `requireNamespace()` for optional `rgenoud`.
 #' @srrstats {G2.9} Column-name existence checks.
 #' @srrstats {G2.13} `cli_abort()` for invalid inputs.
@@ -148,6 +149,7 @@
 #' @section srrstats compliance:
 #' .
 #' @srrstats {RE2.1} `na.omit()` with explicit `NA` handling.
+#' @srrstats {RE2.2} Missing value processing parameters explicitly separate row omissions from complete missingness boundaries.
 #' @srrstats {G2.13} Checks for missing data (via NA removal).
 #' @srrstats {G1.4a} Internal use only (`@noRd`).
 #' @srrstats {G2.10} Ensures column extraction handles single columns
@@ -215,6 +217,7 @@
 #' @srrstats {G2.1} Event column must be numeric 0/1.
 #' @srrstats {G2.13} `cli_abort()` for invalid event data.
 #' @srrstats {G5.8} Edge cases (constant predictor, insufficient data).
+#' @srrstats {G5.8d} Intercepts zero-length groups or data rows falling below relative minimum cohort size allocations.
 #' @srrstats {G1.4a} Internal use only (`@noRd`).
 #'
 #' @noRd

@@ -123,10 +123,10 @@
 
 - **Unified S3 Plotting Router**: Overhauled the
   [`plot()`](https://rdrr.io/r/graphics/plot.default.html) method
-  (`plot.find_cutpoint()`). It now supports full `...` argument
-  passthrough to `survminer` functions for deep customization, and
-  includes a `return_data = TRUE` “escape hatch” to extract the raw,
-  stratified plotting data.
+  ([`plot.find_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/plot.find_cutpoint.md)).
+  It now supports full `...` argument passthrough to `survminer`
+  functions for deep customization, and includes a `return_data = TRUE`
+  “escape hatch” to extract the raw, stratified plotting data.
 - **Schoenfeld Diagnostic Plots & 2-Tier Alert**: Added
   `type = "diagnostic"` to automatically evaluate the proportional
   hazards assumption via
@@ -140,9 +140,8 @@
   stacked composite plot (powered by `patchwork`) showing both the
   predictor distribution and the resulting survival outcome curve in a
   single clinical snapshot.
-- **Interactive Web Widgets**: Introduced
-  [`optsurv_interactive()`](https://paytonyau.github.io/OptSurvCutR/reference/optsurv_interactive.md),
-  a wrapper function that converts any static OptSurvCutR plot into an
+- **Interactive Web Widgets**: Introduced `optsurv_interactive()`, a
+  wrapper function that converts any static OptSurvCutR plot into an
   interactive HTML widget via `plotly` (ideal for Vignettes and
   RMarkdown).
 - **Clinical Aesthetics**: Implemented

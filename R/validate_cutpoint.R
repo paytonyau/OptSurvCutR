@@ -1,73 +1,73 @@
 # ====================================================================
 # VALIDATION FUNCTION
 # Bootstraps cut-points for stability and confidence intervals.
-# ===================================================================
+# ====================================================================
+
 #' Validate an Optimal Cut-point Using Bootstrapping
 #'
 #' @description
-#' Assesses cut-point stability from [find_cutpoint()] via bootstrap
-#' analysis, generating 95% confidence intervals. Streamlined for
+#' Assesses cut-point stability from \code{\link{find_cutpoint}} via bootstrap
+#' analysis, generating 95\% confidence intervals. Streamlined for
 #' survival (time-to-event) analysis.
 #'
 #' @section srrstats compliance:
 #' .
 #' @srrstats {G1.0} Primary refs: Efron (1979), Rota et al. (2015).
-#' @srrstats {G2.0} Input object class validated with `inherits()`.
-#' @srrstats {G2.0a} Scalar parameters (`num_replicates`, `nmin`) checked.
-#' @srrstats {G2.1} Input types validated (`numeric`, `logical`, `integer`).
-#' @srrstats {G2.1a} `cutpoint_result` needs `optimal_cuts`, `parameters`.
-#' @srrstats {G2.2} `NA` in `optimal_cuts` triggers `cli_abort()`.
-#' @srrstats {RE2.1} `na.omit()` and `complete.cases()` used for replicate handling.
-#' @srrstats {G2.4a} `as.integer()` on `nmin`, `num_replicates`.
-#' @srrstats {G5.2} `tryCatch()` handles failed replicates gracefully.
-#' @srrstats {G5.5} Reproducible via `seed` (using `doRNG` for parallel).
-#' @srrstats {G2.13} `cli_abort()` for invalid inputs or missing data.
-#' @srrstats {G2.14a} `NA` in `optimal_cuts` aborts.
-#' @srrstats {G2.7} Accepts `data.frame` and `tibble` (validated via inherits).
+#' @srrstats {G2.0} Input object class validated with \code{inherits()}.
+#' @srrstats {G2.0a} Scalar parameters (\code{num_replicates}, \code{nmin}) checked.
+#' @srrstats {G2.1} Input types validated (\code{numeric}, \code{logical}, \code{integer}).
+#' @srrstats {G2.1a} \code{cutpoint_result} needs \code{optimal_cuts}, \code{parameters}.
+#' @srrstats {G2.2} \code{NA} in \code{optimal_cuts} triggers \code{cli_abort()}.
+#' @srrstats {RE2.1} \code{na.omit()} and \code{complete.cases()} used for replicate handling.
+#' @srrstats {G2.4a} \code{as.integer()} on \code{nmin}, \code{num_replicates}.
+#' @srrstats {G5.2} \code{tryCatch()} handles failed replicates gracefully.
+#' @srrstats {G5.5} Reproducible via \code{seed} (using \code{doRNG} for parallel).
+#' @srrstats {G2.13} \code{cli_abort()} for invalid inputs or missing data.
+#' @srrstats {G2.14a} \code{NA} in \code{optimal_cuts} aborts.
+#' @srrstats {G2.7} Accepts \code{data.frame} and \code{tibble} (validated via inherits).
 #' @srrstats {G5.2a} Handles <20 successful replicates with error.
 #' @srrstats {G5.8} Edge cases (insufficient n) checked pre-bootstrap.
-#' @srrstats {RE4.0} Returns class `validate_cutpoint_result`.
-#' @srrstats {RE4.3} Computes 95% Confidence Intervals via bootstrapping.
-#' @srrstats {RE4.17} `print()` method provided.
-#' @srrstats {RE4.18} `summary()` method provided.
-#' @srrstats {RE6.0} `plot()` method provided.
+#' @srrstats {RE4.0} Returns class \code{validate_cutpoint_result}.
+#' @srrstats {RE4.3} Computes 95\% Confidence Intervals via bootstrapping.
+#' @srrstats {RE4.17} \code{print()} method provided.
+#' @srrstats {RE4.18} \code{summary()} method provided.
+#' @srrstats {RE6.0} \code{plot()} method provided.
 #' @srrstats {RE1.3} Output retains original cut-points and parameters.
 #'
-#' @param cutpoint_result An object from [find_cutpoint()].
+#' @param cutpoint_result An object from \code{\link{find_cutpoint}}.
 #' @param num_replicates Number of bootstrap replicates. Default is 500.
 #' @param n_cores Number of CPU cores to use. Default is 1
 #' (sequential). Set to > 1 to enable parallel processing.
 #' @param seed Optional integer for reproducible results.
-#' @param nmin Minimum group size for bootstrap runs. Defaults to 90%
-#' of original `nmin` to reduce failures.
-#' @param ... Additional arguments passed to [find_cutpoint()]
-#' (e.g., `pop.size`, `max.generations` for genetic algorithm).
+#' @param nmin Minimum group size for bootstrap runs. Defaults to 90\%
+#' of original \code{nmin} to reduce failures.
+#' @param ... Additional arguments passed to \code{\link{find_cutpoint}}
+#' (e.g., \code{pop.size}, \code{max.generations} for genetic algorithm).
 #'
-#' @return An object of class `validate_cutpoint_result` with
-#' original cuts, 95% CIs, bootstrap distribution, and parameters.
+#' @return An object of class \code{validate_cutpoint_result} with
+#' original cuts, 95\% CIs, bootstrap distribution, and parameters.
 #'
 #' @examples
 #' # Fast validation on small data (runs in < 2 seconds)
 #' data(crc_virome)
 #'
 #' fit <- find_cutpoint(
-#'   data = head(crc_virome, 50),
-#'   predictor = "Alphapapillomavirus",
-#'   outcome_time = "time_months",
-#'   outcome_event = "status",
-#'   num_cuts = 1,
-#'   method = "systematic"
+#'     data = head(crc_virome, 50),
+#'     predictor = "Alphapapillomavirus",
+#'     outcome_time = "time_months",
+#'     outcome_event = "status",
+#'     num_cuts = 1,
+#'     method = "systematic"
 #' )
 #'
 #' if (!any(is.na(fit$optimal_cuts))) {
-#'   val <- validate_cutpoint(fit, num_replicates = 20, seed = 123)
-#'   summary(val)
-#'   plot(val)
+#'    val <- validate_cutpoint(fit, num_replicates = 20, seed = 123)
+#'    print(val)
 #' }
 #'
 #' @references
 #' Efron, B. (1979). Bootstrap Methods: Another Look at the
-#' Jackknife. *The Annals of Statistics*, 7(1), 1–26.
+#' Jackknife. *The Annals of Statistics*, 7(1), 1-26.
 #' \doi{10.1214/aos/1176344552}
 #'
 #' Rota, M., Antolini, L., & Valsecchi, M. G. (2015).
@@ -134,7 +134,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     ))
   }
 
-  # --- Handle nmin as integer or proportion (Consistent with other funcs) ---
+  # --- Handle nmin as integer or proportion ---
   if (nmin > 0 && nmin < 1) {
     nmin_abs <- floor(nmin * n)
     if (nmin_abs < 1) nmin_abs <- 1
@@ -161,39 +161,32 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   ))
   # --- 3. Setup Backend (Parallel or Sequential) ---
   if (n_cores < 1) n_cores <- 1
-  cores_to_use <- 1 # Default to sequential
+  cores_to_use <- 1
   if (n_cores > 1) {
-    cores_available <- parallel::detectCores() %||% 2
-    # Cap n_cores at available cores or number of replicates
+    cores_available <- parallel::detectCores()
+    if (is.na(cores_available) || is.null(cores_available)) cores_available <- 2
+
     cores_to_use <- min(cores_available - 1, n_cores, num_replicates)
     if (cores_to_use > 1) {
-      # Proceed with parallel
       if (!requireNamespace("doParallel", quietly = TRUE)) {
-        cli::cli_abort("Package 'doParallel' is required for parallel.")
+        cli::cli_abort("Package 'doParallel' is required for parallel execution.")
       }
-      if (.Platform$OS.type == "unix") {
-        # Mac/Linux/CRAN Servers: Zero-overhead shared memory
-        cl <- parallel::makeCluster(cores_to_use, type = "FORK")
-      } else {
-        # Windows: Standard Socket Cluster
-        cl <- parallel::makeCluster(cores_to_use, type = "PSOCK")
-      }
+      cl <- parallel::makeCluster(cores_to_use, type = "PSOCK")
       doParallel::registerDoParallel(cl)
       on.exit(parallel::stopCluster(cl), add = TRUE)
       cli::cli_alert_info(
-        "Running {num_replicates} replicates on {cores_to_use} core{?s}..."
+        "Running {num_replicates} replicates on {cores_to_use} cores..."
       )
 
       if (!is.null(seed)) {
         if (!requireNamespace("doRNG", quietly = TRUE)) {
           cli::cli_abort(
-            "Package 'doRNG' is required for reproducible parallel."
+            "Package 'doRNG' is required for reproducible parallel computation."
           )
         }
         doRNG::registerDoRNG()
       }
     } else {
-      # Fallback to sequential if logic resulted in 1
       cores_to_use <- 1
     }
   }
@@ -210,8 +203,6 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   }
 
   i <- NULL
-
-  # FIX: Extract '...' OUTSIDE the parallel loop to prevent closure crashes
   extra_args <- list(...)
 
   bootstrap_results <- foreach::foreach(
@@ -243,12 +234,9 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
       extra_args
     )
 
-    # FIX: Revert to the exported find_cutpoint() for strict namespace safety.
-    # Wrapped in suppressWarnings to prevent parallel console spam on tied data.
     res <- tryCatch(
-      suppressWarnings(suppressMessages(do.call(find_cutpoint, final_args))),
+      suppressWarnings(suppressMessages(do.call(OptSurvCutR::find_cutpoint, final_args))),
       error = function(e) {
-        if (cores_to_use == 1) cli::cli_inform("Bootstrap replicate {i} failed: {e$message}")
         return(NULL)
       }
     )
@@ -271,6 +259,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   colnames(bootstrap_matrix) <- paste0("Cut", 1:num_cuts)
   successful_reps <- sum(stats::complete.cases(bootstrap_matrix))
   failed_reps <- num_replicates - successful_reps
+
   if (failed_reps > 0) {
     cli::cli_alert_warning(
       "{failed_reps} of {num_replicates} replicates failed."
@@ -284,7 +273,6 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   }
   cli::cli_alert_success("{successful_reps} replicates completed.")
   if (successful_reps / num_replicates < 0.8 && successful_reps > 0) {
-    ## The test uses suppressWarnings() – base warning bypasses it
     warning(
       "Success rate of model fitting is below 80%. CIs may be unreliable.",
       call. = FALSE

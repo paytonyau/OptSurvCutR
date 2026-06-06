@@ -51,7 +51,7 @@ navbar:
       text: Vignettes
       menu:
         - text: "CRC Virome Workflow"
-          href: articles/crc_virome.html
+          href: articles/crc_virome.html  # Updated to match the processed filename
         - text: "Bilirubin Workflow"
           href: articles/bilirubin.html
         - text: "Q&A and Troubleshooting"
@@ -79,7 +79,7 @@ reference:
       - validate_cutpoint
 
   - title: "Plotting & Diagnostics"
-    desc: "The S3 plotting suite for clinical dashboards and model verification."
+    desc: "The S3 plotting suite for clinical dashboards, verification, and interactive web reporting."
     contents:
       - plot.find_cutpoint
       - plot.find_cutpoint_number_result
@@ -88,11 +88,6 @@ reference:
       - plot_optimisation_curve
       - plot_cutpoint_residuals
       - plot_landmark_stratification
-
-  - title: "Interactive Widgets & Aesthetics"
-    desc: "Tools for dynamic web-reporting and consistent clinical themes."
-    contents:
-      - optsurv_interactive
       - theme_optsurv
 
   - title: "Inspecting & Reporting Results"
@@ -130,7 +125,7 @@ sidebar:
       title: Vignettes
       links:
         - text: "CRC Virome Workflow"
-          href: articles/crc_virome.html
+          href: articles/crc_virome.html  # Updated to match the processed filename
         - text: "Bilirubin Workflow"
           href: articles/bilirubin.html
         - text: "Q&A and Troubleshooting"

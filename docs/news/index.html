@@ -107,13 +107,13 @@
 <div class="section level3">
 <h3 id="advanced-visualisation--reporting-new-features-0-9-8">Advanced Visualisation &amp; Reporting (New Features)<a class="anchor" aria-label="anchor" href="#advanced-visualisation--reporting-new-features-0-9-8"></a></h3>
 <ul><li>
-<strong>Unified S3 Plotting Router</strong>: Overhauled the <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> method (<code>plot.find_cutpoint()</code>). It now supports full <code>...</code> argument passthrough to <code>survminer</code> functions for deep customization, and includes a <code>return_data = TRUE</code> “escape hatch” to extract the raw, stratified plotting data.</li>
+<strong>Unified S3 Plotting Router</strong>: Overhauled the <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> method (<code><a href="../reference/plot.find_cutpoint.html">plot.find_cutpoint()</a></code>). It now supports full <code>...</code> argument passthrough to <code>survminer</code> functions for deep customization, and includes a <code>return_data = TRUE</code> “escape hatch” to extract the raw, stratified plotting data.</li>
 <li>
 <strong>Schoenfeld Diagnostic Plots &amp; 2-Tier Alert</strong>: Added <code>type = "diagnostic"</code> to automatically evaluate the proportional hazards assumption via <code><a href="https://rdrr.io/pkg/survival/man/cox.zph.html" class="external-link">survival::cox.zph()</a></code> and plot the residuals. The <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> function now includes a 2-Tier diagnostic alert to warn users if predictive power shifts significantly over time, gracefully handling singular matrix edge cases.</li>
 <li>
 <strong>Dashboard View</strong>: Added <code>type = "all"</code> to generate a comprehensive, stacked composite plot (powered by <code>patchwork</code>) showing both the predictor distribution and the resulting survival outcome curve in a single clinical snapshot.</li>
 <li>
-<strong>Interactive Web Widgets</strong>: Introduced <code><a href="../reference/optsurv_interactive.html">optsurv_interactive()</a></code>, a wrapper function that converts any static OptSurvCutR plot into an interactive HTML widget via <code>plotly</code> (ideal for Vignettes and RMarkdown).</li>
+<strong>Interactive Web Widgets</strong>: Introduced <code>optsurv_interactive()</code>, a wrapper function that converts any static OptSurvCutR plot into an interactive HTML widget via <code>plotly</code> (ideal for Vignettes and RMarkdown).</li>
 <li>
 <strong>Clinical Aesthetics</strong>: Implemented <code><a href="../reference/theme_optsurv.html">theme_optsurv()</a></code> and defaulted to colorblind-safe palettes (e.g., “nejm”) to enforce a unified, publication-ready aesthetic across all outputs.</li>
 </ul></div>

@@ -118,43 +118,45 @@ plot(x, y, ...)
 
 - ...:
 
-  Additional arguments passed to \`rgenoud\`.
+  Additional arguments passed down to downstream rendering pipelines.
 
 - x:
 
-  An object from \[find_cutpoint_number()\].
+  A `find_cutpoint_number_result` object.
 
 - object:
 
-  An object from \[find_cutpoint_number()\].
+  A `find_cutpoint_number_result` object for analysis overview.
 
 - show_comparison_table:
 
-  Logical. Show model comparison table?
+  Logical. Show information criteria comparison matrix?
 
 - show_best_model_details:
 
-  Logical. Show details for best model?
+  Logical. Show descriptive layers for the optimal selection?
 
 - show_group_counts:
 
-  Logical. Show group counts for best model?
+  Logical. Show categorized patient split breakdowns?
 
 - show_medians:
 
-  Logical. Show median survival for best model?
+  Logical. Show Kaplan-Meier time threshold tracking?
 
 - show_ph_test:
 
-  Logical. Show Proportional Hazards assumption test?
+  Logical. Display Schoenfeld residuals test?
 
 - plot.it:
 
-  Logical. Display model selection plot?
+  Logical. If `TRUE`, automatically prints the information criterion
+  line chart.
 
 - y:
 
-  Unused.
+  Unused mandatory base parameter required for graphic dispatcher
+  pairing inheritance.
 
 ## Value
 

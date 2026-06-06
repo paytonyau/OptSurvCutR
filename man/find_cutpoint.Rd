@@ -4,7 +4,6 @@
 \alias{find_cutpoint}
 \alias{print.find_cutpoint}
 \alias{summary.find_cutpoint}
-\alias{plot.find_cutpoint}
 \title{Find Optimal Cut-points for Survival Data}
 \usage{
 find_cutpoint(
@@ -37,15 +36,6 @@ find_cutpoint(
   show_medians = TRUE,
   show_ph_test = TRUE,
   show_params = TRUE,
-  ...
-)
-
-\method{plot}{find_cutpoint}(
-  x,
-  type = c("outcome", "distribution", "forest", "surface", "trajectory", "diagnostic",
-    "landmark"),
-  return_data = FALSE,
-  landmark = NULL,
   ...
 )
 }
@@ -88,7 +78,21 @@ tests every 1st percentile). If `NULL`, tests all unique values. Default is 0.01
 
 \item{quiet}{Logical. If `TRUE`, suppresses final print.}
 
-\item{...}{Additional arguments passed to the genetic algorithm.}
+\item{...}{Additional arguments passed down to downstream rendering pipelines.}
+
+\item{x}{A find_cutpoint result object.}
+
+\item{object}{A find_cutpoint result object for summary evaluation.}
+
+\item{show_model}{Logical. Whether to print the full Cox model summary frame.}
+
+\item{show_group_counts}{Logical. Whether to show stratified sample split counts.}
+
+\item{show_medians}{Logical. Whether to display Kaplan-Meier median tracking times.}
+
+\item{show_ph_test}{Logical. Display the proportional hazards validation check.}
+
+\item{show_params}{Logical. Print original baseline parameters.}
 }
 \value{
 An object of class `find_cutpoint` containing the
@@ -108,9 +112,6 @@ Systematic search is slow for `num_cuts > 2`; use `genetic`.
 Core vector partitions are calculated in compiled C++ via `Rcpp` for optimal performance.
 }
 \section{srrstats compliance}{
-
-.
-
 
 .
 

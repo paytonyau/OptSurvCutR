@@ -7,12 +7,12 @@
 plot_cutpoint_residuals(x, ...)
 }
 \arguments{
-\item{x}{A `find_cutpoint` result object.}
+\item{x}{A \code{find_cutpoint} result object.}
 
 \item{...}{Unused optional arguments.}
 }
 \value{
-A publication-ready `ggplot` canvas frame.
+A publication-ready \code{ggplot} canvas frame.
 }
 \description{
 High-tier multi-panel diagnostic dashboard tracking the proportional hazards

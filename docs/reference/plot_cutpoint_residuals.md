@@ -13,7 +13,7 @@ plot_cutpoint_residuals(x, ...)
 
 - x:
 
-  A \`find_cutpoint\` result object.
+  A `find_cutpoint` result object.
 
 - ...:
 
@@ -21,4 +21,4 @@ plot_cutpoint_residuals(x, ...)
 
 ## Value
 
-A publication-ready \`ggplot\` canvas frame.
+A publication-ready `ggplot` canvas frame.

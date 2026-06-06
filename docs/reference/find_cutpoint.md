@@ -43,16 +43,6 @@ summary(
   show_params = TRUE,
   ...
 )
-
-# S3 method for class 'find_cutpoint'
-plot(
-  x,
-  type = c("outcome", "distribution", "forest", "surface", "trajectory", "diagnostic",
-    "landmark"),
-  return_data = FALSE,
-  landmark = NULL,
-  ...
-)
 ```
 
 ## Arguments
@@ -133,7 +123,35 @@ plot(
 
 - ...:
 
-  Additional arguments passed to the genetic algorithm.
+  Additional arguments passed down to downstream rendering pipelines.
+
+- x:
+
+  A find_cutpoint result object.
+
+- object:
+
+  A find_cutpoint result object for summary evaluation.
+
+- show_model:
+
+  Logical. Whether to print the full Cox model summary frame.
+
+- show_group_counts:
+
+  Logical. Whether to show stratified sample split counts.
+
+- show_medians:
+
+  Logical. Whether to display Kaplan-Meier median tracking times.
+
+- show_ph_test:
+
+  Logical. Display the proportional hazards validation check.
+
+- show_params:
+
+  Logical. Print original baseline parameters.
 
 ## Value
 
@@ -149,8 +167,6 @@ optimisation. Systematic search is slow for \`num_cuts \> 2\`; use
 \`Rcpp\` for optimal performance.
 
 ## srrstats compliance
-
-.
 
 .
 

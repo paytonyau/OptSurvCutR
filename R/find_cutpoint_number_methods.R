@@ -6,7 +6,9 @@
 #' @rdname find_cutpoint_number
 #' @section srrstats compliance:
 #' .
-#' @srrstats {RE4.17} `print()` method provided.
+#' @srrstats {RE4.17} \code{print()} method provided.
+#' @param x A \code{find_cutpoint_number_result} object.
+#' @param ... Additional arguments passed down to downstream rendering pipelines.
 #' @export
 print.find_cutpoint_number_result <- function(x, ...) {
   cli::cli_h1("Optimal Cut-point Number Analysis")
@@ -72,20 +74,23 @@ print.find_cutpoint_number_result <- function(x, ...) {
   invisible(x)
 }
 
-
-#' @param show_comparison_table Logical. Show model comparison table?
-#' @param show_best_model_details Logical. Show details for best model?
-#' @param show_group_counts Logical. Show group counts for best model?
-#' @param show_medians Logical. Show median survival for best model?
-#' @param show_ph_test Logical. Show Proportional Hazards assumption test?
-#' @param plot.it Logical. Display model selection plot?
 #' @rdname find_cutpoint_number
 #' @section srrstats compliance:
 #' .
-#' @srrstats {RE4.18} `summary()` method provided.
-#' @srrstats {RE1.3} PH diagnostics via `cox.zph` in `summary()`.
-#' @srrstats {RE1.3a} `summary()` includes PH test results.
-#' @srrstats {RE2.0} Estimates/SEs from `coxph` in `summary()`.
+#' @srrstats {RE4.18} \code{summary()} method provided.
+#' @srrstats {RE1.3} PH diagnostics via \code{cox.zph} in \code{summary()}.
+#' @srrstats {RE1.3a} \code{summary()} includes PH test results.
+#' @srrstats {RE2.0} Estimates/SEs from \code{coxph} in \code{summary()}.
+#' @param object A \code{find_cutpoint_number_result} object for analysis overview.
+#' @param show_comparison_table Logical. Show information criteria comparison matrix?
+#' @param show_best_model_details Logical. Show descriptive layers for the optimal selection?
+#' @param show_group_counts Logical. Show categorized patient split breakdowns?
+#' @param show_medians Logical. Show Kaplan-Meier time threshold tracking?
+#' @param show_ph_test Logical. Display Schoenfeld residuals test?
+#' @param plot.it Logical. If \code{TRUE}, automatically prints the information criterion line chart.
+#' @param ... Additional arguments passed down to downstream rendering pipelines.
+#' @importFrom stats as.formula aggregate symnum na.pass
+#' @importFrom survival Surv coxph cox.zph survfit
 #' @export
 summary.find_cutpoint_number_result <- function(
     object, show_comparison_table = TRUE,
@@ -147,7 +152,6 @@ summary.find_cutpoint_number_result <- function(
     cov_part <- if (!is.null(object$parameters$covariates)) paste(" +", paste(object$parameters$covariates, collapse = " + ")) else ""
 
     if (num_cuts > 0) {
-      # CRAN SAFEGUARD: Unique cuts to prevent breaks error
       safe_cuts <- unique(best_cuts_vals)
       num_safe_groups <- length(safe_cuts) + 1
 
@@ -179,11 +183,9 @@ summary.find_cutpoint_number_result <- function(
             surv_df$Group <- gsub("group=", "", rownames(surv_df))
           }
 
-          # CRAN SAFEGUARD: Only extract columns that successfully generated
           target_cols <- intersect(c("Group", "median", "0.95LCL", "0.95UCL"), names(surv_df))
           cohort_df <- merge(cohort_df, surv_df[, target_cols, drop = FALSE], by = "Group", all.x = TRUE)
 
-          # Fallbacks if columns were missing
           if (!"median" %in% names(cohort_df)) cohort_df$median <- NA
           if (!"0.95LCL" %in% names(cohort_df)) cohort_df$`0.95LCL` <- NA
           if (!"0.95UCL" %in% names(cohort_df)) cohort_df$`0.95UCL` <- NA
@@ -226,9 +228,9 @@ summary.find_cutpoint_number_result <- function(
           P_Value = round(coefs[, "Pr(>|z|)"], 3)
         )
 
-        cox_df$Signif <- as.character(symnum(cox_df$P_Value, corr = FALSE, na = FALSE,
-                                             cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1),
-                                             symbols = c("***", "**", "*", ".", " ")))
+        cox_df$Signif <- as.character(stats::symnum(cox_df$P_Value, corr = FALSE, na = FALSE,
+                                                    cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1),
+                                                    symbols = c("***", "**", "*", ".", " ")))
 
         print(cox_df, row.names = FALSE, right = TRUE)
         cat("\n")
@@ -251,11 +253,9 @@ summary.find_cutpoint_number_result <- function(
         global_p <- if ("GLOBAL" %in% rownames(zph_table)) zph_table["GLOBAL", "p"] else zph_table[nrow(zph_table), "p"]
 
         if (!is.na(global_p) && global_p < 0.05) {
-          # TIER 2: Hybrid Insight Message
           cli::cli_alert_info("Insight: The hazard ratios appear to fluctuate over time (Global p = {.val {signif(global_p, 3)}}).")
           cli::cli_text("The cut-points successfully separate the subjects, but the relative event risk between these cohorts likely evolves as follow-up time increases.")
         } else if (!is.na(global_p)) {
-          # TIER 1: Hybrid Success Message
           cli::cli_alert_success("Passed: The proportional hazards assumption holds across the follow-up period (Global p = {.val {signif(global_p, 3)}}).")
         }
       }
@@ -295,8 +295,9 @@ summary.find_cutpoint_number_result <- function(
 #' @rdname find_cutpoint_number
 #' @section srrstats compliance:
 #' .
-#' @srrstats {RE6.0} `plot()` method provided.
-#' @srrstats {RE6.2} `plot()` visualises model selection metric vs cuts.
+#' @srrstats {RE6.0} \code{plot()} method provided.
+#' @srrstats {RE6.2} \code{plot()} visualises model selection metric vs cuts.
+#' @param y Unused mandatory base parameter required for graphic dispatcher pairing inheritance.
 #' @export
 plot.find_cutpoint_number_result <- function(x, y, ...) {
   results <- x$results
@@ -321,7 +322,6 @@ plot.find_cutpoint_number_result <- function(x, y, ...) {
   best_point_idx <- which.min(y_values)
   best_num_cuts <- plot_data$num_cuts[best_point_idx]
 
-  # CRAN SAFEGUARD: Avoid tidyverse global variable warnings by using base mapping
   p <- ggplot2::ggplot(plot_data, ggplot2::aes(
     x = num_cuts,
     y = !!ggplot2::sym(criterion_text)
@@ -345,7 +345,7 @@ plot.find_cutpoint_number_result <- function(x, y, ...) {
       x = "Number of Cut-points",
       y = toupper(criterion_text)
     ) +
-    ggplot2::theme_minimal(base_size = 14) +
+    theme_optsurv() +
     ggplot2::theme(plot.subtitle = ggplot2::element_text(size = 10))
 
   return(p)

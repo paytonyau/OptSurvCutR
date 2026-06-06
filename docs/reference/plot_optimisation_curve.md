@@ -14,7 +14,7 @@ plot_optimisation_curve(cutpoint_result, ...)
 
 - cutpoint_result:
 
-  A \`find_cutpoint\` object.
+  A `find_cutpoint` object.
 
 - ...:
 
@@ -22,4 +22,8 @@ plot_optimisation_curve(cutpoint_result, ...)
 
 ## Value
 
-A \`ggplot\` object.
+A `ggplot` object.
+
+## srrstats compliance
+
+.

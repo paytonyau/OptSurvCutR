@@ -82,25 +82,25 @@ find_cutpoint_number(
 
 \item{use_cpp}{Logical. Automatically checks and calls compiled C++ routines via `Rcpp`. Default is `TRUE`.}
 
-\item{...}{Additional arguments passed to `rgenoud`.}
+\item{...}{Additional arguments passed down to downstream rendering pipelines.}
 
-\item{x}{An object from [find_cutpoint_number()].}
+\item{x}{A \code{find_cutpoint_number_result} object.}
 
-\item{object}{An object from [find_cutpoint_number()].}
+\item{object}{A \code{find_cutpoint_number_result} object for analysis overview.}
 
-\item{show_comparison_table}{Logical. Show model comparison table?}
+\item{show_comparison_table}{Logical. Show information criteria comparison matrix?}
 
-\item{show_best_model_details}{Logical. Show details for best model?}
+\item{show_best_model_details}{Logical. Show descriptive layers for the optimal selection?}
 
-\item{show_group_counts}{Logical. Show group counts for best model?}
+\item{show_group_counts}{Logical. Show categorized patient split breakdowns?}
 
-\item{show_medians}{Logical. Show median survival for best model?}
+\item{show_medians}{Logical. Show Kaplan-Meier time threshold tracking?}
 
-\item{show_ph_test}{Logical. Show Proportional Hazards assumption test?}
+\item{show_ph_test}{Logical. Display Schoenfeld residuals test?}
 
-\item{plot.it}{Logical. Display model selection plot?}
+\item{plot.it}{Logical. If \code{TRUE}, automatically prints the information criterion line chart.}
 
-\item{y}{Unused.}
+\item{y}{Unused mandatory base parameter required for graphic dispatcher pairing inheritance.}
 }
 \value{
 An S3 object (`find_cutpoint_number_result`) with

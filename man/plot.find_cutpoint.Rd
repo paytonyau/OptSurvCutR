@@ -14,15 +14,15 @@
 )
 }
 \arguments{
-\item{x}{A `find_cutpoint` result object.}
+\item{x}{A \code{find_cutpoint} result object.}
 
-\item{type}{Plot framework type: `"outcome"`, `"distribution"`, `"forest"`,
-`"surface"`, `"trajectory"`, `"diagnostic"`, or `"landmark"`.}
+\item{type}{Plot framework type: \code{"outcome"}, \code{"distribution"}, \code{"forest"},
+\code{"surface"}, \code{"trajectory"}, \code{"diagnostic"}, or \code{"landmark"}.}
 
-\item{return_data}{Logical. If `TRUE`, exits the router early and returns the
+\item{return_data}{Logical. If \code{TRUE}, exits the router early and returns the
 assigned underlying data frame template.}
 
-\item{landmark}{Numeric. The operational milestone timestamp used if `type = "landmark"`.}
+\item{landmark}{Numeric. The operational milestone timestamp used if \code{type = "landmark"}.}
 
 \item{...}{Additional arguments passed down to downstream rendering pipelines.}
 }
@@ -31,3 +31,8 @@ Unified plotting dispatch network routing to clinical survival curves,
 predictor density distributions, hazard ratio forest charts, multi-dimensional
 objective surfaces, or conditional landmark stratification assets.
 }
+\section{srrstats compliance}{
+
+.
+}
+

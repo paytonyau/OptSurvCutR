@@ -3,10 +3,20 @@
 # Print, Summary, and Plot methods for all 'validate_cutpoint' objects
 # ===================================================================
 
-#' @rdname validate_cutpoint
+#' Print Method for Bootstrap Validation Results
+#'
+#' @name print.validate_cutpoint_result
+#' @aliases print.validate_cutpoint_result
+#' @description Formats and displays an operational runtime summary of a compiled
+#' \code{validate_cutpoint_result} object canvas.
+#'
+#' @param x A \code{validate_cutpoint_result} object.
+#' @param ... Additional arguments passed down to downstream rendering pipelines.
+#'
+#' @return The input object invisibly.
 #' @section srrstats compliance:
 #' .
-#' @srrstats {RE4.17} `print()` shows CI and success rate.
+#' @srrstats {RE4.17} \code{print()} shows CI and success rate.
 #' @export
 print.validate_cutpoint_result <- function(x, ...) {
   cat("Cut-point Stability Analysis (Bootstrap)\n")
@@ -28,12 +38,25 @@ print.validate_cutpoint_result <- function(x, ...) {
   summary_df[, numeric_cols] <- round(summary_df[, numeric_cols], 3)
   print(summary_df)
   cat("\nHint: Use `summary()` or `plot()` to visualise stability.\n")
+  invisible(x)
 }
 
-#' @rdname validate_cutpoint
+#' Plot Bootstrap Threshold Distributions
+#'
+#' @name plot.validate_cutpoint_result
+#' @aliases plot.validate_cutpoint_result
+#' @description Generates a density plot map visualizing the empirical sampling
+#' distributions of optimal cut-points derived from bootstrap runs.
+#'
+#' @param x A \code{validate_cutpoint_result} object.
+#' @param ... Additional arguments passed down to downstream rendering pipelines.
+#'
+#' @return A \code{ggplot2} graphics canvas object.
 #' @section srrstats compliance:
 #' .
 #' @srrstats {RE6.0} Plot method provided for bootstrap distribution.
+#' @importFrom tidyr pivot_longer everything
+#' @importFrom ggplot2 ggplot aes geom_density geom_vline labs theme_minimal facet_wrap
 #' @export
 plot.validate_cutpoint_result <- function(x, ...) {
   dist_data <- x$bootstrap_distribution
@@ -65,10 +88,25 @@ plot.validate_cutpoint_result <- function(x, ...) {
   return(p)
 }
 
-#' @rdname validate_cutpoint
+#' Summary of Bootstrap Stability Validation
+#'
+#' @name summary.validate_cutpoint_result
+#' @aliases summary.validate_cutpoint_result
+#' @description Calculates precision and boundary validity widths to route the
+#' validation runs into an automated multi-tier clinical suitability score.
+#'
+#' @param object A \code{validate_cutpoint_result} object.
+#' @param show_descriptives Logical. Show complete distribution descriptives?
+#' @param show_ci Logical. Print 95\% Confidence Interval boundaries?
+#' @param show_params Logical. Display execution tracking parameters?
+#' @param plot.it Logical. If \code{TRUE}, automatically prints the sampling line chart.
+#' @param ... Additional arguments passed down to downstream rendering pipelines.
+#'
+#' @return The validation object invisibly.
 #' @section srrstats compliance:
 #' .
 #' @srrstats {RE4.18} `summary()` shows descriptives, CI, params, and potential over-fitting warnings.
+#' @importFrom stats quantile
 #' @export
 summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE, show_ci = TRUE, show_params = TRUE, plot.it = FALSE, ...) {
   cat("Cut-point Stability Analysis (Bootstrap)\n")
@@ -113,10 +151,9 @@ summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE, s
   }
 
   # ===================================================================
-  # 3-TIER STABILITY ASSESSMENT (10th-90th Percentile & Override)
+  # 4-TIER STABILITY ASSESSMENT ENGINE
   # ===================================================================
 
-  # 1. Safely calculate the 10th-90th Percentile spread
   if (!is.null(object$userdata) && !is.null(object$userdata$factor)) {
     p10 <- stats::quantile(object$userdata$factor, 0.10, na.rm = TRUE)
     p90 <- stats::quantile(object$userdata$factor, 0.90, na.rm = TRUE)
@@ -129,7 +166,6 @@ summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE, s
     data_spread <- NA
   }
 
-  # 2. Extract medians
   cut_names <- rownames(object$confidence_intervals)
   medians <- vapply(cut_names, function(n) {
     clean_n <- gsub("[^0-9]", "", n)
@@ -138,43 +174,35 @@ summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE, s
     object$boot_summary[[match_idx]]$median
   }, FUN.VALUE = numeric(1))
 
-  # Failsafe: If the spread is 0, missing, or Infinite, fall back to the magnitude of the medians
   if (is.na(data_spread) || is.infinite(data_spread) || data_spread <= 0) {
     data_spread <- suppressWarnings(max(abs(medians), na.rm = TRUE))
     if (data_spread == 0 || is.infinite(data_spread)) data_spread <- 1
   }
 
-  # 3. Calculate relative widths using the safe 80% spread
   lower_ci <- object$confidence_intervals$Lower
   upper_ci <- object$confidence_intervals$Upper
 
   relative_widths <- (upper_ci - lower_ci) / data_spread
   max_rciw <- suppressWarnings(max(relative_widths, na.rm = TRUE))
 
-  # Prevent multiplying by NA/Inf
   if (is.finite(max_rciw)) {
     stability_pct <- round(max_rciw * 100, 1)
   } else {
     stability_pct <- NA
   }
 
-  # Safely extract the worst cut name
   worst_cut_name <- "Unknown Cut"
   valid_idx <- which.max(relative_widths)
   if (length(valid_idx) > 0) {
     worst_cut_name <- rownames(object$confidence_intervals)[valid_idx]
   }
 
-  # 4. Check for Biological Override (Non-overlapping CIs)
   is_perfectly_separated <- FALSE
   if (nrow(object$confidence_intervals) > 1) {
     is_perfectly_separated <- TRUE
-
-    # Safe sort: Order by the lower bound to ensure correct [i] vs [i+1] comparison
     ci_ordered <- object$confidence_intervals[order(object$confidence_intervals$Lower), ]
 
     for (i in seq_len(nrow(ci_ordered) - 1)) {
-      # Safely handle NAs in the overlap check
       if (is.na(ci_ordered$Upper[i]) || is.na(ci_ordered$Lower[i + 1])) {
         is_perfectly_separated <- FALSE
         break
@@ -186,80 +214,50 @@ summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE, s
     }
   }
 
-  # 5. Print the Final Assessment
   cat("\nStability Assessment:\n")
   cat("---------------------\n")
 
   if (!is.finite(max_rciw) || is.na(stability_pct)) {
     cli::cli_alert_warning("Stability could not be calculated (missing or infinite CI data).")
-
   } else {
     cli::cli_text("Maximum CI Width (Relative to 10th-90th Percentile Range): {.strong {stability_pct}%}\n")
 
-    # Determine structural properties for the 4-Tier Logic
     is_multi_cut <- nrow(object$confidence_intervals) > 1
     has_overlap <- is_multi_cut && !is_perfectly_separated
     has_distinct_separation <- is_multi_cut && is_perfectly_separated
 
     if (max_rciw < 0.30) {
       if (has_overlap) {
-        # TIER 3: OVERLAP DOWNGRADE (Extremely tight variance, but they still overlap)
         cli::cli_alert_warning("Model Status: CAUTION (Tier 3) - OVERLAP DOWNGRADE")
         cli::cli_text("The mathematical variance is very low ({stability_pct}%), but the Confidence Intervals overlap.")
-        cli::cli_text("This indicates that while the thresholds are mathematically stable, the resulting risk cohorts blend together in the 'grey zones'.")
         cli::cli_bullets(c(
-          "*" = "If distinct separation is required for decision-making, consider reducing {.arg num_cuts}.",
-          "*" = "If exploratory, this model is acceptable but should be interpreted with caution in the overlapping ranges."
+          "*" = "Consider reducing {.arg num_cuts} if distinct separation is required for clinical application."
         ))
       } else {
-        # TRUE TIER 1: OPTIMAL
         cli::cli_alert_success("Model Status: OPTIMAL (Tier 1)")
         cli::cli_text("The thresholds are highly consistent across samples with clean separation between risk cohorts.")
       }
-
     } else if (max_rciw >= 0.30 && max_rciw <= 0.60) {
       if (has_distinct_separation) {
-        # TIER 2: DISTINCT (Moderate Variance, Zero Overlap)
         cli::cli_alert_success("Model Status: DISTINCT (Tier 2)")
-        cli::cli_text("The relative mathematical variance is moderate ({stability_pct}%), but the 95% Confidence Intervals for your cut-points do not overlap.")
-        cli::cli_text("This indicates the algorithm found mathematically distinct subpopulations despite exact threshold variance.")
-      } else if (has_overlap) {
-        # TIER 3: CAUTION (Moderate Variance, Overlapping)
+        cli::cli_text("The relative mathematical variance is moderate ({stability_pct}%), but 95% Confidence Intervals do not overlap.")
+      } else {
         cli::cli_alert_warning("Model Status: CAUTION (Tier 3)")
         cli::cli_text("Moderate instability detected ({stability_pct}%), and Confidence Intervals overlap.")
-        cli::cli_text("This indicates that the resulting risk cohorts blend together in the 'grey zones'.")
-        cli::cli_bullets(c(
-          "*" = "If distinct separation is required for decision-making, consider reducing {.arg num_cuts}.",
-          "*" = "If exploratory, this model is acceptable but should be interpreted with caution in the overlapping ranges."
-        ))
-      } else {
-        # TIER 3: CAUTION (Single Cut Model)
-        cli::cli_alert_warning("Model Status: CAUTION (Tier 3)")
-        cli::cli_text("Moderate instability detected ({stability_pct}%). The threshold is sensitive to sample variance but remains within an acceptable range.")
       }
-
     } else {
-      # max_rciw > 0.60
       if (has_distinct_separation) {
-        # TIER 2: DISTINCT (High Variance Override, Zero Overlap)
         cli::cli_alert_success("Model Status: DISTINCT (Tier 2) - SEPARATION OVERRIDE")
-        cli::cli_text("The relative mathematical variance is high ({stability_pct}%), but the 95% Confidence Intervals for your cut-points do not overlap.")
-        cli::cli_text("This indicates the algorithm found mathematically distinct, highly stable subpopulations despite a narrow data range.")
+        cli::cli_text("The relative mathematical variance is high ({stability_pct}%), but 95% Confidence Intervals do not overlap.")
       } else {
-        # TIER 4: UNSTABLE (High Variance, Overlapping or Single Cut)
         cli::cli_alert_danger("Model Status: UNSTABLE (Tier 4)")
-        if (has_overlap) {
-          cli::cli_text("High instability detected ({stability_pct}%)! The cut-points are highly sensitive to sample changes and overlap significantly, indicating potential over-fitting to noise.")
-        } else {
-          cli::cli_text("High instability detected ({stability_pct}%)! The cut-point is highly sensitive to sample changes, indicating potential over-fitting to noise.")
-        }
         cli::cli_bullets(c(
           "!" = "The primary source of instability is {.strong {worst_cut_name}}.",
-          "x" = "Recommendation: Reduce {.arg num_cuts} or increase {.arg nmin}.",
-          "->" = "See the Rescue Protocol: {.code vignette('troubleshooting', package = 'OptSurvCutR')}"
+          "x" = "Recommendation: Reduce {.arg num_cuts} or increase {.arg nmin}."
         ))
       }
     }
   }
   cat("\n")
+  invisible(object)
 }

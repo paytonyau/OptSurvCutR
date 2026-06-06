@@ -288,9 +288,6 @@ plot(cut_res, type = "forest",
 plot(cut_res, type = "diagnostic")
 ```
 
-> **💡 Key Insight: Reading the AUC Curve**
-> An AUC of 0.50 means your model is just guessing (a coin flip). An AUC of 1.0 means perfect prediction. By plotting the AUC over time, we can see if our 3-Tier Bilirubin system loses its predictive power as years go by. A high, stable line proves that the biological thresholds discovered by the Genetic Algorithm have long-lasting prognostic value for the patient.
-
 ## 3.4 2D Cut-point Stability Surface (plot_validation())
 Rather than relying on blocky grids, this specialized diagnostic plot renders a smooth contour elevation surface. It visualizes exactly how your discovered cut-points cluster across bootsrapped replicates or validation folds.
 
