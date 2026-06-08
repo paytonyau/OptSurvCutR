@@ -198,11 +198,31 @@ Software\*, 42, 1–26.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
-data(crc_virome)
-# Fast 1-cut systematic search using downsampled quantile steps
+# Fast 1-cut systematic search example using local mock data for testing
+mock_df <- data.frame(
+  time = c(12, 34, 5, 18, 22, 45, 7, 14, 29, 38, 11, 24, 8, 17, 21),
+  status = c(1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0),
+  marker = c(2.1, 4.5, 1.2, 3.8, 4.0, 5.2, 1.8, 2.9, 3.1, 4.9, 2.0, 4.2, 1.5, 3.0, 3.9)
+)
+
 res <- find_cutpoint(
-  data = head(crc_virome, 50),
+  data = mock_df,
+  predictor = "marker",
+  outcome_time = "time",
+  outcome_event = "status",
+  num_cuts = 1,
+  method = "systematic",
+  nmin = 3,
+  grid_by = 0.05
+)
+#> ℹ Running systematic search for 1 cut-point(s)...
+#> ✔ Systematic search complete.
+
+if (FALSE) { # \dontrun{
+# Heavier analysis example using package-supplied datasets
+data(crc_virome)
+res_virome <- find_cutpoint(
+  data = crc_virome,
   predictor = "Alphapapillomavirus",
   outcome_time = "time_months",
   outcome_event = "status",

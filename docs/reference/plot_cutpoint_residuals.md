@@ -21,4 +21,13 @@ plot_cutpoint_residuals(x, ...)
 
 ## Value
 
-A publication-ready `ggplot` canvas frame.
+A publication-ready `ggplot` canvas frame, or `NULL` if the fit fails.
+
+## Examples
+
+``` r
+mock_df <- data.frame(time = 1:20, event = rep(c(0, 1), 10), factor = rnorm(20, 10, 2))
+res <- find_cutpoint(mock_df, "factor", "time", "event", num_cuts = 1, method = "systematic", quiet = TRUE)
+p <- plot_cutpoint_residuals(res)
+#> No valid cut-points mapped; diagnostics skipped.
+```

@@ -71,7 +71,7 @@ for 1-cut systematic setups, or a 2D topographic grid profile for 2-cut layouts.
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>ggplot</code> object.</p>
+    <p>A valid <code>ggplot</code> object detailing evaluation statistics vs coordinates.</p>
     </div>
     <div class="section level2">
     <h2 id="srrstats-compliance">srrstats compliance<a class="anchor" aria-label="anchor" href="#srrstats-compliance"></a></h2>
@@ -80,6 +80,14 @@ for 1-cut systematic setups, or a 2D topographic grid profile for 2-cut layouts.
 <p>.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">mock_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>time <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">20</span>, event <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, <span class="fl">10</span><span class="op">)</span>, factor <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">10</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="find_cutpoint.html">find_cutpoint</a></span><span class="op">(</span><span class="va">mock_df</span>, <span class="st">"factor"</span>, <span class="st">"time"</span>, <span class="st">"event"</span>, num_cuts <span class="op">=</span> <span class="fl">1</span>, method <span class="op">=</span> <span class="st">"systematic"</span>, quiet <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">plot_optimisation_curve</span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></span>
+<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in plot_optimisation_curve(res):</span> The results object must contain a valid grid log array in `all_stats`.</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

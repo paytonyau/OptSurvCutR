@@ -124,7 +124,7 @@ plot_validation(val_res, focus_cuts = c(1, 2)) # 2D Contour Elevation Stability 
 
 - **Vignettes & Tutorials**: `browseVignettes("OptSurvCutR")` or read
   the [Troubleshooting & FAQ
-  Guide](https://paytonyau.github.io/OptSurvCutR/articles/troubleshooting.html).
+  Guide](https://github.com/paytonyau/OptSurvCutR/blob/main/vignettes/troubleshooting.Rmd).
 - **Package Website**: <https://paytonyau.github.io/OptSurvCutR/>
 - **Manuscript**: Yau, Payton T. O. “OptSurvCutR: Validated Cut-point
   Selection for Survival Analysis.” bioRxiv preprint, posted October

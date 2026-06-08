@@ -76,19 +76,19 @@ definition in biomarkers: The case of censored failure time outcome.
 data(crc_virome)
 
 fit <- find_cutpoint(
-    data = head(crc_virome, 50),
-    predictor = "Alphapapillomavirus",
-    outcome_time = "time_months",
-    outcome_event = "status",
-    num_cuts = 1,
-    method = "systematic"
+  data = head(crc_virome, 50),
+  predictor = "Alphapapillomavirus",
+  outcome_time = "time_months",
+  outcome_event = "status",
+  num_cuts = 1,
+  method = "systematic"
 )
 #> ℹ Running systematic search for 1 cut-point(s)...
 #> ✔ Systematic search complete.
 
 if (!any(is.na(fit$optimal_cuts))) {
-   val <- validate_cutpoint(fit, num_replicates = 20, seed = 123)
-   print(val)
+  val <- validate_cutpoint(fit, num_replicates = 20, seed = 123)
+  print(val)
 }
 #> ℹ Using random seed 123 for reproducibility.
 #> ℹ Bootstrap `nmin` not set. Using 18 (90% of original) to improve stability.

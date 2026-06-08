@@ -12,9 +12,14 @@ plot_cutpoint_residuals(x, ...)
 \item{...}{Unused optional arguments.}
 }
 \value{
-A publication-ready \code{ggplot} canvas frame.
+A publication-ready \code{ggplot} canvas frame, or \code{NULL} if the fit fails.
 }
 \description{
 High-tier multi-panel diagnostic dashboard tracking the proportional hazards
 assumption with custom facets per risk cohort stratum.
+}
+\examples{
+mock_df <- data.frame(time = 1:20, event = rep(c(0, 1), 10), factor = rnorm(20, 10, 2))
+res <- find_cutpoint(mock_df, "factor", "time", "event", num_cuts = 1, method = "systematic", quiet = TRUE)
+p <- plot_cutpoint_residuals(res)
 }

@@ -22,8 +22,17 @@ plot_optimisation_curve(cutpoint_result, ...)
 
 ## Value
 
-A `ggplot` object.
+A valid `ggplot` object detailing evaluation statistics vs coordinates.
 
 ## srrstats compliance
 
 .
+
+## Examples
+
+``` r
+mock_df <- data.frame(time = 1:20, event = rep(c(0, 1), 10), factor = rnorm(20, 10, 2))
+res <- find_cutpoint(mock_df, "factor", "time", "event", num_cuts = 1, method = "systematic", quiet = TRUE)
+p <- plot_optimisation_curve(res)
+#> Error in plot_optimisation_curve(res): The results object must contain a valid grid log array in `all_stats`.
+```

@@ -23,10 +23,18 @@ if the model contains more than 2 cuts. Defaults to \code{c(1, 2)}.}
 \item{...}{Unused optional dots.}
 }
 \value{
-A publication-ready \code{ggplot} canvas object.
+A publication-ready \code{ggplot} canvas object displaying stability density bounds.
 }
 \description{
 Generates a premium, continuous 2D contour surface density topology map tracking the
 statistical stability of paired discovered cut-points across bootstrap resampling
 profiles. Automatically handles 1, 2, or multi-cut architectures dynamically.
+}
+\examples{
+mock_val <- list(
+  bootstrap_distribution = data.frame(Cut_point_1 = rnorm(30, 10, 1)),
+  original_cuts = 10.2,
+  parameters = list(predictor = "Biomarker")
+)
+p <- plot_validation(mock_val)
 }
