@@ -1,0 +1,8 @@
+/* Restricts the size of the package logo inside the homepage main text block */
+#main-contents img[alt="OptSurvCutR logo"],
+.contents img[src*="logo.png"] {
+  height: 90px !important;
+  width: auto !important;
+  float: right;
+  margin-left: 15px;
+}

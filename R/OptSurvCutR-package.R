@@ -1,12 +1,21 @@
 #' @keywords internal
 #' @srrstats {G1.2} Life Cycle Statement is included in the CONTRIBUTING.md file.
+#' @srrstats {G3.0} Verification that statistical algorithms yield expected
+#'   outputs has been confirmed via extensive unit tests comparing the internal
+#'   C++ routines (`Rcpp`) against native transparent R loop implementations.
 #' @srrstats {G5.0} Asserts code pathways verify against defensive data boundaries.
+#' @srrstats {G5.1} Software has been tested with varying sample sizes, missing
+#'   predictor values (NA handling), and low data-density profiles to ensure
+#'   robust handling of boundary conditions.
 #' @srrstats {G5.4} Runs low-dimensional matrices to save continuous integration memory.
 #' @srrstats {G5.4a} Restricts iterations to single-generation optimization loops during test sequences.
 #' @srrstats {G5.4b} Forces single-core cluster routing as active package defaults during checks.
 #' @srrstats {G5.4c} Validates return object class types rather than extracting high-dimensional matrices.
 #' @srrstats {G5.6} Fixes seeds to confirm exact numeric search parameter recovery.
 #' @srrstats {G5.9} Verifies small input noise values do not shift optimal cut boundaries.
+#' @srrstats {RE7.1} For the survival regression workflows, clear descriptions
+#'   and diagnostic tools (such as Schoenfeld residual plotting paths) are
+#'   provided to explicitly assess the proportional hazards assumption.
 "_PACKAGE"
 
 ## usethis namespace: start

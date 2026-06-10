@@ -12,13 +12,14 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   echo = TRUE,
   comment = "#>",
-  fig.width = 7,
-  fig.height = 5,
+  fig.width = 8,
+  fig.height = 4.5,
   fig.align = "center",
   warning = TRUE,
   message = TRUE
@@ -49,17 +50,20 @@ options(cli.num_colors = 1)
 
 # Introduction
 
-In clinical research, continuous biomarkers are often simplified into binary groups using arbitrary thresholds like median splits. While convenient, this approach obscures meaningful biological structure. 
+In clinical research, continuous biomarkers are often simplified into binary groups using arbitrary thresholds like median splits. While convenient, this approach obscures meaningful biological structure.
 
-The **OptSurvCutR** package is built specifically to discover true, mathematically optimal thresholds. Its core powerhouse is a **Genetic Algorithm**—an evolutionary search engine capable of navigating massive, multi-dimensional data to find 1, 2, or even 4 optimal cut-points simultaneously, a task where traditional methods would freeze.
+The **OptSurvCutR** package is built specifically to discover true, mathematically optimal thresholds. Its core powerhouse is a **Genetic Algorithm**—an evolutionary search engine capable of navigating massive, multi-dimensional data to find optimal cut-points simultaneously, a task where traditional methods would freeze.
 
-Furthermore, the package features built-in statistical safety nets, including a 2-Tier Schoenfeld diagnostic check and a comprehensive 4-Tier Validation Stability system, ensuring the thresholds you discover are mathematically defensible.
+Furthermore, the package features built-in statistical safety nets, including a 2-Tier Schoenfeld diagnostic check and a comprehensive 4-Tier Validation Stability system. Crucially, the engine allows for **covariate adjustment**, ensuring that the discovered biomarker thresholds provide independent prognostic value even when controlling for established clinical confounders like age or disease staging.
 
-In this vignette, we apply this workflow to the classic **Mayo Clinic Primary Biliary Cholangitis (PBC)** dataset to evaluate raw **serum bilirubin**, a well-established prognostic marker of liver dysfunction.
+In this vignette, we apply this workflow to the classic **Mayo Clinic Primary Biliary Cholangitis (PBC)** dataset to evaluate raw **serum bilirubin**, controlling for age and edema.
 
----
+------------------------------------------------------------------------
 
 # 1. Setup & Data Preparation
+
+To begin the analysis, we must first load our workspace environment with the required data-wrangling libraries, graphics systems, and the underlying survival and optimisation packages.
+
 ```{r load-libraries, message=FALSE, warning=FALSE}
 library(survival)
 library(dplyr)
@@ -70,68 +74,81 @@ library(cli)
 library(OptSurvCutR)
 ```
 
-We load the PBC dataset and extract the complete cases. 
+Next, we pull the historical baseline dataset into memory, strip out clinical records containing missing entries across our features of interest, and map all active events safely to isolate true endpoints.
+
 ```{r load-data}
 data(pbc, package = "survival")
 
-# Extract complete cases for our variables of interest
-pbc_clean <- na.omit(pbc[, c("time", "status", "bili")])
+# Extract complete cases for our predictor, outcome, and clinical covariates
+pbc_clean <- na.omit(pbc[, c("time", "status", "bili", "age", "sex", "edema")])
 
-# Define the survival event (2 = dead, everything else is censored)
-pbc_clean$event <- ifelse(pbc_clean$status == 2, 1, 0)
+# Define the all-cause mortality survival event (1 or 2 = endpoint, 0 = censored)
+pbc_clean$event <- ifelse(pbc_clean$status %in% c(1, 2), 1, 0)
 
 head(pbc_clean)
 ```
 
-> **💡 Key Insight: Dealing with Skewed Data**
-> Raw clinical lab values are often heavily right-skewed (our `bili` data ranges from 0.3 to 28.0, with most patients bunched at the bottom). Because `OptSurvCutR` evaluates survival using the Log-rank test—which looks at the *rank order* of patients rather than their absolute numerical distance—the algorithm is mathematically immune to this skew. You do not need to manually log-transform your data; just feed the raw clinical values directly into the engine!
-> 
-> *Advanced Note:* If your specific research workflow requires mathematically smoothing the risk curves prior to cut-point discovery, commonly used R packages for data smoothing include **`mgcv`** (for Generalized Additive Models / GAMs) and **`splines`**.
+> **💡 Key Insight: Dealing with Skewed Data & Confounders** Raw clinical lab values are often heavily right-skewed. Because `OptSurvCutR` evaluates survival using the Log-rank/Cox rank infrastructure—which looks at the *rank order* of patients rather than absolute numerical distance—the algorithm is mathematically immune to this skew.
+>
+> By passing `covariates = c("age","sex", "edema")`, the optimisation routine transitions from a univariate survival split to an adjusted Cox proportional hazards model framework, ensuring your cut-points reflect true baseline risk alterations independent of baseline age or physical edema presentation.
 
----
+------------------------------------------------------------------------
 
 # 2. The Three-Step Analysis Workflow
 
 ## Step 1: Determine the Optimal Number of Cuts
 
-Before we ask *where* the cut-points are, we need to ask the math *how many* cut-points actually exist in our data. 
+Before we ask *where* the cut-points are, we need to ask the math *how many* cut-points actually exist in our data when adjusting for our baseline covariates.
 
 ### Choosing Your Information Criterion
+
 The algorithm evaluates models using an Information Criterion, which balances accuracy against complexity:
 
 | Criterion | What it does | Best Use Case |
-| :--- | :--- | :--- |
+|:-----------------------|:-----------------------|:-----------------------|
 | **AIC** | Light penalty for complexity. | Exploratory research; allows more cuts. |
-| **AICc** | Corrects AIC for small sample sizes. | Small clinical datasets (N < 200). |
+| **AICc** | Corrects AIC for small sample sizes. | Small clinical datasets (N \< 200). |
 | **BIC** | Heavy penalty for complexity. | Confirmatory research; prefers simpler, highly robust models. |
+
+We deploy the multi-model search check to calculate fitness scores across various grouping parameters, enforcing safety boundaries so that cohorts don't become unsustainably small.
+
 ```{r find-number-BIC}
 num_res <- find_cutpoint_number(
   # ==========================================
-  # 1. CORE DATA INPUTS
+  # 1. CORE DATA & COVARIATE INPUTS
   # ==========================================
-  data = pbc_clean, # The patient dataset
-  predictor = "bili", # The continuous biomarker
-  outcome_time = "time", # Survival time column
-  outcome_event = "event", # Survival event column
+  data = pbc_clean,           # The patient dataset
+  predictor = "bili",         # The continuous biomarker
+  outcome_time = "time",      # Survival time column
+  outcome_event = "event",    # Survival event column
+  covariates = c("age","sex","edema"), # Confounders to control for
 
   # ==========================================
   # 2. SEARCH ENGINE SETTINGS
   # ==========================================
-  method = "genetic", # The evolutionary search engine
-  criterion = "AIC", # Evaluates model fit (BIC heavily penalizes over-complexity)
-  max_cuts = 6, # Test models ranging from 0 to 3 cuts
-  nmin = 0.10, # SAFETY LIMIT: Minimum 10% of patients per group
+  method = "genetic",         # The evolutionary search engine
+  criterion = "AIC",          # Evaluates adjusted model fit
+  max_cuts = 5,               # Test models ranging from 0 to 5 cuts
+  nmin = 0.15,                # SAFETY LIMIT: Minimum 15% of patients per group
+   
   # ==========================================
-  # 3. THE "R-GROUND" SETTINGS (Advanced Genetic Tuning)
+  # 3. ADVANCED GENETIC TUNING
   # ==========================================
-  max.generations = NULL, # LIFESPAN: How many evolutionary cycles to run
-  pop.size = NULL, # SEARCH PARTY: Number of random guesses per generation
-  boundary.enforcement = 2, # EDGE CONTROL: 1 = Soft boundary (allows safe edge exploration)
-  seed = 123 # REPRODUCIBILITY: Locks the random number generator
+  max.generations = NULL,     # LIFESPAN: How many evolutionary cycles to run
+  pop.size = NULL,            # SEARCH PARTY: Number of random guesses per generation
+  boundary.enforcement = 2,   # EDGE CONTROL: 2 = Soft boundary configuration
+  seed = 123                  # REPRODUCIBILITY
 )
 
+```
+
+Here, we use `summary()` for detailed information.
+
+```{r find-number-BIC-summary}
 summary(num_res)
 ```
+
+To easily track the inflection points where adding more thresholds yields diminishing mathematical returns, we plot the complete multi-model fitness curve.
 
 ```{r loess}
 plot(num_res) +
@@ -142,129 +159,131 @@ plot(num_res) +
               alpha = 0.5)
 ```
 
-### ⚠️ Step 1 Warning System: Algorithm Failure
-If the genetic algorithm is suffocated by overly strict safety parameters, it will output the following warning:
-> `"No valid cut-points found for X cut(s) due to genetic algorithm failure or constraints."`
-
-**How to fix it:** If you see this, lower your `nmin` (e.g., to 0.05), ensure `boundary.enforcement = 1`, or increase `max.generations` to give the algorithm more room to search.
-
-> **⚠️ Important: The Clinical & Statistical Overrule (Why we step down to 2 cuts)**
-> Looking at the BIC trend above, the math might suggest that **3 cuts (4 groups)** provides the best raw fit for this specific dataset. However, statistical fit does not always equal biological stability. 
-> 
-> If we blindly pushed a 3-cut model through our rigorous Bootstrap Validation (Step 3), the resulting groups would be too small. The cut-points would bounce wildly across samples, causing the confidence intervals to overlap and the risk cohorts to bleed into one another (resulting in a **Tier 3 or Tier 4 Unstable** rating). The algorithm would be overfitting to sample noise.
-> 
-> To prevent this and ensure our model discovers mathematically distinct, well-separated subpopulations, we will intentionally overrule the initial mathematical suggestion. In Step 2, we will drop down to **2 cuts (3 groups)**. This mirrors standard clinical triaging (Normal, Elevated, Severe) and gives the groups enough data density to guarantee a robust, high-tier validation.
-
----
+**Interpretation:** The model minimising the information landscape sits clearly at **2 cut-points** (which divides the patient cohort into 3 distinct risk groups). This confirms that even after stripping away the confounding baseline effects of age and sex, a multi-tier group model is statistically superior to a traditional median binary split.
 
 ## Step 2: Pinpointing the Exact Cut-point Values
 
-This step is the heart of `OptSurvCutR`. We ask the search engine to physically locate the optimal dividing lines. 
+This step is the heart of `OptSurvCutR`. We ask the search engine to physically locate the optimal dividing lines while holding our adjusted covariates constant.
 
-### Choosing Your Engine
-You must select the correct mathematical engine based on your goal:
+We initiate the core optimisation search loop, directing the engine to settle on an integer space topology that maximises group risk divergence under active covariate adjustment.
 
-| Engine | How it works | Best for | Drawback |
-| :--- | :--- | :--- | :--- |
-| `systematic` | Brute-force checks every single number. | Finding exactly **1 cut-point**. | Mathematically impossible to use for 2+ cuts (takes hours/days). |
-| `genetic` | Drops random guesses and "evolves" the best answer. | Finding **2, 3, or 4 cut-points** instantly. | Can occasionally fail if parameters (`nmin`) are too strict. |
 ```{r find-cutpoint}
 cut_res <- find_cutpoint(
   # ==========================================
-  # 1. CORE DATA INPUTS
+  # 1. CORE DATA & COVARIATE INPUTS
   # ==========================================
   data = pbc_clean,
   predictor = "bili",
   outcome_time = "time",
   outcome_event = "event",
+  covariates = c("age","sex","edema"), # Adjusted during location discovery
 
   # ==========================================
   # 2. SEARCH ENGINE SETTINGS
   # ==========================================
-  method = "genetic", # Crucial for finding >1 cut-point
-  criterion = "logrank", # Maximizes survival difference between groups
-  num_cuts = 5,     # Forcing 2 cuts (3 groups) for demonstration and stability
-  nmin = 0.1,       # SAFETY LIMIT: Forces every group to contain >= 25% of patients
-  n_perm = 20,      # Streamlined permutation cycle
+  method = "genetic", 
+  criterion = "logrank", 
+  num_cuts = 3,       # Setting 3 cuts for clinical tier separation
+  nmin = 0.15,         # SAFETY LIMIT: Minimum patients per risk cohort
+  n_perm = 20,        # Streamlined permutation cycle
 
   # ==========================================
-  # 3. THE "R-GROUND" SETTINGS (Advanced Genetic Tuning)
+  # 3. ADVANCED GENETIC TUNING
   # ==========================================
-  max.generations = NULL,   # LIFESPAN: Increase if the algorithm fails to converge
-  pop.size = NULL,          # SEARCH PARTY: Increase to 500+ for massive datasets
-  boundary.enforcement = 2, # EDGE CONTROL: Soft boundaries prevent the algorithm from crashing near edges
-  seed = 123,               # REPRODUCIBILITY
-  n_cores = 1               # SPEED: Adjust based on your machine's CPU
+  max.generations = NULL,   
+  pop.size = NULL,          
+  boundary.enforcement = 2, 
+  seed = 123,               
+  n_cores = 1               
 )
+```
 
+Now, we call the optimisation summary report to extract hazard thresholds, coefficients, and preliminary model diagnostics.
+
+```{r find-cutpoint-summary}
 summary(cut_res)
 ```
 
-### ⚠️ Step 2 Warning System: The 2-Tier Schoenfeld Diagnostic
-When `summary()` is called, the package automatically evaluates your discovered cut-points against the fundamental rule of survival analysis: **The Proportional Hazards Assumption**. It does this using the Schoenfeld residuals test, which checks if the risk between your groups remains parallel over time. It flags the result using a 2-Tier Diagnostic System (`── 3. Time-Dependent Diagnostics (Schoenfeld) ──`):
+### 🔍 Automated Diagnostic Check: The 2-Tier Schoenfeld Diagnostic
+
+When evaluating `summary()`, the package automatically processes a Schoenfeld residuals validation check against your adjusted model matrix, verifying if the Proportional Hazards assumption holds:
 
 | Diagnostic Status | What it Means (Schoenfeld Test) | Clinical Implication |
-| :--- | :--- | :--- |
-| **Tier 1 (Proportional)** | The proportional hazards assumption holds ($p > 0.05$). | Your cut-points remain equally deadly/protective on Day 1 as they do on Day 1,000. Reporting a standard Hazard Ratio is valid. |
-| **Tier 2 (Time-Varying)** | The hazard ratio changes significantly over time ($p < 0.05$). | Your cut-point is still biologically valid and separates survival, but its predictive power shifts (e.g., highly lethal early on, but fades later). You may need to report time-dependent Hazard Ratios. |
+|:-----------------------|:-----------------------|:-----------------------|
+| **Tier 1 (Proportional)** | The proportional hazards assumption holds ($p > 0.05$). | Your cut-points remain equally deadly/protective on Day 1 as they do on Day 1,000. Reporting a standard adjusted Hazard Ratio is valid. |
+| **Tier 2 (Time-Varying)** | The hazard ratio changes significantly over time ($p < 0.05$). | Your cut-point is still biologically valid, but its predictive power shifts over time. You may need to report time-dependent Hazard Ratios. |
 
-### Distribution Plot with KDE Interpolation
+To visualise where these calculated cut-points slice across the patient density profile, we map our continuous marker distribution.
+
 ```{r plot_find-cutpoint}
 plot(cut_res, type = "distribution") +
   geom_rug(alpha = 0.5) +
-  labs(caption = "KDE interpolation reveals the continuous distribution of bilirubin")
+  labs(caption = "KDE interpolation reveals the covariate-adjusted thresholds of bilirubin")
 ```
 
-> **💡 Key Insight: Reading the Distribution Plot**
-> The blue shaded area is the density of your patients. The orange dashed lines are the exact biological thresholds the algorithm discovered. The algorithm doesn't just cut the population evenly; it places the lines exactly where the *risk of death* sharply increases, isolating the healthy baseline from the severe outliers.
-
----
+------------------------------------------------------------------------
 
 ## Step 3: Validate the Threshold Stability
 
-Finding a cut-point in one dataset is easy; proving that cut-point is real and will hold up in future patients is hard. We use "Bootstrap Resampling" to stress-test our findings.
+We use Bootstrap Resampling to ensure our covariate-adjusted thresholds are real and completely independent of sample noise.
+
+We run repetitive bootstrap sampling loops, forcing the optimisation engine to re-verify the marker thresholds across randomised slices of our cohort.
+
 ```{r validate-cutpoint}
 val_res <- validate_cutpoint(
   # ==========================================
   # 1. VALIDATION INPUTS
   # ==========================================
-  cutpoint_result = cut_res, # The exact result object you generated in Step 2
-  num_replicates = 30, # BOOTSTRAP: How many times to scramble and re-test. 500+ is the gold standard
-  n_cores = 1, # SPEED: Number of CPU cores to use
+  cutpoint_result = cut_res, 
+  num_replicates = 30,       # 500+ is the standard for final publication
+  n_cores = 1, 
 
   # ==========================================
-  # 2. THE "R-GROUND" SETTINGS (Must match Step 2)
+  # 2. ADVANCED SETTINGS (Must match Step 2)
   # ==========================================
-  max.generations = 100, # Must match or exceed Step 2 to ensure stability during bootstrap
-  pop.size = 100, # Must match or exceed Step 2
-  boundary.enforcement = 2, # Must match Step 2
-  seed = 123 # REPRODUCIBILITY
+  max.generations = NULL, 
+  pop.size = NULL, 
+  boundary.enforcement = 2, 
+  seed = 123 
 )
-
-summary(val_res)
-
-knitr::kable(val_res$confidence_intervals, digits = 3, caption = "Stability Intervals for Bilirubin Risk Thresholds")
-
-plot(val_res) +
-  labs(caption = "Density interpolation of bootstrap-derived cut-points")
 ```
 
-### ⚠️ Step 3 Warning System: The 4-Tier Stability Assessment
-Bootstrapping is highly aggressive. Once complete, `OptSurvCutR` evaluates both the **Precision** (Maximum CI Width) and the **Validity** (Interval Overlap), automatically categorizing your threshold's stability into one of four diagnostic tiers:
+We look at the aggregated validation metrics to review the underlying variance metrics across our calculated thresholds.
 
-*   **Tier 1 (OPTIMAL):** Narrow confidence intervals (CI Width < 30%) and clean separation. The thresholds are rock-solid, highly reproducible, and distinctly divide the population.
-*   **Tier 2 (DISTINCT):** Zero overlap between intervals, regardless of exact CI Width. The exact threshold value may bounce across samples (moderate to high variance), but the resulting biological subpopulations remain fundamentally separate and never bleed into one another. 
-*   **Tier 3 (CAUTION):** Moderate variance (CI Width 30%–60%) **WITH** overlapping intervals. The threshold is somewhat sensitive to sample changes, and the resulting risk cohorts may blend together in the 'grey zones'.
-*   **Tier 4 (UNSTABLE):** High variance (CI Width > 60%) **WITH** overlapping intervals. The exact numbers are highly volatile, and the groups bleed into each other completely, indicating potential over-fitting to noise.
+```{r validate-cutpoint-summary}
+summary(val_res)
+```
 
-> **💡 Key Insight: Why do we Bootstrap?**
-> Imagine we randomly re-sampled your patient cohort (with replacement) to create 500 slightly different "alternate reality" datasets. Would your cut-points completely change or hold steady? Bootstrapping simulates this process. The tight, peaked density curves in the plot above prove that our thresholds are a genuine biological signal, not just a mathematical fluke of this specific patient sample!
+### 🔍 Automated Performance Grading: The 4-Tier Stability Assessment
 
----
+Following bootstrap calculations, `OptSurvCutR` evaluates both your **Precision** (Confidence Interval width relative to overall data range) and **Validity** (absence of interval overlap), grading model health into four distinct tiers:
+
+1.  **Tier 1 (OPTIMAL):** Narrow intervals (CI Width \< 30%) paired with complete cohort separation.
+2.  **Tier 2 (DISTINCT):** Zero overlap between confidence zones regardless of width. Thresholds may float slightly, but risk boundaries remain clear.
+3.  **Tier 3 (CAUTION):** Moderate parameter variance (CI Width 30%–60%) accompanied by overlapping intervals.
+4.  **Tier 4 (UNSTABLE):** High variance (CI Width \> 60%) with overlapping intervals, signaling severe data over-fitting.
+
+For precise documentation, we compile our numerical confidence intervals directly into a clean markdown summary table.
+
+```{r validate-cutpoint-knitr}
+knitr::kable(val_res$confidence_intervals, digits = 3, caption = "Covariate-Adjusted Stability Intervals for Bilirubin Risk Thresholds")
+```
+
+To see if our thresholds remain tightly anchored or scatter across the iterations, we inspect the bootstrap density landscape.
+
+```{r validate-cutpoint-plot}
+plot(val_res) +
+  labs(caption = "Density interpolation of bootstrap-derived cut-points under adjustment")
+```
+
+------------------------------------------------------------------------
 
 # 3. Advanced Visualisation & Reporting
 
 ## 3.1 Group Composition Table
+
+We can check the physical distributions and average baseline parameters across our newly established medical risk tiers.
+
 ```{r group-composition}
 final_dataset <- plot(cut_res, return_data = TRUE)
 
@@ -275,81 +294,81 @@ composition_table <- final_dataset %>%
       round(min(factor), 3), " – ", round(max(factor), 3)
     ),
     N = n(),
-    Deaths = sum(event)
+    Deaths = sum(event),
+    Mean_Age = round(mean(age), 1),
+    Edema_Rate = round(mean(edema), 2)
   )
 
-knitr::kable(composition_table, caption = "Composition of Discovered Bilirubin Risk Groups")
+knitr::kable(composition_table, caption = "Composition and Covariate Profiles of Discovered Bilirubin Risk Groups")
 ```
 
-## 3.2 Hazard Ratio Forest Plot (`type = "forest"`)
+## 3.2 Adjusted Hazard Ratio Forest Plot (`type = "forest"`)
+
+We can easily plot a custom forest chart to display our adjusted hazard models relative to the low-risk baseline tier.
+
 ```{r plot-forest, fig.width=7, fig.height=3.5}
 plot(cut_res,
   type = "forest",
-  main = "Mortality Hazard Ratios Relative to Group 1 (Baseline)"
+  main = "Adjusted Mortality Hazard Ratios Relative to Group 1"
 )
 ```
 
-> **⚠️ Important: The Hazard Ratio**
-> The forest plot explicitly quantifies the increased risk of mortality. Group 3 (the severe impairment group) shows a massive, statistically significant hazard ratio compared to the baseline group, confirming the clinical urgency of crossing this biological threshold.
-
 ## 3.3 Time-Dependent Diagnostics (`type = "diagnostic"`)
+
+We track whether our optimisation groups safely adhere to proportional variance targets across the complete time scope.
+
 ```{r plot-diagnostic}
 plot(cut_res, type = "diagnostic")
 ```
 
 ## 3.4 2D Cut-point Stability Surface (plot_validation())
-Rather than relying on blocky grids, this specialized diagnostic plot renders a smooth contour elevation surface. It visualizes exactly how your discovered cut-points cluster across bootsrapped replicates or validation folds.
+
+Rather than relying on blocky grids, `plot_validation()` allows us to project high-dimensional bootstrap convergence horizons onto a smooth 2D continuous contour map, highlighting exactly where our optimal threshold combinations cluster.
 
 ```{r plot_validation}
-# Evaluates the stability cluster between your second and third clinical thresholds
 plot_validation(val_res,
   focus_cuts = c(1, 2),
   main = "Upper Tier Threshold Stability Map"
 )
 ```
 
-## 3.6 Standalone Kaplan-Meier Survival Curves (`type = "outcome"`)
-```{r plot-km, fig.width=8, fig.height=6}
+## 3.5 Adjusted Kaplan-Meier Survival Curves (`type = "outcome"`)
+
+We evaluate the clear divergence in survival over time by mapping the adjusted step functions for our groups.
+
+```{r plot-km}
 plot(cut_res,
   type = "outcome",
-  title = "PBC Survival by Bilirubin Tier",
+  title = "PBC Survival by Bilirubin Tier (Covariate Adjusted)",
   xlab = "Follow-up Time (Days)",
   ylab = "Overall Survival Probability",
   legend.title = "Bilirubin Tier"
 )
 ```
 
-> **💡 Key Insight: The Kaplan-Meier Step Function**
-> This is the most famous plot in oncology and hepatology. Each time a patient experiences the event (death), the line steps down. The visual "gap" between the red, green, and blue lines represents the life-saving or life-threatening impact of being in a specific bilirubin tier. Wide gaps that don't cross over each other visually confirm that the algorithm successfully found distinctly different biological risk groups.
+## 3.6 Exporting Your Stratified Data
 
-## 3.7 The Escape Hatch: Exporting Your Stratified Data
+By passing `return_data = TRUE`, you can seamlessly extract your original clinical dataset paired with the newly calculated `group` and original covariate column assignments.
 
-While `OptSurvCutR` provides beautiful plots, you will likely need to export your newly stratified patients to run custom models or share with collaborators. 
-
-By passing `return_data = TRUE` to the plot function, you can extract your exact original dataset, but with a new `group` column added that assigns every patient to their mathematically discovered tier!
 ```{r export-data}
-# Extract the classified dataset
 stratified_patients <- plot(cut_res, return_data = TRUE)
-
-# View the new data
-head(stratified_patients[, c("time", "event", "factor", "group")])
-
-# Save to Excel/CSV for your team!
-# write.csv(stratified_patients, "PBC_Patients_Tiered.csv", row.names = FALSE)
+head(stratified_patients[, c("time", "event", "factor", "age", "sex","edema", "group")])
 ```
 
----
+------------------------------------------------------------------------
 
 # 4. Conclusion
 
-This vignette demonstrates how **OptSurvCutR** bridges the gap between raw statistical optimization and clinical reality. By pairing advanced genetic algorithms with comprehensive diagnostic warnings, researchers can confidently discover robust, stable risk thresholds directly from un-transformed clinical laboratory data.
+This vignette demonstrates how **OptSurvCutR** controls for clinical confounding factors during optimal threshold selection. By providing a streamlined pipeline for covariate-adjusted optimisation, clinical scientists can establish reliable diagnostic thresholds that retain absolute structural validity across independent validation cohorts.
 
-- **Install the package:** `remotes::install_github("paytonyau/OptSurvCutR")`
-- **Report issues or suggest features** on our [GitHub page](https://github.com/paytonyau/OptSurvCutR).
-
----
+------------------------------------------------------------------------
 
 # 5. Session Information
+
+Finally, we print our system specifications, environmental packages, and runtime tracking indices to ensure perfect documentation reproducibility.
+
 ```{r session_info}
 sessionInfo()
 ```
+
+\`\`\`

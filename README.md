@@ -1,22 +1,22 @@
 # OptSurvCutR: Validated Cut-point Selection for Survival Analysis
 
-<!-- badges: start -->
 [![R-CMD-check](https://github.com/paytonyau/OptSurvCutR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/paytonyau/OptSurvCutR/actions/workflows/R-CMD-check.yaml)
 [![Lifecycle: Stable](https://lifecycle.r-lib.org/articles/figures/lifecycle-stable.svg)](https://lifecycle.r-lib.org/articles/stages.html#Stable)
 [![Codecov](https://codecov.io/gh/paytonyau/OptSurvCutR/branch/main/graph/badge.svg)](https://app.codecov.io/gh/paytonyau/OptSurvCutR)
 [![License: GPL-3](https://img.shields.io/badge/License-GPL%203-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
-<!-- badges: end -->
+<img src="man/figures/logo.png" align="right" height="165" alt="OptSurvCutR logo" />
 
-<img src="man/figures/logo.png" align="right" height="140" alt="OptSurvCutR logo" />
+`OptSurvCutR` (**Opt**imal **Surv**ival **Cut**-points **R**) provides a rigorous, reproducible, rOpenSci-compliant pipeline for discovering the optimal number and location of stratification cut-points in time-to-event (survival) data. Designed for continuous predictors (e.g., gene expression, microbiome abundance, clinical biomarkers), it moves beyond arbitrary median splits to deliver fully **data-driven, covariate-adjusted stratification**.
 
-`OptSurvCutR` (**Opt**imal **Surv**ival **Cut**-points **R**) provides a rigorous, reproducible **three-step workflow** for discovering the optimal number and location of cut-points in time-to-event (survival) data. Designed for continuous predictors (e.g., gene expression, virome abundance, clinical biomarkers), it moves beyond arbitrary median splits to fully **data-driven, covariate-adjusted stratification**.
 
-## What's New in Version 0.9.8
-We have significantly overhauled the validation and diagnostic engines to ensure your discovered thresholds are mathematically stable and publication-ready:
+## What's New in Version 0.9.9
+We have significantly overhauled the validation and diagnostic engines to ensure your discovered thresholds are mathematically stable, rOpenSci-compliant, and publication-ready:
+* **Integer Index-Space Mapping:** Replaced continuous floating-point search spaces with a discrete, bounded integer lattice mapped directly to sorted unique data indices. This shifts the engine math from an infinite decimal space to a finite spectrum of actual observations, eliminating micro-decimal overfitting and stochastic seed drift.
 * **The 4-Tier Stability Assessment:** Bootstrap validation now automatically grades your cut-points into four tiers (Optimal, Distinct, Caution, Unstable) based on confidence interval width and overlap metrics.
-* **Automated Schoenfeld Diagnostics:** The package now flags time-varying effects to ensure your thresholds do not violate the Proportional Hazards assumption.
+* **Automated Schoenfeld Diagnostics:** The package now flags time-varying effects natively during optimization to ensure your thresholds do not violate the Proportional Hazards assumption.
 * **Enhanced Parameter Controls:** Fine-tune the genetic algorithm with `nmin` wedges and soft boundaries to rescue unstable thresholds and prevent overfitting.
 * **Continuous 2D Contour Validation Landscapes:** Added native S3 routing support for projecting complex multi-dimensional bootstrap distribution horizons onto smooth contour peaks.
+
 
 ## Why OptSurvCutR?
 
@@ -30,32 +30,36 @@ We have significantly overhauled the validation and diagnostic engines to ensure
 | Publication-ready plots        | Kaplan–Meier, distribution curves, forest plots, & 2D topology surfaces |
 
 ## Installation
-You can install the development version of `OptSurvCutR` from GitHub. Note that the genetic algorithm (`method = "genetic"`) requires the `rgenoud` package, which should be installed separately from CRAN if you plan to use it.
+You can install the development version of `OptSurvCutR` directly from GitHub. Note that the genetic algorithm (`method = "genetic"`) requires the `rgenoud` package, which should be installed separately from CRAN if you plan to search for multiple cut-points.
+
 ```r
 # Core dependencies
 install.packages(c("remotes", "survival"))
 
-# Optional but highly recommended for >2 cuts
+# Optional but highly recommended for multi-cut genetic optimization
 install.packages("rgenoud")
 
-# Install the development version from GitHub
+# Install the package from GitHub
 remotes::install_github("paytonyau/OptSurvCutR")
 ```
 
-## Example: Quick Workflow with CRC Virome Data
+## Example: Quick Workflow with Simulated Cohort Data
 
 ```r
 library(OptSurvCutR)
 library(survival)
 library(dplyr)
 
-data("crc_virome")
-
-# Quick data preparation
-crc <- crc_virome %>%
-  mutate(event = as.numeric(substr(status, 1, 1))) %>% 
-  select(time = time_months, event, abundance = Enterovirus) %>%
-  filter(complete.cases(.))
+# Generate a reproducible, synthetic survival dataset
+set.seed(123)
+n <- 200
+crc <- tibble(
+  abundance = rnorm(n, mean = 5, sd = 2),
+  age = rnorm(n, mean = 60, sd = 10),
+  # Generate survival times influenced by biomarker abundance
+  time = rexp(n, rate = 0.05 * exp(0.3 * (abundance > 5.5) + 0.02 * age)),
+  event = sample(c(0, 1), n, replace = TRUE, prob = c(0.3, 0.7))
+) %>% filter(time > 0)
 
 # Step 1: Determine the optimal number of cut-points
 num_res <- find_cutpoint_number(
@@ -100,8 +104,8 @@ plot_validation(val_res, focus_cuts = c(1, 2)) # 2D Contour Elevation Stability 
 3. `validate_cutpoint()`: Assesses threshold stability via bootstrapping and assigns an automated 4-Tier stability grade.
 
 ## Resources
-- **Vignettes & Tutorials**: `browseVignettes("OptSurvCutR")` or read the [Troubleshooting & FAQ Guide](https://github.com/paytonyau/OptSurvCutR/blob/main/vignettes/troubleshooting.Rmd).
-- **Package Website**: https://paytonyau.github.io/OptSurvCutR/
+- **Vignettes & Tutorials**: Run `browseVignettes("OptSurvCutR")` within your R session to access complete walk-throughs.
+- **Troubleshooting & FAQ**: Review the detailed development notes located directly in the `vignettes/troubleshooting.Rmd` source path.
 - **Manuscript**: Yau, Payton T. O. "OptSurvCutR: Validated Cut-point Selection for Survival Analysis." bioRxiv preprint, posted October 18, 2025. https://doi.org/10.1101/2025.10.08.681246.
 
 ## Citation
@@ -123,3 +127,4 @@ Licensed under the GPL-3 License.
 ## Contact
 Questions, suggestions, or issues? Please open a ticket:
 https://github.com/paytonyau/OptSurvCutR/issues
+```

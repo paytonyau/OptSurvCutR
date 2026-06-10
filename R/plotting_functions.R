@@ -679,13 +679,13 @@ plot_validation <- function(validation_result,
       bar_list[[b_idx]] <- data.frame(
         Variable = rep(current_var, 2),
         Value    = c(km_sum[current_gid, "N"] - km_sum[current_gid, "Events"], km_sum[current_gid, "Events"]),
-        Metric   = c("Survivors/Censored", "Observed Events (Deaths)")
+        Metric   = c("Censored", "Events")
       )
     } else {
       bar_list[[b_idx]] <- data.frame(
         Variable = rep(current_var, 2),
         Value    = c(0, 0),
-        Metric   = c("Survivors/Censored", "Observed Events (Deaths)")
+        Metric   = c("Censored", "Events")
       )
     }
     b_idx <- b_idx + 1
@@ -693,7 +693,7 @@ plot_validation <- function(validation_result,
 
   bar_df <- do.call(rbind, bar_list)
   bar_df$Variable <- factor(bar_df$Variable, levels = levels(forest_df$Variable))
-  bar_df$Metric <- factor(bar_df$Metric, levels = c("Survivors/Censored", "Observed Events (Deaths)"))
+  bar_df$Metric <- factor(bar_df$Metric, levels = c("Censored", "Events"))
 
   max_upper <- max(forest_df$Upper, na.rm = TRUE)
   x_limit_upper <- max_upper * 1.05
@@ -741,7 +741,7 @@ plot_validation <- function(validation_result,
       legend.position = "bottom"
     ) +
     ggplot2::geom_col(width = 0.35, position = "stack") +
-    ggplot2::scale_fill_manual(name = "", values = c("Survivors/Censored" = "#0072B2", "Observed Events (Deaths)" = "#D55E00"))
+    ggplot2::scale_fill_manual(name = "", values = c("Censored" = "#0072B2", "Events" = "#D55E00"))
 
   combined_layout <- patchwork::wrap_plots(p_forest, p_ribbon, ncol = 2, widths = c(10, 1)) +
     patchwork::plot_layout(guides = "collect") &
