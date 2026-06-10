@@ -87,22 +87,21 @@ test_that(".prepare_cutpoint_data subsets, renames, and omits NA cases", {
 #' @srrstats {G2.1}
 #' @srrstats {G5.2b}
 test_that(".validate_event_column enforces strict 0/1 binary formatting and accurate messaging", {
-  # Trigger non-numeric data entry checks with localized-safe variable name tracking
+  # Trigger non-numeric data entry checks
   expect_error(
     OptSurvCutR:::.validate_event_column(c("1", "0"), "status"),
-    regexp = "status"
+    regexp = "must be numeric" # Updated to match your exact 80-char message string
   )
 
   # Trigger out-of-bounds categorical integer check
   expect_error(
     OptSurvCutR:::.validate_event_column(c(0, 1, 2), "status"),
-    regexp = "status"
+    regexp = "must be strictly binary"
   )
 
-  # Clean pass check via robust expect_silent wrapper
+  # Clean pass check
   expect_silent(OptSurvCutR:::.validate_event_column(c(0, 1, 0, 1), "status"))
 })
-
 
 # --- 5. Cohort Metrics Constraints (.validate_data_conditions) ---
 

@@ -41,7 +41,10 @@ test_that("Core plot themes and optimization curves execute completely", {
 
   p_lr <- plot_optimisation_curve(fixtures$res_base)
   expect_s3_class(p_lr, "ggplot")
-  print(p_lr)
+  # Muffle the ggplot scale truncation warnings for small test samples safely
+  suppressWarnings({
+    print(p_lr)
+  })
 })
 
 #' @srrstats {G5.2b}
@@ -111,18 +114,16 @@ test_that("Exhaustive layout matrix testing for S3 plot routers across engine ty
 
   res_with_covars <- suppressMessages(suppressWarnings(
     find_cutpoint(fixtures$df, "predictor", "time", "event",
-      covariates = "covariate1", num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 5
+                  covariates = "covariate1", num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 5
     )
   ))
 
   res_2cuts_gen <- suppressMessages(suppressWarnings(
     find_cutpoint(fixtures$df_3groups, "predictor", "time", "event",
-      num_cuts = 2, method = "systematic", quiet = TRUE, nmin = 5
+                  num_cuts = 2, method = "systematic", quiet = TRUE, nmin = 5
     )
   ))
 
-  # CRITICAL ACTION: Force an alternative copy of your models to flag use_cpp = FALSE
-  # This opens the native R findInterval() fallback paths across all subroutines!
   res_pure_r <- fixtures$res_base
   res_pure_r$parameters$use_cpp <- FALSE
 
@@ -190,14 +191,16 @@ test_that("Force plot_optimisation_curve to render 3D/2-cut surface logic or tra
 
   res_2cuts_surf <- suppressMessages(suppressWarnings(
     find_cutpoint(fixtures$df_3groups, "predictor", "time", "event",
-      num_cuts = 2, method = "systematic", nmin = 5, quiet = TRUE
+                  num_cuts = 2, method = "systematic", nmin = 5, quiet = TRUE
     )
   ))
 
-  expect_error(
-    plot_optimisation_curve(res_2cuts_surf),
-    regexp = "grid"
-  )
+  # Updated to expect a valid plot structure since the RGS backend correctly preserves surface matrices
+  pdf(NULL)
+  on.exit(dev.off(), add = TRUE)
+
+  p_surf <- plot_optimisation_curve(res_2cuts_surf)
+  expect_s3_class(p_surf, "ggplot")
 })
 
 test_that("Exhaustive S3 method and plot sweep for find_cutpoint_number results", {
@@ -205,7 +208,7 @@ test_that("Exhaustive S3 method and plot sweep for find_cutpoint_number results"
 
   res_num <- suppressMessages(suppressWarnings(
     find_cutpoint_number(fixtures$df, "predictor", "time", "event",
-      max_cuts = 2, method = "systematic", criterion = "BIC", quiet = TRUE, nmin = 5
+                         max_cuts = 2, method = "systematic", criterion = "BIC", quiet = TRUE, nmin = 5
     )
   ))
 

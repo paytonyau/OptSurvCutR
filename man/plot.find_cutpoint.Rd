@@ -28,7 +28,7 @@ assigned underlying data frame template.}
 }
 \value{
 A \code{ggplot} canvas object, a multi-panel \code{patchwork} collection, or
-    a \code{data.frame} if \code{return_data = TRUE}.
+     a \code{data.frame} if \code{return_data = TRUE}.
 }
 \description{
 Unified plotting dispatch network routing to clinical survival curves,
@@ -41,8 +41,16 @@ objective surfaces, or conditional landmark stratification assets.
 }
 
 \examples{
-# Build clean local simulation objects for quick validation runs
-mock_df <- data.frame(time = 1:30, event = rep(c(0, 1), 15), factor = rnorm(30, 10, 2))
-res <- find_cutpoint(mock_df, "factor", "time", "event", num_cuts = 1, method = "systematic", quiet = TRUE)
+# Build clean local simulation objects with an explicit survival risk split
+set.seed(123)
+mock_df <- data.frame(
+  time   = c(runif(15, 50, 100), runif(15, 5, 25)),
+  event  = rep(1, 30),
+  factor = c(rnorm(15, 5, 0.5), rnorm(15, 15, 0.5))
+)
+res <- find_cutpoint(
+  mock_df, "factor", "time", "event",
+  num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 3
+)
 p <- plot(res, type = "distribution")
 }

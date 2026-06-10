@@ -6,34 +6,25 @@
 #' Internal helper: Objective Function for Genetic Algorithm
 #'
 #' @description
-#' Called by `rgenoud::genoud`. Calculates fitness (log-likelihood,
-#' log-rank stat, etc.) for a given set of cut-points.
-#' `rgenoud` always maximises, so all criteria are framed as such.
+#' Called by `rgenoud::genoud`. Translates incoming discrete integer board indices
+#' back to regularized biomarker coordinates and calculates fitness (maximised).
 #'
-#' @param params Numeric vector. First `numcut` are cut-points; remaining are betas.
+#' @param params Numeric vector. First `numcut` are integer indices of the grid; remaining are betas.
 #' @param time Survival time vector.
 #' @param censor Survival event vector.
 #' @param target Continuous predictor vector.
 #' @param confound Optional covariate data frame.
 #' @param numcut Number of cut-points.
-#' @param gap Minimum distance between cut-points.
+#' @param gap Minimum distance between cut-points (applied to decoded values).
 #' @param nmin Minimum observations per group.
 #' @param criterion "logrank", "p_value", "hazard_ratio" or "loglik".
 #' @param loglik0 Log-likelihood of the null model.
 #' @param cache Optional environment to cache and retrieve evaluations.
 #' @param base_df Pre-allocated data.frame template for speed.
 #' @param precompiled_formula Pre-parsed survival formula.
+#' @param grid_pool The underlying regularized numeric coordinates vector.
 #'
 #' @return Single numeric fitness value.
-#'
-#' @references
-#' Cox, D. R. (1972). Regression Models and Life-Tables.
-#' *Journal of the Royal Statistical Society: Series B*, **34**(2),
-#' 187–202. \doi{10.1111/j.2517-6161.1972.tb00899.x}
-#'
-#' Mantel, N. (1966). Evaluation of survival data and two new rank order
-#' statistics arising in its consideration. *Cancer Chemotherapy Reports*,
-#' **50**(3). <https://pubmed.ncbi.nlm.nih.gov/5910392/>
 #'
 #' @section srrstats compliance:
 #' .
@@ -49,9 +40,14 @@
 #' @noRd
 .obj <- function(params, time, censor, target, confound, numcut, gap, nmin,
                  criterion, loglik0 = NA_real_, cache = NULL,
-                 base_df = NULL, precompiled_formula = NULL) {
+                 base_df = NULL, precompiled_formula = NULL, grid_pool = NULL) {
+
+  # Decode incoming parameter indices back into numeric cuts
+  winning_indices <- round(params[1:numcut])
+  cutoff <- sort(grid_pool[winning_indices])
+
   if (!is.null(cache)) {
-    key <- paste(round(params, 6), collapse = "_")
+    key <- paste(round(cutoff, 6), collapse = "_")
     if (exists(key, envir = cache, inherits = FALSE)) {
       return(cache[[key]])
     }
@@ -60,17 +56,15 @@
   if (length(unique(time)) <= 1) {
     return(-Inf)
   }
-  cutoff <- params[1:numcut]
-  sorted_cuts <- sort(cutoff)
 
-  if (numcut > 1 && min(diff(sorted_cuts)) < gap) {
+  if (numcut > 1 && min(diff(cutoff)) < gap) {
     return(-Inf)
   }
-  if (sorted_cuts[1] <= min(target, na.rm = TRUE) || sorted_cuts[numcut] >= max(target, na.rm = TRUE)) {
+  if (cutoff[1] <= min(target, na.rm = TRUE) || cutoff[numcut] >= max(target, na.rm = TRUE)) {
     return(-Inf)
   }
 
-  cut_design <- as.factor(findInterval(target, sorted_cuts, left.open = TRUE) + 1L)
+  cut_design <- as.factor(findInterval(target, cutoff, left.open = TRUE) + 1L)
   if (length(table(cut_design)) != (numcut + 1) || min(table(cut_design)) < nmin) {
     return(-Inf)
   }
@@ -79,63 +73,59 @@
   data_for_fit$cut_design <- cut_design
 
   stat_value <- switch(criterion,
-    "logrank" = {
-      if (is.null(confound) || ncol(confound) == 0) {
-        fit <- tryCatch(survival::survdiff(precompiled_formula, data = data_for_fit), error = function(e) NULL)
-        if (is.null(fit)) -Inf else fit$chisq
-      } else {
-        fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
-        if (is.null(fit) || is.null(fit$score)) -Inf else fit$score
-      }
-    },
-    "hazard_ratio" = {
-      fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
-      if (is.null(fit) || isTRUE(fit$nevent == 0)) {
-        -Inf
-      } else {
-        target_coef <- paste0("cut_design", numcut + 1)
-        if (!(target_coef %in% names(fit$coefficients)) || is.na(fit$coefficients[target_coef])) -Inf else exp(fit$coefficients[target_coef])
-      }
-    },
-    "p_value" = {
-      fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
-      if (is.null(fit) || is.null(fit$loglik) || isTRUE(fit$nevent == 0)) {
-        -Inf
-      } else {
-        if (!is.na(loglik0)) {
-          pval <- stats::pchisq(-2 * (loglik0 - fit$loglik[2]), numcut, lower.tail = FALSE)
-          1 - pval
-        } else {
-          sfit <- tryCatch(summary(fit), error = function(e) NULL)
-          if (is.null(sfit) || is.null(sfit$logtest)) -Inf else 1 - sfit$logtest["pvalue"]
-        }
-      }
-    },
-    "loglik" = {
-      beta_init <- params[(numcut + 1):length(params)]
-
-      # DEFENSIVE ENGINE BACKSTOP: If running an unadjusted model,
-      # bypass manual init arrays to let coxph resolve loglik natively
-      if (length(beta_init) == 0 || is.null(confound) || ncol(confound) == 0) {
-        fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
-        if (is.null(fit) || is.null(fit$loglik) || isTRUE(fit$nevent == 0)) -Inf else fit$loglik[2]
-      } else {
-        fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit, init = beta_init, iter.max = 0), error = function(e) NULL)
-        if (is.null(fit) || is.null(fit$loglik) || isTRUE(fit$nevent == 0)) -Inf else fit$loglik[2]
-      }
-    },
-    -Inf
+                       "logrank" = {
+                         if (is.null(confound) || ncol(confound) == 0) {
+                           fit <- tryCatch(survival::survdiff(precompiled_formula, data = data_for_fit), error = function(e) NULL)
+                           if (is.null(fit)) -Inf else fit$chisq
+                         } else {
+                           fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
+                           if (is.null(fit) || is.null(fit$score)) -Inf else fit$score
+                         }
+                       },
+                       "hazard_ratio" = {
+                         fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
+                         if (is.null(fit) || isTRUE(fit$nevent == 0)) {
+                           -Inf
+                         } else {
+                           target_coef <- paste0("cut_design", numcut + 1)
+                           if (!(target_coef %in% names(fit$coefficients)) || is.na(fit$coefficients[target_coef])) -Inf else exp(fit$coefficients[target_coef])
+                         }
+                       },
+                       "p_value" = {
+                         fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
+                         if (is.null(fit) || is.null(fit$loglik) || isTRUE(fit$nevent == 0)) {
+                           -Inf
+                         } else {
+                           if (!is.na(loglik0)) {
+                             pval <- stats::pchisq(-2 * (loglik0 - fit$loglik[2]), numcut, lower.tail = FALSE)
+                             1 - pval
+                           } else {
+                             sfit <- tryCatch(summary(fit), error = function(e) NULL)
+                             if (is.null(sfit) || is.null(sfit$logtest)) -Inf else 1 - sfit$logtest["pvalue"]
+                           }
+                         }
+                       },
+                       "loglik" = {
+                         beta_init <- params[(numcut + 1):length(params)]
+                         if (length(beta_init) == 0 || is.null(confound) || ncol(confound) == 0) {
+                           fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
+                           if (is.null(fit) || is.null(fit$loglik) || isTRUE(fit$nevent == 0)) -Inf else fit$loglik[2]
+                         } else {
+                           fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit, init = beta_init, iter.max = 0), error = function(e) NULL)
+                           if (is.null(fit) || is.null(fit$loglik) || isTRUE(fit$nevent == 0)) -Inf else fit$loglik[2]
+                         }
+                       },
+                       -Inf
   )
 
   if (!is.null(cache)) cache[[key]] <- stat_value
   return(stat_value)
 }
 
-#' Internal helper: Wrapper for the rgenoud Genetic Algorithm
+#' Internal helper: Wrapper for the rgenoud Genetic Algorithm over Regularized Space
 #'
 #' @description
-#' Sets up and runs `rgenoud::genoud` to find optimal cut-points, defining
-#' search domains, caching environments, and initial starting values.
+#' Sets up and runs `rgenoud::genoud` to optimize discrete indices over a regularized pool.
 #'
 #' @param target Continuous predictor vector.
 #' @param numcut Number of cut-points.
@@ -144,18 +134,14 @@
 #' @param confound Optional covariate data frame.
 #' @param nmin Minimum observations per group.
 #' @param criterion Optimisation criterion.
-#' @param max.generations Max generations (native rgenoud arg).
-#' @param pop.size Population size (native rgenoud arg).
+#' @param max.generations Max generations (adaptive fallback).
+#' @param pop.size Population size (adaptive fallback).
 #' @param gap Minimum distance between cut-points.
 #' @param print.level Console output level.
+#' @param candidate_cuts Optional vector of pre-filtered cuts from Step 1.
 #' @param ... Additional arguments passed to `.obj` and `genoud`.
 #'
-#' @return A `genoud` object (or `NULL` on failure).
-#'
-#' @references
-#' Mebane Jr, W. R., & Sekhon, J. S. (2011). Genetic Optimization Using
-#' Derivatives: The rgenoud Package for R. *Journal of Statistical Software*,
-#' **42**, 1–26. \doi{10.18637/jss.v042.i11}
+#' @return A list containing decoded `par` values and final fitness `value`.
 #'
 #' @section srrstats compliance:
 #' .
@@ -167,24 +153,34 @@
 #' @importFrom survival coxph Surv
 #' @noRd
 .run_genetic_search <- function(target, numcut, time, censor, confound, nmin,
-                                criterion, max.generations = 100, pop.size = 100,
-                                gap = NULL, print.level = 0, ...) {
+                                criterion, max.generations = 30, pop.size = 100,
+                                gap = NULL, print.level = 0, candidate_cuts = NULL, ...) {
   if (!requireNamespace("rgenoud", quietly = TRUE)) {
     stop("The 'rgenoud' package is required. Please install it.", call. = FALSE)
   }
+
+  # Establish the discrete grid coordinate matrix
+  if (!is.null(candidate_cuts)) {
+    grid_pool <- candidate_cuts
+  } else {
+    grid_probs <- seq(0.01, 0.99, by = 0.01)
+    grid_pool <- sort(unique(stats::quantile(target, probs = grid_probs, na.rm = TRUE)))
+  }
+
+  G <- length(grid_pool)
+  if (G < numcut) return(NULL)
 
   num_confound_vars <- if (is.null(confound)) 0 else ncol(confound)
   optimising_betas <- (criterion == "loglik")
   nvars <- if (optimising_betas) numcut * 2 + num_confound_vars else numcut
 
-  domain_cuts <- matrix(rep(range(target, na.rm = TRUE), numcut), ncol = 2, byrow = TRUE)
-  if (any(is.infinite(domain_cuts))) {
-    return(NULL)
-  }
+  # Map domains directly to valid integer boundaries (1 to G)
+  domain_cuts <- matrix(rep(c(1, G), numcut), ncol = 2, byrow = TRUE)
   domain <- if (optimising_betas) rbind(domain_cuts, matrix(rep(c(-5, 5), nvars - numcut), ncol = 2, byrow = TRUE)) else domain_cuts
 
-  initial_cuts <- stats::quantile(target, probs = seq(0, 1, length.out = numcut + 2), na.rm = TRUE)[2:(numcut + 1)]
-  initial_values <- if (optimising_betas) c(initial_cuts, rep(0, nvars - numcut)) else initial_cuts
+  # Compute starting index points evenly spaced across the matrix length
+  initial_indices <- round(seq(2, G - 1, length.out = numcut))
+  initial_values <- if (optimising_betas) c(initial_indices, rep(0, nvars - numcut)) else initial_indices
 
   if (is.null(gap)) {
     gap <- stats::quantile(sort(diff(sort(unique(stats::na.omit(target))))), probs = 0.5, na.rm = TRUE)
@@ -215,15 +211,28 @@
 
   optim_result <- tryCatch(rgenoud::genoud(
     fn = .obj, nvars = nvars, max = TRUE, pop.size = pop.size,
-    max.generations = max.generations, wait.generations = 10, hard.generation.limit = TRUE,
+    max.generations = max.generations, wait.generations = 5, hard.generation.limit = TRUE,
     starting.values = initial_values, Domains = domain, print.level = print.level,
+    data.type = 1,          # DISCRETE INTEGER SEARCH MODE
+    P9 = 0,                 # Turn off continuous local gradient optimization
+    boundary.enforcement = 2,
+    gradient.check = FALSE, # Bypass expensive fractional checking loops
     time = time, censor = censor, target = target, confound = confound,
     numcut = numcut, gap = gap, nmin = nmin, criterion = criterion,
     loglik0 = loglik0, cache = eval_cache, base_df = base_df,
-    precompiled_formula = stats::as.formula(formula_str)
+    precompiled_formula = stats::as.formula(formula_str), grid_pool = grid_pool
   ), error = function(e) NULL)
 
-  return(optim_result)
+  if (is.null(optim_result)) return(NULL)
+
+  # Decode winning integer parameters back to real clinical coordinates
+  final_indices <- round(optim_result$par[1:numcut])
+  decoded_cuts <- sort(grid_pool[final_indices])
+
+  return(list(
+    par = decoded_cuts,
+    value = optim_result$value
+  ))
 }
 
 #' Internal helper: Genetic Model Selection for finding `max_cuts`
@@ -272,7 +281,7 @@
   results$cuts <- I(list(NULL))
 
   for (k_cuts in 1:max_cuts) {
-    if (requireNamespace("cli", quietly = TRUE)) cli::cli_alert_info(paste("Running genetic algorithm for", k_cuts, "cut-point(s)..."))
+    if (requireNamespace("cli", quietly = TRUE)) cli::cli_alert_info(paste("Running discrete genetic algorithm for", k_cuts, "cut-point(s)..."))
 
     ga_result <- tryCatch(
       {
@@ -312,24 +321,7 @@
 #'
 #' @return Single numeric IC value (or `NA` on failure).
 #'
-#' @references
-#' Akaike, H. (1974). A new look at the statistical model identification.
-#' *IEEE Transactions on Automatic Control*, **19**(6), 716–723.
-#' \doi{10.1109/TAC.1974.1100705}
-#'
-#' Hurvich, C. M., & Tsai, C.-L. (1989). Regression and time series model
-#' selection in small samples. *Biometrika*, **76**(2), 297–307.
-#' \doi{10.1093/biomet/76.2.297}
-#'
-#' Schwarz, G. (1978). Estimating the dimension of a model.
-#' *The Annals of Statistics*, **6**(2), 461–464.
-#' \doi{10.1214/aos/1176344136}
-#'
-#' @section srrstats compliance:
-#' .
-#' @srrstats {RE4.11} Implements AIC, AICc, BIC.
-#' @srrstats {G1.4a} Internal use only (`@noRd`).
-#'
+#' @importFrom stats as.formula
 #' @noRd
 .calc_ic <- function(model, k, n, criterion) {
   if (is.null(model) || !is.list(model) || is.null(model$loglik)) {

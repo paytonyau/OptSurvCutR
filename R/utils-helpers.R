@@ -90,14 +90,14 @@
                                            criterion, covariates) {
   method <- match.arg(method, choices = c("systematic", "genetic"))
   criterion <- match.arg(criterion,
-    choices = c("logrank", "hazard_ratio", "p_value")
+                         choices = c("logrank", "hazard_ratio", "p_value")
   )
   if (!is.numeric(num_cuts) || num_cuts < 0 || num_cuts != round(num_cuts)) {
     stop("num_cuts must be a non-negative integer.", call. = FALSE)
   }
   if (criterion == "hazard_ratio" && num_cuts > 1) {
     stop("'hazard_ratio' is only supported for num_cuts = 1.",
-      call. = FALSE
+         call. = FALSE
     )
   }
   if (method == "genetic" && !requireNamespace("rgenoud", quietly = TRUE)) {
@@ -111,7 +111,7 @@
   }
   if (method == "systematic" && !num_cuts %in% c(1, 2)) {
     stop("Systematic search only supports num_cuts = 1 or 2.",
-      call. = FALSE
+         call. = FALSE
     )
   }
   if (is.null(predictor)) {
@@ -119,7 +119,7 @@
   }
   if (is.null(outcome_time) || is.null(outcome_event)) {
     stop("Both 'outcome_time' and 'outcome_event' are required.",
-      call. = FALSE
+         call. = FALSE
     )
   }
   required_vars <- c(predictor, outcome_time, outcome_event, covariates)
@@ -183,19 +183,15 @@
 #'
 #' @noRd
 .validate_event_column <- function(event_col, outcome_event) {
-  if (!is.numeric(event_col)) {
-    cli::cli_abort(c(
-      "Event column ({.arg {outcome_event}}) must be numeric.",
-      "i" = "Detected: {.cls {class(event_col)}}.",
-      "i" = "Please convert to 0 (censored) and 1 (event)."
-    ))
+  if (is.character(event_col) || is.factor(event_col)) {
+    cli::cli_abort("Event column {.var {outcome_event}} must be numeric.")
   }
-  valid_events <- unique(event_col)
-  if (!all(valid_events %in% c(0, 1))) {
-    invalid_vals <- sort(valid_events[!(valid_events %in% c(0, 1))])
+
+  unique_events <- unique(na.omit(event_col))
+  if (!all(unique_events %in% c(0, 1, TRUE, FALSE))) {
     cli::cli_abort(c(
-      "Event column ({.arg {outcome_event}}) must contain only 0 and 1.",
-      "i" = "Found invalid value(s): {.val {invalid_vals}}"
+      "x" = "Event column {.var {outcome_event}} must be strictly binary (0/1).",
+      "i" = "Detected invalid values: {.val {sort(unique_events)}}."
     ))
   }
   invisible(TRUE)

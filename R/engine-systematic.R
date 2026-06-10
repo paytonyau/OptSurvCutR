@@ -3,19 +3,21 @@
 # Handles exhaustive grid searches for find_cutpoint and find_cutpoint_number
 # ===================================================================
 
-#' Internal helper: Systematic Grid Search
+#' Internal helper: Systematic Grid Search over Regularized Space
 #'
 #' @description
-#' Implements an exhaustive grid search to evaluate all possible thresholds
-#' for 1 or 2 cut-points, respecting the minimum group size constraints.
+#' Implements an exhaustive grid search over a regularized percentile space
+#' to evaluate possible thresholds for 1 or 2 cut-points, respecting the minimum
+#' group size constraints.
 #'
-#' @param userdata Cleaned survival data frame.
+#' @param userdata Cleaned survival data frame containing columns 'factor', 'time', and 'event'.
 #' @param num_cuts Number of cut-points to evaluate (1 or 2).
 #' @param criterion Statistic to optimise: "logrank", "hazard_ratio", or "p_value".
 #' @param covariates Optional vector of covariate names.
 #' @param nmin Absolute minimum number of observations per group.
 #' @param predictor_name Original name of the predictor (for messaging).
 #' @param quiet Logical to suppress console output.
+#' @param candidate_cuts Optional vector of pre-filtered cuts defining a narrow search space.
 #' @param ... Additional unused arguments (absorbed safely).
 #'
 #' @return A list containing `optimal_cuts`, `optimal_stat`, and `all_stats`.
@@ -28,12 +30,12 @@
 #' @importFrom foreach %do% registerDoSEQ
 #' @importFrom cli cli_alert_info cli_alert_warning cli_inform cli_alert_success
 #' @importFrom survival coxph Surv
-#' @importFrom stats as.formula
+#' @importFrom stats as.formula quantile
 #' @noRd
 .systematic_search <- function(userdata, num_cuts, criterion,
                                covariates, nmin, predictor_name,
-                               quiet, ...) {
-  if (!quiet) cli::cli_alert_info("Running systematic search for {num_cuts} cut-point(s)...")
+                               quiet, candidate_cuts = NULL, ...) {
+  if (!quiet) cli::cli_alert_info("Running regularized systematic search for {num_cuts} cut-point(s)...")
   userdata <- userdata[order(userdata$factor), ]
 
   cov_part <- if (!is.null(covariates)) paste(" +", paste(covariates, collapse = " + ")) else ""
@@ -69,17 +71,24 @@
   best_cut_val <- rep(NA_real_, num_cuts)
   all_stats_df <- NULL
 
+  # Establish the core regularized grid structure
+  if (!is.null(candidate_cuts)) {
+    search_grid <- candidate_cuts
+  } else {
+    grid_probs <- seq(0.01, 0.99, by = 0.01)
+    search_grid <- sort(unique(stats::quantile(userdata$factor, probs = grid_probs, na.rm = TRUE)))
+  }
+
   if (num_cuts == 1) {
-    search_grid <- unique(userdata$factor[nmin:(nrow(userdata) - nmin)])
     if (length(search_grid) == 0) {
       return(list(optimal_cuts = NA_real_, optimal_stat = NA_real_, all_stats = NULL, parameters = list(method = "systematic")))
     }
 
     stats_per_cut <- vapply(search_grid, .get_stat,
-      num_cuts = 1, data_in = userdata,
-      criterion = criterion, cov_formula = cov_part,
-      nmin = nmin, fit_null = fit_null_model,
-      FUN.VALUE = numeric(1)
+                            num_cuts = 1, data_in = userdata,
+                            criterion = criterion, cov_formula = cov_part,
+                            nmin = nmin, fit_null = fit_null_model,
+                            FUN.VALUE = numeric(1)
     )
 
     if (all(is.na(stats_per_cut))) {
@@ -90,46 +99,34 @@
     best_cut_val <- search_grid[best_idx]
     best_stat <- stats_per_cut[best_idx]
     all_stats_df <- data.frame(cut1 = search_grid, stat = stats_per_cut)
+
   } else { # num_cuts == 2
-    if (!quiet) cli::cli_alert_info("Searching for 2 cuts is slow...")
+    if (!quiet) cli::cli_alert_info("Searching for 2 cuts over regularized coordinate space...")
     foreach::registerDoSEQ()
 
-    possible_c1_indices <- nmin:(nrow(userdata) - (2 * nmin))
-    grid1_values <- unique(userdata$factor[possible_c1_indices])
-
-    if (length(grid1_values) == 0) {
+    if (length(search_grid) < 2) {
       return(list(optimal_cuts = c(NA_real_, NA_real_), optimal_stat = NA_real_, all_stats = NULL, parameters = list(method = "systematic")))
     }
 
-    results_list <- foreach::foreach(c1 = grid1_values, .combine = "rbind", .export = c(".get_stat")) %do% {
+    results_list <- foreach::foreach(c1 = search_grid, .combine = "rbind", .export = c(".get_stat")) %do% {
       best_local_stat <- if (direction == "min") Inf else -Inf
       best_local_c2 <- NA_real_
-      c1_max_index <- max(which(userdata$factor == c1))
 
-      start_index_c2 <- c1_max_index + nmin
-      end_index_c2 <- nrow(userdata) - nmin
-      if (start_index_c2 > end_index_c2) {
-        return(NULL)
-      }
-
-      grid2_values <- unique(userdata$factor[start_index_c2:end_index_c2])
-      if (length(grid2_values) == 0) {
-        return(NULL)
-      }
+      # Ensure structural ordering where c2 is downstream of c1
+      grid2_values <- search_grid[search_grid > c1]
+      if (length(grid2_values) == 0) return(NULL)
 
       for (c2 in grid2_values) {
         stat <- .get_stat(c(c1, c2), 2, userdata, criterion, cov_part, nmin, fit_null = fit_null_model)
         if (is.na(stat)) next
         is_better <- if (direction == "min") (stat < best_local_stat) else (stat > best_local_stat)
         if (is_better && !is.infinite(stat)) {
-          best_local_stat <- stat
-          best_local_c2 <- c2
+          best_local_stat = stat
+          best_local_c2 = c2
         }
       }
-      if (is.na(best_local_c2)) {
-        return(NULL)
-      }
-      data.frame(stat = best_local_stat, c1 = c1, c2 = c2)
+      if (is.na(best_local_c2)) return(NULL)
+      data.frame(stat = best_local_stat, c1 = c1, c2 = best_local_c2)
     }
 
     if (is.null(results_list) || nrow(results_list) == 0) {
@@ -139,14 +136,15 @@
     best_idx <- if (direction == "min") which.min(results_list$stat) else which.max(results_list$stat)
     best_stat <- results_list$stat[best_idx]
     best_cut_val <- c(results_list$c1[best_idx], results_list$c2[best_idx])
+    all_stats_df <- results_list
   }
 
-  if (!quiet) cli::cli_alert_success("Systematic search complete.")
+  if (!quiet) cli::cli_alert_success("Systematic grid optimization complete.")
   return(list(
     optimal_cuts = best_cut_val,
     optimal_stat = best_stat,
     all_stats = all_stats_df,
-    parameters = list(method = "systematic") # Satisfies internal tests
+    parameters = list(method = "systematic")
   ))
 }
 
@@ -226,11 +224,11 @@
   }
 }
 
-#' Internal helper: Systematic Model Selection for finding `max_cuts`
+#' Internal helper: Systematic Model Selection and Delta IC Range Mining
 #'
 #' @description
-#' Evaluates models from 1 to `max_cuts` using the systematic exhaustive
-#' engine, computing Information Criteria (AIC/BIC) for model selection.
+#' Evaluates models from 1 to `max_cuts` using the regularized systematic
+#' sweeper, computing Information Criteria (AIC/BIC) and profiling the permissible range.
 #'
 #' @param userdata Cleaned survival data frame.
 #' @param max_cuts Maximum number of cut-points to test (<= 2).
@@ -239,7 +237,8 @@
 #' @param covariates Optional covariates.
 #' @param ... Unused arguments passed down safely.
 #'
-#' @return A data.frame of model selection results.
+#' @return A list containing a data.frame of model selection results (`selection_table`),
+#' the optimal number of cuts (`numcut`), and the vector of `candidate_cuts` within Delta IC <= 2.
 #'
 #' @section srrstats compliance:
 #' .
@@ -248,15 +247,16 @@
 #' @srrstats {G1.4a} Internal use only (`@noRd`).
 #'
 #' @importFrom survival coxph Surv
-#' @importFrom stats as.formula
+#' @importFrom stats as.formula quantile
 #' @importFrom cli cli_inform cli_alert_info
 #' @noRd
 .systematic_search_num <- function(userdata, max_cuts, nmin, criterion, covariates, ...) {
-  if (max_cuts > 2) stop("systematic method is only implemented for max_cuts <= 2.")
+  if (max_cuts > 2) stop("Systematic method selection is constrained to max_cuts <= 2.")
   n <- nrow(userdata)
   userdata <- userdata[order(userdata$factor), ]
   cov_part <- if (!is.null(covariates)) paste(" +", paste(covariates, collapse = " + ")) else ""
 
+  # Base model (0 cuts) evaluation
   base_formula_str <- paste("survival::Surv(time, event) ~ factor", cov_part)
   ic0 <- tryCatch(
     {
@@ -272,22 +272,50 @@
   results <- data.frame(num_cuts = 0, IC = ic0)
   results$cuts <- I(list(NULL))
 
+  # Set baseline profile metrics
+  grid_probs <- seq(0.01, 0.99, by = 0.01)
+  base_grid <- sort(unique(stats::quantile(userdata$factor, probs = grid_probs, na.rm = TRUE)))
+  ic_profile <- rep(Inf, length(base_grid))
+
   for (k_cuts in 1:max_cuts) {
-    if (requireNamespace("cli", quietly = TRUE)) cli::cli_alert_info(paste("Testing for", k_cuts, "cut-point(s)..."))
+    if (requireNamespace("cli", quietly = TRUE)) cli::cli_alert_info(paste("Profiling IC surface for", k_cuts, "cut-point(s)..."))
 
     res <- .systematic_search(userdata, k_cuts, "p_value", covariates, nmin, "factor", quiet = TRUE)
     if (any(is.na(res$optimal_cuts))) {
-      if (requireNamespace("cli", quietly = TRUE)) cli::cli_inform(paste("No valid cut-points found for", k_cuts, "cut(s) due to model failures or constraints."))
+      if (requireNamespace("cli", quietly = TRUE)) cli::cli_inform(paste("No valid cut-points found for", k_cuts, "cut(s)."))
       results <- rbind(results, data.frame(num_cuts = k_cuts, IC = NA_real_, cuts = I(list(NULL))))
       next
     }
+
     factor_status <- factor(findInterval(userdata$factor, res$optimal_cuts, left.open = TRUE) + 1L)
     best_ic <- .get_model_ic_num(userdata, factor_status, k_cuts, n, criterion, cov_part)
-
     results <- rbind(results, data.frame(num_cuts = k_cuts, IC = best_ic, cuts = I(list(res$optimal_cuts))))
+
+    # If profiling the structural first cut-point surface, build the Delta IC range boundaries
+    if (k_cuts == 1 && !is.null(res$all_stats)) {
+      for (g_idx in seq_along(base_grid)) {
+        f_status <- factor(findInterval(userdata$factor, base_grid[g_idx], left.open = TRUE) + 1L)
+        ic_profile[g_idx] <- .get_model_ic_num(userdata, f_status, 1, n, criterion, cov_part)
+      }
+    }
   }
+
   names(results)[2] <- criterion
-  return(results)
+
+  # Determine optimal K (ignoring NA)
+  valid_rows <- results[!is.na(results[[criterion]]), ]
+  optimal_k <- if (nrow(valid_rows) > 0) valid_rows$num_cuts[which.min(valid_rows[[criterion]])] else 1
+
+  # Extract permissible cut-point range boundaries (Delta IC <= 2)
+  min_profile_ic <- min(ic_profile, na.rm = TRUE)
+  permissible_cuts <- base_grid[which((ic_profile - min_profile_ic) <= 2.0)]
+  if (length(permissible_cuts) == 0) permissible_cuts <- base_grid # Safe fallback
+
+  return(list(
+    selection_table = results,
+    numcut = optimal_k,
+    candidate_cuts = permissible_cuts
+  ))
 }
 
 #' Internal helper: Compute IC from standard factors

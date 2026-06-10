@@ -19,7 +19,7 @@
 #' @srrstats {G1.5} Compared with `cutpointr`/`survminer` in vignette.
 #' @srrstats {G1.6} Numerical stability via `survival::coxph`
 #' and `rgenoud`; edge cases return `NA`.
-#' @srrstats {G2.3b} NSE via `as.formula()`/`data[...]`; no unsafe eval.
+#' @srrstats {G2.3b} Uses `as.formula()`/`data[...]`; no unsafe eval.
 #' @srrstats {G2.4} `NA` removed via `stats::na.omit()`.
 #' @srrstats {G5.2} `optimal_num_cuts` is `NA` when no valid solution found.
 #' @srrstats {G2.6} Input validation via direct checks.
@@ -51,30 +51,6 @@
 #' Systematic search is slow for `max_cuts > 2`; use `genetic`.
 #' Core vector partitions are calculated in compiled C++ via `Rcpp` for optimal performance.
 #'
-#' @references
-#' Akaike, H. (1974). A new look at the statistical model identification.
-#' *IEEE Transactions on Automatic Control*, **19**(6), 716–723.
-#' \doi{10.1109/TAC.1974.1100705}
-#'
-#' Chang, C., Hsieh, M.-K., Chang, W.-Y., Chiang, A. J., &
-#' Chen, J. (2017). Determining the optimal number and location of cutoff
-#' points with application to data of cervical cancer. *PLOS ONE*, 12(4),
-#' e0176231. \doi{10.1371/journal.pone.0176231}
-#'
-#' Chen, Y., Huang, J., He, X., Gao, Y., Mahara, G., Lin, Z.,
-#' & Zhang, J. (2019). A novel approach to determine two optimal
-#' cut-points of a continuous predictor with a U-shaped relationship to
-#' hazard ratio in survival data: Simulation and application. *BMC Medical
-#' Research Methodology*, 19(1), 96. \doi{10.1186/s12874-019-0738-4}
-#'
-#' Schwarz, G. (1978). Estimating the dimension of a model.
-#' *The Annals of Statistics*, **6**(2), 461–464.
-#' \doi{10.1214/aos/1176344136}
-#'
-#' Hurvich, C. M., & Tsai, C.-L. (1989). Regression and time series model
-#' selection in small samples. *Biometrika*, **76**(2), 297–307.
-#' \doi{10.1093/biomet/76.2.297}
-#'
 #' @param data Input data frame.
 #' @param predictor Continuous predictor variable name (character).
 #' @param outcome_time Time-to-event variable name (character).
@@ -85,31 +61,20 @@
 #' @param max_cuts Max number of cut-points to test (non-negative int).
 #' @param nmin Min. group size (count or proportion).
 #' @param seed Integer or `NULL`; random seed for `rgenoud`.
-#' @param max.generations Integer; generations for `rgenoud` (default 100).
-#' @param pop.size Integer; population size for `rgenoud` (default 100).
+#' @param max.generations Integer; generations for `rgenoud`. If `NULL`, dynamically scales.
+#' @param pop.size Integer; population size for `rgenoud`. If `NULL`, dynamically scales.
 #' @param use_cpp Logical. Automatically checks and calls compiled C++ routines via `Rcpp`. Default is `TRUE`.
 #' @param x An object from [find_cutpoint_number()].
 #' @param object An object from [find_cutpoint_number()].
 #' @param y Unused.
 #' @param ... Additional arguments passed to `rgenoud`.
 #'
-#' @examples
-#' data(crc_virome)
-#' res <- find_cutpoint_number(
-#'   data = head(crc_virome, 50),
-#'   predictor = "Alphapapillomavirus",
-#'   outcome_time = "time_months",
-#'   outcome_event = "status",
-#'   method = "systematic",
-#'   max_cuts = 1
-#' )
-#'
 #' @return An S3 object (`find_cutpoint_number_result`) with
 #' `results`, `parameters`, `userdata`, `optimal_num_cuts`,
-#' and `optimal_cuts`.
+#' `optimal_cuts`, and `candidate_cuts`.
 #'
 #' @importFrom foreach %do% registerDoSEQ
-#' @importFrom stats na.omit as.formula aggregate
+#' @importFrom stats na.omit as.formula aggregate quantile symnum
 #' @importFrom survival coxph Surv survfit
 #' @importFrom cli cli_h1 cli_text cli_alert_info cli_alert_success
 #' @importFrom cli cli_inform cli_abort cli_bullets cli_h2 cli_alert_warning
@@ -122,9 +87,8 @@ find_cutpoint_number <- function(data, predictor,
                                  method = "systematic", criterion = "BIC",
                                  covariates = NULL, max_cuts = 2,
                                  nmin = 0.1, seed = NULL,
-                                 max.generations = 100, pop.size = 100,
+                                 max.generations = NULL, pop.size = NULL,
                                  use_cpp = TRUE, ...) {
-  #' @srrstats {G3.0} Checks for integers avoid floating point equality comparisons.
   if (!is.numeric(max_cuts) || max_cuts < 0 || max_cuts != round(max_cuts)) {
     cli::cli_abort("max_cuts must be a non-negative integer.")
   }
@@ -163,6 +127,14 @@ find_cutpoint_number <- function(data, predictor,
 
   userdata <- data[, required_vars, drop = FALSE]
   userdata <- stats::na.omit(userdata)
+
+  if (is.factor(userdata[[predictor]]) || is.character(userdata[[predictor]])) {
+    cli::cli_abort(c(
+      "x" = "Unordered factors or characters are not allowed as continuous optimization inputs.",
+      "i" = "Variable '{predictor}' must be passed as a continuous numeric vector."
+    ))
+  }
+
   names(userdata)[names(userdata) == predictor] <- "factor"
   names(userdata)[names(userdata) == outcome_time] <- "time"
   names(userdata)[names(userdata) == outcome_event] <- "event"
@@ -171,13 +143,11 @@ find_cutpoint_number <- function(data, predictor,
 
   .validate_event_column(userdata$event, outcome_event)
 
-  # AUTOMATED SAFE GUARDRAIL: Sync with our compiled Rcpp function loading state
   if (use_cpp && !exists("cpp_get_group_assignments", mode = "function")) {
     cli::cli_alert_warning("Compiled C++ binary not loaded. Falling back gracefully to native R processing.")
     use_cpp <- FALSE
   }
 
-  # --- UX ENHANCEMENT: Early Nmin Evaluation to Prevent Silent Evaluation Collapses ---
   if (nmin < 1 && nmin > 0) {
     nmin_abs <- floor(nmin * n)
     cli::cli_alert_info("nmin {nmin} is a proportion. Min. group size set to {nmin_abs}.")
@@ -187,7 +157,6 @@ find_cutpoint_number <- function(data, predictor,
     cli::cli_abort("'nmin' must be a positive number.")
   }
 
-  # --- Create a standard NA result object ---
   na_result <- function(userdata, method, criterion) {
     output <- list(
       results = data.frame(),
@@ -207,20 +176,19 @@ find_cutpoint_number <- function(data, predictor,
       ),
       userdata = userdata,
       optimal_num_cuts = NA,
-      optimal_cuts = NA
+      optimal_cuts = NA,
+      candidate_cuts = NULL
     )
     class(output) <- "find_cutpoint_number_result"
     cli::cli_inform("No valid results found with given parameters.")
     return(output)
   }
 
-  # Handle no data post-NA removal
   if (n == 0) {
     cli::cli_inform("No complete cases found after removing NAs.")
     return(na_result(userdata, method, criterion))
   }
 
-  # --- HARDENED GUARDRAIL: Verify Total Data Split Headroom Matrix Capacity ---
   if (n < nmin_abs * (max_cuts + 1)) {
     cli::cli_alert_warning(
       "Sample size ({n}) is mathematically insufficient to support {max_cuts} cuts with a minimum group size constraint of {nmin_abs} patients ({max_cuts + 1} groups required)."
@@ -228,7 +196,24 @@ find_cutpoint_number <- function(data, predictor,
     return(na_result(userdata, method, criterion))
   }
 
-  # Check for constant predictor
+  # Build the base Regularized Grid Space lattice to gauge unique data supply
+  grid_probs_vec <- seq(0.01, 0.99, by = 0.01)
+  permissible_cuts <- sort(unique(stats::quantile(userdata$factor, probs = grid_probs_vec, na.rm = TRUE)))
+
+  # ===================================================================
+  # UX COHORT HEADROOM CHECK (Dynamic Lot Defense)
+  # ===================================================================
+  unique_values_needed <- (max_cuts + 1) * nmin_abs
+  actual_available_nodes <- length(permissible_cuts)
+
+  if (n < unique_values_needed || actual_available_nodes < max_cuts) {
+    cli::cli_abort(c(
+      "x" = "Insufficient data density for {max_cuts} cut-point(s) at nmin = {nmin_abs}.",
+      "i" = "Model requires at least {max_cuts} unique partition boundaries, but only {actual_available_nodes} survived duplicate filtering.",
+      "*" = "Action: Reduce 'max_cuts' or lower your 'nmin' threshold."
+    ))
+  }
+
   if (length(unique(userdata$factor)) <= max_cuts) {
     cli::cli_inform(paste(
       "Predictor has too few unique values",
@@ -239,22 +224,89 @@ find_cutpoint_number <- function(data, predictor,
 
   cli::cli_alert_info("Finding optimal cut number: method = {.strong {method}}")
 
-  # PILLAR 2 ALIGNMENT: Include use_cpp directly in search parameters list payload
-  params <- list(
-    userdata = userdata, max_cuts = max_cuts, nmin = nmin_abs,
-    criterion = criterion, covariates = covariates,
-    max.generations = max.generations,
-    pop.size = pop.size,
-    use_cpp = use_cpp
-  )
+  if (method == "systematic") {
+    params <- list(
+      userdata = userdata, max_cuts = max_cuts, nmin = nmin_abs,
+      criterion = criterion, covariates = covariates,
+      max.generations = max.generations, pop.size = pop.size,
+      use_cpp = use_cpp
+    )
+    extra_args <- list(...)
+    params <- c(params, extra_args)
 
-  extra_args <- list(...)
-  params <- c(params, extra_args)
+    search_payload <- do.call(.systematic_search_num, params)
+    results <- search_payload$selection_table
+    permissible_cuts <- search_payload$candidate_cuts
+  } else { # genetic complexity loop sweep
+    results_list <- list()
 
-  results <- if (method == "systematic") {
-    do.call(.systematic_search_num, params)
-  } else { # genetic
-    do.call(.genetic_search_num, params)
+    results_list[[1]] <- data.frame(
+      num_cuts = 0,
+      BIC = .get_model_ic_num(userdata, rep(1, n), 0, n, criterion, covariates),
+      cuts = I(list(NA))
+    )
+    names(results_list[[1]])[2] <- criterion
+
+    confound_df <- if (!is.null(covariates)) userdata[, covariates, drop = FALSE] else NULL
+
+    for (k in 1:max_cuts) {
+      cli::cli_inform("Running discrete genetic algorithm for {k} cut-point(s)...")
+
+      # --- SYSTEM SYNCHRONIZED MEMORY-SAFE TUNING ---
+      current_pop <- pop.size
+      current_gen <- max.generations
+      if (is.null(pop.size) || pop.size == 100) {
+        current_pop <- switch(as.character(k),
+                              "1" = 30, "2" = 60, "3" = 100, "4" = 120,
+                              "5" = 150, "6" = 180, "7" = 200, 250)
+      }
+      if (is.null(max.generations) || max.generations == 100) {
+        current_gen <- switch(as.character(k),
+                              "1" = 30, "2" = 40, "3" = 50, "4" = 55,
+                              "5" = 60, "6" = 65, "7" = 70, 80)
+      }
+
+      params_k <- list(
+        target = userdata$factor,
+        numcut = k,
+        time = userdata$time,
+        censor = userdata$event,
+        confound = confound_df,
+        nmin = nmin_abs,
+        criterion = if (criterion %in% c("BIC", "AIC", "AICc")) "p_value" else criterion,
+        max.generations = current_gen,
+        pop.size = current_pop,
+        use_cpp = use_cpp,
+        print.level = 0,
+        grid_probs = grid_probs_vec
+      )
+      extra_args <- list(...)
+
+      if (!("boundary.enforcement" %in% names(extra_args))) {
+        extra_args$boundary.enforcement <- 2
+      }
+      params_k <- c(params_k, extra_args)
+
+      raw_fit <- do.call(".run_genetic_search", params_k)
+
+      if (is.null(raw_fit) || !is.finite(raw_fit$value) || raw_fit$value <= -.Machine$double.xmax) {
+        fit_k <- NULL
+        # DYNAMIC RECOGNITION ARREST: Throw warning for dropped candidate configurations
+        cli::cli_alert_warning("Model with {k} cut-point(s) collapsed: Subgroups violated the minimum 'nmin' constraint of {nmin_abs} subjects.")
+      } else {
+        fit_k <- data.frame(
+          num_cuts = k,
+          placeholder = .get_model_ic_num(userdata, cut(userdata$factor, breaks = c(-Inf, sort(raw_fit$par[1:k]), Inf), labels = FALSE), k, n, criterion, covariates),
+          cuts = I(list(sort(raw_fit$par[1:k])))
+        )
+        names(fit_k)[2] <- criterion
+      }
+
+      if (!is.null(fit_k)) {
+        results_list[[k + 1]] <- fit_k
+      }
+    }
+    results <- do.call(rbind, results_list)
   }
 
   if (is.null(results) || !is.data.frame(results) || nrow(results) == 0) {
@@ -262,12 +314,10 @@ find_cutpoint_number <- function(data, predictor,
     return(na_result(userdata, method, criterion))
   }
 
-  # Check if all tested cut loops failed due to localized tier alignment boundary limitations
   if (all(is.na(results[[criterion]]))) {
     cli::cli_alert_warning("All tested model cut-points violated localized subgroup size constraints during runtime search iterations.")
   }
 
-  # --- Post-process IC results ---
   min_ic <- min(results[[criterion]], na.rm = TRUE)
   delta_col_name <- paste0("Delta_", criterion)
   weight_col_name <- paste0(criterion, "_Weight")
@@ -288,7 +338,6 @@ find_cutpoint_number <- function(data, predictor,
     }
   }, FUN.VALUE = character(1))
 
-  # --- Compute optimal_num_cuts and optimal_cuts ---
   output <- list(
     results = results,
     parameters = list(
@@ -305,10 +354,10 @@ find_cutpoint_number <- function(data, predictor,
       pop.size = pop.size,
       use_cpp = use_cpp
     ),
-    userdata = userdata
+    userdata = userdata,
+    candidate_cuts = permissible_cuts
   )
 
-  # Add optimal_num_cuts and optimal_cuts
   finite_ic <- results[[criterion]][is.finite(results[[criterion]])]
   if (length(finite_ic) > 0) {
     min_ic_idx <- which.min(results[[criterion]])
@@ -323,16 +372,12 @@ find_cutpoint_number <- function(data, predictor,
   return(output)
 }
 
-#' @srrstats {RE4.11} Computes AIC, AICc, or BIC from a fitted Cox model.
-#' @srrstats {RE1.0} Relies on `logLik()` from `coxph` fit.
-#' @srrstats {G1.4a} Internal use only (`@noRd`).
 #' @noRd
 .get_model_ic_num <- function(userdata, factor_status, k_cuts, n,
                               criterion, cov_part) {
   num_cov <- length(cov_part[cov_part != ""])
-
-  # Build formula with covariates
-  formula_str <- paste("survival::Surv(time, event) ~ factor_status", cov_part)
+  cov_string <- if (num_cov > 0) paste(" +", paste(cov_part, collapse = " + ")) else ""
+  formula_str <- paste("survival::Surv(time, event) ~ factor_status", cov_string)
 
   fit <- tryCatch(
     survival::coxph(as.formula(formula_str), data = userdata),
@@ -348,25 +393,15 @@ find_cutpoint_number <- function(data, predictor,
   .calc_ic(fit, k_params, n, criterion)
 }
 
-
 # --- S3 Methods for Printing, Summarising and Plotting ---
 
 #' @rdname find_cutpoint_number
-#' @srrstats {RE1.3} PH diagnostics via `cox.zph` in `summary()`.
 #' @export
 print.find_cutpoint_number_result <- function(x, ...) {
   cli::cli_h1("Optimal Cut-point Number Analysis")
 
-  method_text <- if (!is.null(x$parameters$method)) {
-    x$parameters$method
-  } else {
-    "Unknown"
-  }
-  criterion_text <- if (!is.null(x$parameters$criterion)) {
-    x$parameters$criterion
-  } else {
-    "IC"
-  }
+  method_text <- if (!is.null(x$parameters$method)) x$parameters$method else "Unknown"
+  criterion_text <- if (!is.null(x$parameters$criterion)) x$parameters$criterion else "IC"
 
   cli::cli_text("Method: {.strong {method_text}}")
   cli::cli_text("Criterion: {.strong {criterion_text}}")
@@ -384,7 +419,7 @@ print.find_cutpoint_number_result <- function(x, ...) {
 
   if ("cuts" %in% names(print_df) && is.list(print_df$cuts)) {
     print_df$cuts <- vapply(print_df$cuts, function(c) {
-      if (is.null(c)) "NA" else paste(round(c, 2), collapse = ", ")
+      if (length(c) == 1 && is.na(c[1])) "NA" else paste(round(c, 2), collapse = ", ")
     }, FUN.VALUE = character(1))
   }
 
@@ -413,9 +448,9 @@ print.find_cutpoint_number_result <- function(x, ...) {
       "\nConclusion: {best_result$num_cuts} cut-point(s) is",
       "best based on {criterion_text}."
     ))
-    if (!is.null(best_cuts_vals)) {
+    if (length(best_cuts_vals) > 0 && !any(is.na(best_cuts_vals))) {
       rounded_cuts <- round(best_cuts_vals, 2)
-      cli::cli_text("  Optimal cuts at: {.strong {rounded_cuts}}")
+      cli::cli_text("   Optimal cuts at: {.strong {rounded_cuts}}")
     }
   } else {
     cli::cli_inform("\nConclusion: No optimal model could be determined.")
@@ -425,7 +460,6 @@ print.find_cutpoint_number_result <- function(x, ...) {
   invisible(x)
 }
 
-
 #' @param show_comparison_table Logical. Show model comparison table?
 #' @param show_best_model_details Logical. Show details for best model?
 #' @param show_group_counts Logical. Show group counts for best model?
@@ -434,18 +468,18 @@ print.find_cutpoint_number_result <- function(x, ...) {
 #' @rdname find_cutpoint_number
 #' @export
 summary.find_cutpoint_number_result <- function(
-  object, show_comparison_table = TRUE,
-  show_best_model_details = TRUE,
-  show_group_counts = TRUE, show_medians = TRUE,
-  plot.it = FALSE, ...
+    object, show_comparison_table = TRUE,
+    show_best_model_details = TRUE,
+    show_group_counts = TRUE, show_medians = TRUE,
+    plot.it = FALSE, ...
 ) {
   criterion_text <- object$parameters$criterion %||% "IC"
 
   cli::cli_h1("Optimal Cut-point Number Analysis")
 
   if (is.null(object) || is.null(object$results) ||
-    nrow(object$results) == 0 ||
-    all(is.na(object$results[[criterion_text]]))) {
+      nrow(object$results) == 0 ||
+      all(is.na(object$results[[criterion_text]]))) {
     cli::cli_inform("Cannot summarise: no valid model was found.")
     return(invisible(object))
   }
@@ -454,31 +488,25 @@ summary.find_cutpoint_number_result <- function(
   num_cuts <- best_result$num_cuts
   best_cuts_vals <- best_result$cuts[[1]]
 
-  # --- HEADER & CONCLUSION ---
   cli::cli_alert_success("Best Model: {.strong {num_cuts} Cut-points} (Criterion: {toupper(criterion_text)})")
-  if (!is.null(best_cuts_vals)) {
+  if (length(best_cuts_vals) > 0 && !any(is.na(best_cuts_vals))) {
     cli::cli_alert_info("Optimal Thresholds: {.val {paste(round(best_cuts_vals, 3), collapse = ', ')}}")
   }
   cat("\n")
 
-  # --- 1. MODEL COMPARISON TABLE ---
   if (show_comparison_table) {
     cli::cli_h2(sprintf("1. Model Comparison (%s Search)", tools::toTitleCase(object$parameters$method %||% "Unknown")))
 
     comp_df <- object$results
     comp_df$cuts <- NULL
-
-    # Add a marker for the winning model
     comp_df$Marker <- ifelse(comp_df$num_cuts == num_cuts, ">", " ")
 
-    # Format weights safely
     weight_col <- names(comp_df)[grepl("_Weight$", names(comp_df))]
     if (length(weight_col) > 0) {
       target_col <- weight_col[1]
       comp_df[[target_col]] <- paste0(round(comp_df[[target_col]] * 100, 1), "%")
     }
 
-    # Reorder and print
     cols_to_print <- c("Marker", "num_cuts", criterion_text, paste0("Delta_", criterion_text), weight_col[1], "Evidence")
     cols_exist <- cols_to_print[cols_to_print %in% names(comp_df)]
 
@@ -489,21 +517,19 @@ summary.find_cutpoint_number_result <- function(
     cat("\n")
   }
 
-  # --- 2. CLINICAL RISK COHORTS ---
   if (show_best_model_details) {
     data <- object$userdata
     cov_part <- if (!is.null(object$parameters$covariates)) paste(" +", paste(object$parameters$covariates, collapse = " + ")) else ""
 
-    if (num_cuts > 0) {
+    if (num_cuts > 0 && length(best_cuts_vals) > 0 && !any(is.na(best_cuts_vals))) {
       data$group <- cut(data$factor,
-        breaks = c(-Inf, best_cuts_vals, Inf),
-        labels = paste0("G", 1:(num_cuts + 1))
+                        breaks = c(-Inf, best_cuts_vals, Inf),
+                        labels = paste0("G", 1:(num_cuts + 1))
       )
 
       if (show_group_counts || show_medians) {
         cli::cli_h2("2. Clinical Risk Cohorts")
 
-        # Build the combined table
         counts_table <- as.data.frame(table(data$group))
         names(counts_table) <- c("Group", "N")
         event_counts <- stats::aggregate(event ~ group, data = data, sum)
@@ -520,7 +546,6 @@ summary.find_cutpoint_number_result <- function(
           cohort_df$Lower <- surv_summary[, "0.95LCL"]
           cohort_df$Upper <- surv_summary[, "0.95UCL"]
 
-          # Format the CI visually
           cohort_df$Median_CI <- sprintf(
             "%s (%s - %s)",
             ifelse(is.na(cohort_df$Median), "NA", round(cohort_df$Median, 1)),
@@ -536,10 +561,9 @@ summary.find_cutpoint_number_result <- function(
       }
     }
 
-    # --- 3. COX PROPORTIONAL-HAZARDS ---
     cli::cli_h2("3. Cox Proportional-Hazards")
-    formula_str <- if (num_cuts > 0) paste("survival::Surv(time, event) ~ group", cov_part) else paste("survival::Surv(time, event) ~ factor", cov_part)
-    model_data <- if (num_cuts > 0) data else object$userdata
+    formula_str <- if (num_cuts > 0 && length(best_cuts_vals) > 0 && !any(is.na(best_cuts_vals))) paste("survival::Surv(time, event) ~ group", cov_part) else paste("survival::Surv(time, event) ~ factor", cov_part)
+    model_data <- if (num_cuts > 0 && length(best_cuts_vals) > 0 && !any(is.na(best_cuts_vals))) data else object$userdata
 
     fit_cox <- tryCatch(
       survival::coxph(as.formula(formula_str), data = model_data),
@@ -555,17 +579,17 @@ summary.find_cutpoint_number_result <- function(
 
       if (nrow(coefs) > 0) {
         cox_df <- data.frame(
-          Group = gsub("group", "", rownames(coefs)),
+          Group = gsub("group|factor", "", rownames(coefs)),
           HR = round(conf[, "exp(coef)"], 3),
           Lower = round(conf[, "lower .95"], 3),
           Upper = round(conf[, "upper .95"], 3),
           P_Value = round(coefs[, "Pr(>|z|)"], 3)
         )
 
-        cox_df$Signif <- as.character(symnum(cox_df$P_Value,
-          corr = FALSE, na = FALSE,
-          cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1),
-          symbols = c("***", "**", "*", ".", " ")
+        cox_df$Signif <- as.character(stats::symnum(cox_df$P_Value,
+                                                    corr = FALSE, na = FALSE,
+                                                    cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1),
+                                                    symbols = c("***", "**", "*", ".", " ")
         ))
 
         print(cox_df, row.names = FALSE, right = TRUE)
@@ -585,7 +609,6 @@ summary.find_cutpoint_number_result <- function(
     cat("\n")
   }
 
-  # --- 4. PARAMETERS ---
   cli::cli_h2("4. Analysis Parameters")
   params <- object$parameters
 
@@ -613,14 +636,9 @@ summary.find_cutpoint_number_result <- function(
 #' @export
 plot.find_cutpoint_number_result <- function(x, y, ...) {
   results <- x$results
-  criterion_text <- if (!is.null(x$parameters$criterion)) {
-    x$parameters$criterion
-  } else {
-    "IC"
-  }
+  criterion_text <- if (!is.null(x$parameters$criterion)) x$parameters$criterion else "IC"
 
-  if (is.null(results) || nrow(results) == 0 ||
-    all(is.na(results[[criterion_text]]))) {
+  if (is.null(results) || nrow(results) == 0 || all(is.na(results[[criterion_text]]))) {
     cli::cli_inform("Cannot generate plot: no valid IC values found.")
     return(invisible(NULL))
   }

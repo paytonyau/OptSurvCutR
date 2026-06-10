@@ -17,13 +17,14 @@ find_cutpoint(
   covariates = NULL,
   nmin = 20,
   seed = NULL,
-  max.generations = 100,
-  pop.size = 100,
+  max.generations = NULL,
+  pop.size = NULL,
   n_perm = 0,
   n_cores = 1,
   use_cpp = TRUE,
   grid_by = 0.01,
   quiet = FALSE,
+  candidate_cuts = NULL,
   ...
 )
 
@@ -61,9 +62,9 @@ find_cutpoint(
 
 \item{seed}{Optional integer seed for reproducible genetic search.}
 
-\item{max.generations}{Integer; max generations for genetic algorithm (default 100).}
+\item{max.generations}{Integer; max generations for genetic algorithm. If `NULL`, dynamically scales.}
 
-\item{pop.size}{Integer; population size for genetic algorithm (default 100).}
+\item{pop.size}{Integer; population size for genetic algorithm. If `NULL`, dynamically scales.}
 
 \item{n_perm}{Integer. Number of permutations to run for an adjusted p-value.
 Default is 0. Highly recommended for `num_cuts >= 2` to account for optimization bias.}
@@ -77,6 +78,8 @@ Can be overridden if required. Default is `TRUE`.}
 tests every 1st percentile). If `NULL`, tests all unique values. Default is 0.01.}
 
 \item{quiet}{Logical. If `TRUE`, suppresses final print.}
+
+\item{candidate_cuts}{Optional vector of pre-filtered cuts defining a narrow search space.}
 
 \item{...}{Additional arguments passed down to downstream rendering pipelines.}
 
@@ -96,7 +99,7 @@ tests every 1st percentile). If `NULL`, tests all unique values. Default is 0.01
 }
 \value{
 An object of class `find_cutpoint` containing the
-  optimal cut-points, statistic, and analysis parameters.
+   optimal cut-points, statistic, and analysis parameters.
 }
 \description{
 Finds optimal cut-point(s) for a continuous predictor in a
@@ -122,39 +125,6 @@ Core vector partitions are calculated in compiled C++ via `Rcpp` for optimal per
 .
 }
 
-\examples{
-# Fast 1-cut systematic search example using local mock data for testing
-mock_df <- data.frame(
-  time = c(12, 34, 5, 18, 22, 45, 7, 14, 29, 38, 11, 24, 8, 17, 21),
-  status = c(1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0),
-  marker = c(2.1, 4.5, 1.2, 3.8, 4.0, 5.2, 1.8, 2.9, 3.1, 4.9, 2.0, 4.2, 1.5, 3.0, 3.9)
-)
-
-res <- find_cutpoint(
-  data = mock_df,
-  predictor = "marker",
-  outcome_time = "time",
-  outcome_event = "status",
-  num_cuts = 1,
-  method = "systematic",
-  nmin = 3,
-  grid_by = 0.05
-)
-
-\dontrun{
-# Heavier analysis example using package-supplied datasets
-data(crc_virome)
-res_virome <- find_cutpoint(
-  data = crc_virome,
-  predictor = "Alphapapillomavirus",
-  outcome_time = "time_months",
-  outcome_event = "status",
-  num_cuts = 1,
-  method = "systematic",
-  grid_by = 0.01
-)
-}
-}
 \references{
 Altman, D. G., Lausen, B., Sauerbrei, W., & Schumacher,
 M. (1994). Dangers of Using “Optimal” Cutpoints in the Evaluation of

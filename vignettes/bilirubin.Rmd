@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
   fig.width = 7,
   fig.height = 5,
   fig.align = "center",
-  warning = FALSE,
+  warning = TRUE,
   message = TRUE
 )
 
@@ -118,21 +118,28 @@ num_res <- find_cutpoint_number(
   # 2. SEARCH ENGINE SETTINGS
   # ==========================================
   method = "genetic", # The evolutionary search engine
-  criterion = "BIC", # Evaluates model fit (BIC heavily penalizes over-complexity)
-  max_cuts = 3, # Test models ranging from 0 to 3 cuts
-  nmin = 0.25, # SAFETY LIMIT: Minimum 10% of patients per group
-  n_perm = 50,
+  criterion = "AIC", # Evaluates model fit (BIC heavily penalizes over-complexity)
+  max_cuts = 6, # Test models ranging from 0 to 3 cuts
+  nmin = 0.10, # SAFETY LIMIT: Minimum 10% of patients per group
   # ==========================================
   # 3. THE "R-GROUND" SETTINGS (Advanced Genetic Tuning)
   # ==========================================
-  max.generations = 100, # LIFESPAN: How many evolutionary cycles to run
-  pop.size = 100, # SEARCH PARTY: Number of random guesses per generation
-  boundary.enforcement = 1, # EDGE CONTROL: 1 = Soft boundary (allows safe edge exploration)
+  max.generations = NULL, # LIFESPAN: How many evolutionary cycles to run
+  pop.size = NULL, # SEARCH PARTY: Number of random guesses per generation
+  boundary.enforcement = 2, # EDGE CONTROL: 1 = Soft boundary (allows safe edge exploration)
   seed = 123 # REPRODUCIBILITY: Locks the random number generator
 )
 
+summary(num_res)
+```
+
+```{r loess}
 plot(num_res) +
-  geom_smooth(method = "loess", se = FALSE, colour = "darkgrey", linetype = "dashed", alpha = 0.5)
+  geom_smooth(method = "loess", 
+              se = FALSE, 
+              colour = "darkgrey", 
+              linetype = "dashed", 
+              alpha = 0.5)
 ```
 
 ### ⚠️ Step 1 Warning System: Algorithm Failure
@@ -176,18 +183,18 @@ cut_res <- find_cutpoint(
   # ==========================================
   method = "genetic", # Crucial for finding >1 cut-point
   criterion = "logrank", # Maximizes survival difference between groups
-  num_cuts = 2, # Forcing 2 cuts (3 groups) for demonstration and stability
-  nmin = 0.25, # SAFETY LIMIT: Forces every group to contain >= 25% of patients
-  n_perm = 100, # PERMUTATION TEST: Scrambles the data to calculate an honest p-value
+  num_cuts = 5,     # Forcing 2 cuts (3 groups) for demonstration and stability
+  nmin = 0.1,       # SAFETY LIMIT: Forces every group to contain >= 25% of patients
+  n_perm = 20,      # Streamlined permutation cycle
 
   # ==========================================
   # 3. THE "R-GROUND" SETTINGS (Advanced Genetic Tuning)
   # ==========================================
-  max.generations = 100, # LIFESPAN: Increase if the algorithm fails to converge
-  pop.size = 100, # SEARCH PARTY: Increase to 500+ for massive datasets
-  boundary.enforcement = 1, # EDGE CONTROL: Soft boundaries prevent the algorithm from crashing near edges
-  seed = 123, # REPRODUCIBILITY
-  n_cores = 1 # SPEED: Adjust based on your machine's CPU
+  max.generations = NULL,   # LIFESPAN: Increase if the algorithm fails to converge
+  pop.size = NULL,          # SEARCH PARTY: Increase to 500+ for massive datasets
+  boundary.enforcement = 2, # EDGE CONTROL: Soft boundaries prevent the algorithm from crashing near edges
+  seed = 123,               # REPRODUCIBILITY
+  n_cores = 1               # SPEED: Adjust based on your machine's CPU
 )
 
 summary(cut_res)
@@ -222,7 +229,7 @@ val_res <- validate_cutpoint(
   # 1. VALIDATION INPUTS
   # ==========================================
   cutpoint_result = cut_res, # The exact result object you generated in Step 2
-  num_replicates = 100, # BOOTSTRAP: How many times to scramble and re-test. 500+ is the gold standard
+  num_replicates = 30, # BOOTSTRAP: How many times to scramble and re-test. 500+ is the gold standard
   n_cores = 1, # SPEED: Number of CPU cores to use
 
   # ==========================================
@@ -230,7 +237,7 @@ val_res <- validate_cutpoint(
   # ==========================================
   max.generations = 100, # Must match or exceed Step 2 to ensure stability during bootstrap
   pop.size = 100, # Must match or exceed Step 2
-  boundary.enforcement = 1, # Must match Step 2
+  boundary.enforcement = 2, # Must match Step 2
   seed = 123 # REPRODUCIBILITY
 )
 

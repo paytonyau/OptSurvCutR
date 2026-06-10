@@ -50,12 +50,8 @@ navbar:
     articles:
       text: Vignettes
       menu:
-        - text: "CRC Virome Workflow"
-          href: articles/crc_virome.html  # Updated to match the processed filename
         - text: "Bilirubin Workflow"
           href: articles/bilirubin.html
-        - text: "Q&A and Troubleshooting"
-          href: articles/QA.html
     news:
       text: Changelog
       href: news/index.html

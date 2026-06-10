@@ -1,3 +1,31 @@
+# OptSurvCutR v0.9.9 (2026-06)
+
+## Major Engine Enhancements
+
+* **Integer Index-Space Mapping:** Replaced the continuous floating-point search space with a discrete, bounded integer lattice mapped directly to sorted unique data row indices. This fundamentally shifts the engine math from an infinite decimal space to a finite spectrum of actual observations, eliminating micro-decimal overfitting and stochastic seed drift.
+* **Hybrid Execution Routing:** Upgraded threshold discovery to dynamically select the most efficient search engine. The package now defaults to a deterministic, exhaustive **`method = "systematic"`** grid sweep for lower dimensional profiles (1 or 2 cuts) to guarantee global maximum discovery with zero performance lag. For higher dimensions ($K \ge 3$), it seamlessly transitions to the evolutionary genetic algorithm (`rgenoud` backend).
+* **Automated Proportional Hazards Diagnostics:** Integrated a native 2-tier Schoenfeld residuals validation layer inside the core S3 `summary()` methods. The package automatically flags models violating the Cox proportional hazards assumption, distinguishing between *Tier 1 (Proportional, Stable)* and *Tier 2 (Time-Varying, Dynamic Risk)* cohorts.
+* **Strict Structural Headroom Guardrails:** Upgraded `nmin` cell-floor checking to calculate total available degrees of freedom prior to loop execution. When discrete data density collapses or drops below necessary cell floors, the engine throws clean UX alert messages and skips impossible configurations to prevent fatal R session crashes.
+
+---
+
+### 📊 Algorithmic Scaling Protocol
+
+The table below outlines how `OptSurvCutR` automatically routes execution and scales its internal tuning parameters (`pop.size` and `max.generations`) based on target complexity ($K$ Cuts) and data structure:
+
+| Target Complexity ($K$ Cuts) | Execution Method | Default Population Size (`pop.size`) | Default Search Lifespan (`max.generations`) | Optimization Mechanics |
+| --- | --- | --- | --- | --- |
+| **$K = 1$ Cut** | `systematic` | *N/A (Exhaustive Grid)* | *N/A (Exhaustive Grid)* | Full 1D Coordinate Vector Sweep |
+| **$K = 2$ Cuts** | `systematic` | *N/A (Exhaustive Grid)* | *N/A (Exhaustive Grid)* | Full 2D Cross-Lattice Matrix Sweep |
+| **$K = 3$ Cuts** | `genetic` | 100 | 50 | 3D Index Hyper-Lattice Traversal |
+| **$K = 4$ Cuts** | `genetic` | 120 | 55 | 4D Hyper-Lattice Spatial Search |
+| **$K = 5$ Cuts** | `genetic` | 150 | 60 | 5D Multi-Epitope Surface Clustering |
+| **$K = 6$ Cuts** | `genetic` | 180 | 65 | 6D High-Dimensional Coordinate Scan |
+| **$K = 7$ Cuts** | `genetic` | 200 | 70 | 7D Ultra-Deep Hyper-Volume Optimization |
+| **$K \ge 8$ Cuts** | `genetic` | 250 | 80 | Complex Deep Lattice Cluster Optimization |
+| **Low-Density Data (Discrete)** | `systematic` | *N/A (Auto-collapsed)* | *N/A (Auto-collapsed)* | Rigid Quantile Step Filtering / Cell Floor Defense |
+| **Validation / Bootstrap Loop** | *Context Snapped* | 10 (Streamlined default) | 2 (Streamlined default) | Accelerated Resampling Stability Assessment |
+
 # OptSurvCutR 0.9.8 (3/6/2026)
 
 ## New Core Features & Architecture

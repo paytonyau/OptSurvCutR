@@ -49,13 +49,13 @@ theme_optsurv <- function(base_size = 14) {
 #'
 #' @param x A \code{find_cutpoint} result object.
 #' @param type Plot framework type: \code{"outcome"}, \code{"distribution"}, \code{"forest"},
-#'     \code{"surface"}, \code{"trajectory"}, \code{"diagnostic"}, or \code{"landmark"}.
+#'      \code{"surface"}, \code{"trajectory"}, \code{"diagnostic"}, or \code{"landmark"}.
 #' @param return_data Logical. If \code{TRUE}, exits the router early and returns the
-#'     assigned underlying data frame template.
+#'      assigned underlying data frame template.
 #' @param landmark Numeric. The operational milestone timestamp used if \code{type = "landmark"}.
 #' @param ... Additional arguments passed down to downstream rendering pipelines.
 #' @return A \code{ggplot} canvas object, a multi-panel \code{patchwork} collection, or
-#'     a \code{data.frame} if \code{return_data = TRUE}.
+#'      a \code{data.frame} if \code{return_data = TRUE}.
 #'
 #' @section srrstats compliance:
 #' .
@@ -65,16 +65,24 @@ theme_optsurv <- function(base_size = 14) {
 #' @importFrom cli cli_abort
 #' @export
 #' @examples
-#' # Build clean local simulation objects for quick validation runs
-#' mock_df <- data.frame(time = 1:30, event = rep(c(0, 1), 15), factor = rnorm(30, 10, 2))
-#' res <- find_cutpoint(mock_df, "factor", "time", "event", num_cuts = 1, method = "systematic", quiet = TRUE)
+#' # Build clean local simulation objects with an explicit survival risk split
+#' set.seed(123)
+#' mock_df <- data.frame(
+#'   time   = c(runif(15, 50, 100), runif(15, 5, 25)),
+#'   event  = rep(1, 30),
+#'   factor = c(rnorm(15, 5, 0.5), rnorm(15, 15, 0.5))
+#' )
+#' res <- find_cutpoint(
+#'   mock_df, "factor", "time", "event",
+#'   num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 3
+#' )
 #' p <- plot(res, type = "distribution")
 plot.find_cutpoint <- function(x, type = c(
-                                 "outcome", "distribution", "forest",
-                                 "surface", "trajectory",
-                                 "diagnostic", "landmark"
-                               ),
-                               return_data = FALSE, landmark = NULL, ...) {
+  "outcome", "distribution", "forest",
+  "surface", "trajectory",
+  "diagnostic", "landmark"
+),
+return_data = FALSE, landmark = NULL, ...) {
   type <- match.arg(type)
 
   if (is.null(x$optimal_cuts) || any(is.na(x$optimal_cuts))) {
@@ -97,13 +105,13 @@ plot.find_cutpoint <- function(x, type = c(
   }
 
   switch(type,
-    "outcome"      = .plot_km_curve(x, df, ...),
-    "distribution" = .plot_density_cuts(x, df, ...),
-    "forest"       = .plot_hr_forest(x, df, ...),
-    "surface"      = plot_optimisation_curve(x, ...),
-    "trajectory"   = .plot_genetic_trajectory(x, ...),
-    "diagnostic"   = plot_cutpoint_residuals(x, ...),
-    "landmark"     = plot_landmark_stratification(x, landmark = landmark, ...)
+         "outcome"      = .plot_km_curve(x, df, ...),
+         "distribution" = .plot_density_cuts(x, df, ...),
+         "forest"       = .plot_hr_forest(x, df, ...),
+         "surface"      = plot_optimisation_curve(x, ...),
+         "trajectory"   = .plot_genetic_trajectory(x, ...),
+         "diagnostic"   = plot_cutpoint_residuals(x, ...),
+         "landmark"     = plot_landmark_stratification(x, landmark = landmark, ...)
   )
 }
 
@@ -126,8 +134,18 @@ plot.find_cutpoint <- function(x, type = c(
 #' @importFrom cli cli_abort
 #' @export
 #' @examples
-#' mock_df <- data.frame(time = 1:20, event = rep(c(0, 1), 10), factor = rnorm(20, 10, 2))
-#' res <- find_cutpoint(mock_df, "factor", "time", "event", num_cuts = 1, method = "systematic", quiet = TRUE)
+#' # Build clean simulation objects using a 2-cut systematic search
+#' # to populate the 2D grid matrix log array
+#' set.seed(123)
+#' mock_df <- data.frame(
+#'   time   = c(runif(10, 50, 100), runif(10, 20, 60), runif(10, 5, 25)),
+#'   event  = rep(1, 30),
+#'   factor = c(rnorm(10, 2, 0.2), rnorm(10, 7, 0.2), rnorm(10, 15, 0.2))
+#' )
+#' res <- find_cutpoint(
+#'   mock_df, "factor", "time", "event",
+#'   num_cuts = 2, method = "systematic", quiet = TRUE, nmin = 3
+#' )
 #' p <- plot_optimisation_curve(res)
 plot_optimisation_curve <- function(cutpoint_result, ...) {
   if (!inherits(cutpoint_result, "find_cutpoint")) {
@@ -206,8 +224,11 @@ plot_optimisation_curve <- function(cutpoint_result, ...) {
 #' @importFrom stats as.formula
 #' @export
 #' @examples
-#' mock_df <- data.frame(time = 1:20, event = rep(c(0, 1), 10), factor = rnorm(20, 10, 2))
-#' res <- find_cutpoint(mock_df, "factor", "time", "event", num_cuts = 1, method = "systematic", quiet = TRUE)
+#' mock_df <- data.frame(time = 1:30, event = rep(c(0, 1), 15), factor = rnorm(30))
+#' res <- find_cutpoint(
+#'   mock_df, "factor", "time", "event",
+#'   num_cuts = 1, method = "systematic", quiet = TRUE
+#' )
 #' p <- plot_cutpoint_residuals(res)
 plot_cutpoint_residuals <- function(x, ...) {
   if (is.null(x$optimal_cuts) || any(is.na(x$optimal_cuts))) {
@@ -297,8 +318,15 @@ plot_cutpoint_residuals <- function(x, ...) {
 #' @return A \code{ggplot} template or \code{survminer} survival curve asset mapping layout.
 #' @export
 #' @examples
-#' mock_df <- data.frame(time = runif(25, 5, 50), event = sample(c(0, 1), 25, replace = TRUE), factor = rnorm(25, 10, 2))
-#' res <- find_cutpoint(mock_df, "factor", "time", "event", num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 3)
+#' mock_df <- data.frame(
+#'   time   = runif(25, 5, 50),
+#'   event  = sample(c(0, 1), 25, replace = TRUE),
+#'   factor = rnorm(25, 10, 2)
+#' )
+#' res <- find_cutpoint(
+#'   mock_df, "factor", "time", "event",
+#'   num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 3
+#' )
 #' p <- plot_landmark_stratification(res, landmark = 10)
 plot_landmark_stratification <- function(x, landmark = NULL, ...) {
   df <- x$userdata

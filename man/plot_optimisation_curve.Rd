@@ -24,7 +24,17 @@ for 1-cut systematic setups, or a 2D topographic grid profile for 2-cut layouts.
 }
 
 \examples{
-mock_df <- data.frame(time = 1:20, event = rep(c(0, 1), 10), factor = rnorm(20, 10, 2))
-res <- find_cutpoint(mock_df, "factor", "time", "event", num_cuts = 1, method = "systematic", quiet = TRUE)
+# Build clean simulation objects using a 2-cut systematic search
+# to populate the 2D grid matrix log array
+set.seed(123)
+mock_df <- data.frame(
+  time   = c(runif(10, 50, 100), runif(10, 20, 60), runif(10, 5, 25)),
+  event  = rep(1, 30),
+  factor = c(rnorm(10, 2, 0.2), rnorm(10, 7, 0.2), rnorm(10, 15, 0.2))
+)
+res <- find_cutpoint(
+  mock_df, "factor", "time", "event",
+  num_cuts = 2, method = "systematic", quiet = TRUE, nmin = 3
+)
 p <- plot_optimisation_curve(res)
 }

@@ -47,34 +47,6 @@
 #' @return An object of class \code{validate_cutpoint_result} with
 #' original cuts, 95\% CIs, bootstrap distribution, and parameters.
 #'
-#' @examples
-#' # Fast validation on small data (runs in < 2 seconds)
-#' data(crc_virome)
-#'
-#' fit <- find_cutpoint(
-#'   data = head(crc_virome, 50),
-#'   predictor = "Alphapapillomavirus",
-#'   outcome_time = "time_months",
-#'   outcome_event = "status",
-#'   num_cuts = 1,
-#'   method = "systematic"
-#' )
-#'
-#' if (!any(is.na(fit$optimal_cuts))) {
-#'   val <- validate_cutpoint(fit, num_replicates = 20, seed = 123)
-#'   print(val)
-#' }
-#'
-#' @references
-#' Efron, B. (1979). Bootstrap Methods: Another Look at the
-#' Jackknife. *The Annals of Statistics*, 7(1), 1-26.
-#' \doi{10.1214/aos/1176344552}
-#'
-#' Rota, M., Antolini, L., & Valsecchi, M. G. (2015).
-#' Optimal cut-point definition in biomarkers: The case of censored
-#' failure time outcome. *BMC Medical Research Methodology*, 15(1), 24.
-#' \doi{10.1186/s12874-015-0009-y}
-#'
 #' @importFrom foreach %dopar%
 #' @importFrom cli cli_h1 cli_text cli_alert_info cli_alert_success
 #' @importFrom cli cli_alert_warning cli_inform cli_abort
@@ -94,7 +66,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     cli::cli_abort("Input must be a `find_cutpoint` object.")
   }
   if (!is.numeric(num_replicates) || num_replicates < 1 ||
-    num_replicates != round(num_replicates)) {
+      num_replicates != round(num_replicates)) {
     cli::cli_abort("`num_replicates` must be a positive integer.")
   }
   if (num_replicates < 20) {
@@ -104,21 +76,36 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     set.seed(seed)
     cli::cli_alert_info("Using random seed {seed} for reproducibility.")
   }
-  # --- 2. Extract Original Parameters and Data ---
+
+  # --- 2. Extract Original Parameters and Reconstruction Layers ---
   original_params <- cutpoint_result$parameters
-  original_data <- cutpoint_result$userdata
   original_cuts <- cutpoint_result$optimal_cuts
-  n <- nrow(original_data)
+  candidate_cuts <- cutpoint_result$candidate_cuts
+
   if (any(is.na(original_cuts))) {
     cli::cli_abort("Input `find_cutpoint` object has NA cut-points.")
   }
+
+  # Map environmental naming parameters out cleanly
   predictor <- original_params$predictor
   num_cuts <- original_params$num_cuts
   method <- original_params$method
   criterion <- original_params$criterion
   covariates <- original_params$covariates
+  grid_by <- original_params$grid_by
 
-  # --- Default nmin: 90% of original ---
+  # Reconstruct the raw data frame back into original named column metrics
+  raw_reconstructed <- cutpoint_result$userdata
+  names(raw_reconstructed)[names(raw_reconstructed) == "factor"] <- predictor
+  names(raw_reconstructed)[names(raw_reconstructed) == "time"] <- outcome_time <- "time_col"
+  names(raw_reconstructed)[names(raw_reconstructed) == "event"] <- outcome_event <- "event_col"
+
+  # Remap internal parameter tracking names to step past masking traps
+  names(raw_reconstructed)[names(raw_reconstructed) == "time_col"] <- outcome_time <- paste0("boot_", predictor, "_time")
+  names(raw_reconstructed)[names(raw_reconstructed) == "event_col"] <- outcome_event <- paste0("boot_", predictor, "_event")
+
+  n <- nrow(raw_reconstructed)
+
   if (is.null(nmin)) {
     original_nmin_param <- original_params$nmin
     if (original_nmin_param > 0 && original_nmin_param < 1) {
@@ -134,7 +121,6 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     ))
   }
 
-  # --- Handle nmin as integer or proportion ---
   if (nmin > 0 && nmin < 1) {
     nmin_abs <- floor(nmin * n)
     if (nmin_abs < 1) nmin_abs <- 1
@@ -148,7 +134,6 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     cli::cli_abort("`nmin` must be a positive number.")
   }
 
-  # --- Check constraints ---
   if (n < nmin * (num_cuts + 1)) {
     cli::cli_abort(
       "Not enough data ({n}) for nmin ({nmin}) and {num_cuts} cut(s)."
@@ -157,8 +142,9 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
 
   cli::cli_alert_info(paste(
     "Validating {num_cuts} cut(s) from '{method}' search",
-    "using '{criterion}'."
+    "using '{criterion}' over regularized coordinate lattice."
   ))
+
   # --- 3. Setup Backend (Parallel or Sequential) ---
   if (n_cores < 1) n_cores <- 1
   cores_to_use <- 1
@@ -205,6 +191,10 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   i <- NULL
   extra_args <- list(...)
 
+  # Strip explicit overrides to let find_cutpoint switches flow natively
+  if ("pop.size" %in% names(extra_args) && is.null(extra_args$pop.size)) extra_args$pop.size <- NULL
+  if ("max.generations" %in% names(extra_args) && is.null(extra_args$max.generations)) extra_args$max.generations <- NULL
+
   bootstrap_results <- foreach::foreach(
     i = 1:num_replicates,
     .combine = "rbind",
@@ -216,22 +206,27 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     }
 
     boot_indices <- sample(1:n, n, replace = TRUE)
-    boot_data <- original_data[boot_indices, ]
+    boot_data <- raw_reconstructed[boot_indices, ]
 
     final_args <- c(
       list(
         data = boot_data,
-        predictor = "factor",
-        outcome_time = "time",
-        outcome_event = "event",
+        predictor = predictor,
+        outcome_time = outcome_time,
+        outcome_event = outcome_event,
         method = method,
         num_cuts = num_cuts,
         criterion = criterion,
         covariates = covariates,
         nmin = nmin,
-        quiet = TRUE
+        pop.size = extra_args$pop.size,             # Lets find_cutpoint auto-scale memory
+        max.generations = extra_args$max.generations, # Lets find_cutpoint auto-scale lifespans
+        use_cpp = original_params$use_cpp,
+        grid_by = grid_by,
+        quiet = TRUE,
+        candidate_cuts = candidate_cuts
       ),
-      extra_args
+      extra_args[!(names(extra_args) %in% c("pop.size", "max.generations"))]
     )
 
     res <- tryCatch(
@@ -242,21 +237,26 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     )
 
     if (is.null(res) || any(is.na(res$optimal_cuts)) || length(res$optimal_cuts) != num_cuts) {
-      return(rep(NA_real_, num_cuts))
+      return(matrix(rep(NA_real_, num_cuts), nrow = 1, ncol = num_cuts))
     }
-    res$optimal_cuts
+    matrix(sort(res$optimal_cuts), nrow = 1, ncol = num_cuts)
   }
 
   # --- 5. Process Results and Calculate CIs ---
+  # Safely coerce results into an explicit matrix grid, preventing structural vector-collapse
   if (!is.matrix(bootstrap_results)) {
-    bootstrap_matrix <- matrix(bootstrap_results,
-      nrow = num_replicates,
-      ncol = num_cuts, byrow = TRUE
+    bootstrap_matrix <- matrix(unlist(bootstrap_results),
+                               nrow = num_replicates,
+                               ncol = num_cuts, byrow = TRUE
     )
   } else {
     bootstrap_matrix <- bootstrap_results
   }
+
+  # Ensure complete dimension alignment before naming assignments
+  bootstrap_matrix <- matrix(as.numeric(bootstrap_matrix), nrow = num_replicates, ncol = num_cuts)
   colnames(bootstrap_matrix) <- paste0("Cut", 1:num_cuts)
+
   successful_reps <- sum(stats::complete.cases(bootstrap_matrix))
   failed_reps <- num_replicates - successful_reps
 
@@ -279,16 +279,25 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     )
   }
   bootstrap_matrix_clean <- na.omit(bootstrap_matrix)
-  ci <- apply(bootstrap_matrix_clean, 2, stats::quantile,
-    probs = c(0.025, 0.975), na.rm = TRUE
+
+  # Force clean matrix topology on cleaned subset to isolate apply dimensions safely
+  bootstrap_matrix_clean <- matrix(
+    as.numeric(bootstrap_matrix_clean),
+    nrow = successful_reps,
+    ncol = num_cuts
   )
-  if (is.vector(ci)) {
+
+  ci <- apply(bootstrap_matrix_clean, 2, stats::quantile,
+              probs = c(0.025, 0.975), na.rm = TRUE
+  )
+  if (num_cuts == 1) {
     ci_df <- data.frame(Lower = ci[1], Upper = ci[2])
   } else {
     ci_df <- as.data.frame(t(ci))
     names(ci_df) <- c("Lower", "Upper")
   }
   row.names(ci_df) <- paste0("Cut ", 1:num_cuts)
+
   boot_summary <- lapply(1:num_cuts, function(i) {
     valid_cuts <- bootstrap_matrix_clean[, i]
     if (length(valid_cuts) == 0) {
@@ -305,6 +314,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   names(boot_summary) <- paste0("Cut", 1:num_cuts)
   bootstrap_df <- as.data.frame(bootstrap_matrix_clean)
   names(bootstrap_df) <- paste0("Cut_point_", 1:num_cuts)
+
   output <- list(
     original_cuts = original_cuts,
     confidence_intervals = ci_df,

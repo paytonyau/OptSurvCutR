@@ -127,8 +127,7 @@ NULL
   # Get the installed version of the package
   ver <- utils::packageVersion(pkgname)
 
-  # Use cli to create a clean, cross-platform startup message
-  # cli_rule creates a horizontal line with the version number
+  # Display branding only
   cli::cli_rule(left = paste0("OptSurvCutR v", ver))
 
   cli::cli_bullets(c(
@@ -136,9 +135,4 @@ NULL
     " " = "Paper: Yau, Payton (2025) bioRxiv 10.1101/2025.10.08.681246",
     " " = "Cite: {.code citation('OptSurvCutR')}"
   ))
-
-  cli::cli_text("\n{.info Please cite the paper to support development.}")
-
-  # Note: cli functions automatically send messages to the startup stream
-  # when called inside .onAttach.
 }

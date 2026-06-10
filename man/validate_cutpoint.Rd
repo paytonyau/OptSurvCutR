@@ -43,32 +43,3 @@ survival (time-to-event) analysis.
 .
 }
 
-\examples{
-# Fast validation on small data (runs in < 2 seconds)
-data(crc_virome)
-
-fit <- find_cutpoint(
-  data = head(crc_virome, 50),
-  predictor = "Alphapapillomavirus",
-  outcome_time = "time_months",
-  outcome_event = "status",
-  num_cuts = 1,
-  method = "systematic"
-)
-
-if (!any(is.na(fit$optimal_cuts))) {
-  val <- validate_cutpoint(fit, num_replicates = 20, seed = 123)
-  print(val)
-}
-
-}
-\references{
-Efron, B. (1979). Bootstrap Methods: Another Look at the
-Jackknife. *The Annals of Statistics*, 7(1), 1-26.
-\doi{10.1214/aos/1176344552}
-
-Rota, M., Antolini, L., & Valsecchi, M. G. (2015).
-Optimal cut-point definition in biomarkers: The case of censored
-failure time outcome. *BMC Medical Research Methodology*, 15(1), 24.
-\doi{10.1186/s12874-015-0009-y}
-}

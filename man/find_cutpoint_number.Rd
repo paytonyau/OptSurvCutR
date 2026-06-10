@@ -19,8 +19,8 @@ find_cutpoint_number(
   max_cuts = 2,
   nmin = 0.1,
   seed = NULL,
-  max.generations = 100,
-  pop.size = 100,
+  max.generations = NULL,
+  pop.size = NULL,
   use_cpp = TRUE,
   ...
 )
@@ -76,9 +76,9 @@ find_cutpoint_number(
 
 \item{seed}{Integer or `NULL`; random seed for `rgenoud`.}
 
-\item{max.generations}{Integer; generations for `rgenoud` (default 100).}
+\item{max.generations}{Integer; generations for `rgenoud`. If `NULL`, dynamically scales.}
 
-\item{pop.size}{Integer; population size for `rgenoud` (default 100).}
+\item{pop.size}{Integer; population size for `rgenoud`. If `NULL`, dynamically scales.}
 
 \item{use_cpp}{Logical. Automatically checks and calls compiled C++ routines via `Rcpp`. Default is `TRUE`.}
 
@@ -105,7 +105,7 @@ find_cutpoint_number(
 \value{
 An S3 object (`find_cutpoint_number_result`) with
 `results`, `parameters`, `userdata`, `optimal_num_cuts`,
-and `optimal_cuts`.
+`optimal_cuts`, and `candidate_cuts`.
 }
 \description{
 Finds optimal cut-point number (0 to `max_cuts`) for a Cox model
@@ -132,39 +132,3 @@ Core vector partitions are calculated in compiled C++ via `Rcpp` for optimal per
 .
 }
 
-\examples{
-data(crc_virome)
-res <- find_cutpoint_number(
-  data = head(crc_virome, 50),
-  predictor = "Alphapapillomavirus",
-  outcome_time = "time_months",
-  outcome_event = "status",
-  method = "systematic",
-  max_cuts = 1
-)
-
-}
-\references{
-Akaike, H. (1974). A new look at the statistical model identification.
-*IEEE Transactions on Automatic Control*, **19**(6), 716–723.
-\doi{10.1109/TAC.1974.1100705}
-
-Chang, C., Hsieh, M.-K., Chang, W.-Y., Chiang, A. J., &
-Chen, J. (2017). Determining the optimal number and location of cutoff
-points with application to data of cervical cancer. *PLOS ONE*, 12(4),
-e0176231. \doi{10.1371/journal.pone.0176231}
-
-Chen, Y., Huang, J., He, X., Gao, Y., Mahara, G., Lin, Z.,
-& Zhang, J. (2019). A novel approach to determine two optimal
-cut-points of a continuous predictor with a U-shaped relationship to
-hazard ratio in survival data: Simulation and application. *BMC Medical
-Research Methodology*, 19(1), 96. \doi{10.1186/s12874-019-0738-4}
-
-Schwarz, G. (1978). Estimating the dimension of a model.
-*The Annals of Statistics*, **6**(2), 461–464.
-\doi{10.1214/aos/1176344136}
-
-Hurvich, C. M., & Tsai, C.-L. (1989). Regression and time series model
-selection in small samples. *Biometrika*, **76**(2), 297–307.
-\doi{10.1093/biomet/76.2.297}
-}
