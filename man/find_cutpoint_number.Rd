@@ -132,3 +132,35 @@ Core vector partitions are calculated in compiled C++ via `Rcpp` for optimal per
 .
 }
 
+\examples{
+if (requireNamespace("survival", quietly = TRUE)) {
+  library(survival)
+  # Build a tiny reproducible synthetic cohort dataset
+  set.seed(123)
+  n <- 60
+  study_data <- data.frame(
+    time_days = rexp(n, rate = 0.01),
+    death_event = sample(c(0, 1), n, replace = TRUE, prob = c(0.4, 0.6)),
+    biomarker = rnorm(n, mean = 5, sd = 1.5),
+    age = rnorm(n, mean = 55, sd = 10)
+  )
+
+  # Run selection using standard systematic grid evaluation
+  num_res <- find_cutpoint_number(
+    data = study_data,
+    predictor = "biomarker",
+    outcome_time = "time_days",
+    outcome_event = "death_event",
+    covariates = "age",
+    method = "systematic",
+    criterion = "BIC",
+    max_cuts = 2,
+    nmin = 0.15
+  )
+
+  # Run standard S3 reporting hooks
+  print(num_res)
+  summary(num_res)
+  plot(num_res)
+}
+}
