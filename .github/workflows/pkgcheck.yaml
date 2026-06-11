@@ -1,14 +1,11 @@
 name: pkgcheck
 
-# This will cancel running jobs once a new run is triggered
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
 
 on:
-  # Manually trigger the Action under Actions/pkgcheck
   workflow_dispatch:
-  # Run on every push to main
   push:
     branches:
       - main
@@ -19,4 +16,16 @@ jobs:
     permissions:
       issues: write
     steps:
+      - uses: actions/checkout@v4
+
+      # 🧹 Clean disk space before the heavy rOpenSci checks trigger compilation
+      - name: Free runner disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          docker system prune -a -f
+
       - uses: ropensci-review-tools/pkgcheck-action@main
+      
