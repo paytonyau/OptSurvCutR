@@ -125,36 +125,6 @@ Core vector partitions are calculated in compiled C++ via `Rcpp` for optimal per
 .
 }
 
-\examples{
-if (requireNamespace("survival", quietly = TRUE)) {
-  library(survival)
-  # Generate a reproducible baseline clinical tracking dataframe
-  set.seed(123)
-  n <- 50
-  patient_cohort <- data.frame(
-    follow_up_time = rexp(n, rate = 0.02),
-    mortality_event = sample(c(0, 1), n, replace = TRUE, prob = c(0.3, 0.7)),
-    expression_value = rnorm(n, mean = 6, sd = 2),
-    patient_age = rnorm(n, mean = 62, sd = 8)
-  )
-
-  # Locate the optimal threshold using adjusted grid partition models
-  cut_res <- find_cutpoint(
-    data = patient_cohort,
-    predictor = "expression_value",
-    outcome_time = "follow_up_time",
-    outcome_event = "mortality_event",
-    covariates = "patient_age",
-    num_cuts = 1,
-    method = "systematic",
-    criterion = "logrank",
-    nmin = 10
-  )
-  
-  # Inspect calculated results payload
-  print(cut_res$optimal_cuts)
-}
-}
 \references{
 Altman, D. G., Lausen, B., Sauerbrei, W., & Schumacher,
 M. (1994). Dangers of Using “Optimal” Cutpoints in the Evaluation of

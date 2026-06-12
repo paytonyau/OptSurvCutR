@@ -110,36 +110,6 @@
 #' @useDynLib OptSurvCutR, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
 #' @export
-#'
-#' @examples
-#' if (requireNamespace("survival", quietly = TRUE)) {
-#'   library(survival)
-#'   # Generate a reproducible baseline clinical tracking dataframe
-#'   set.seed(123)
-#'   n <- 50
-#'   patient_cohort <- data.frame(
-#'     follow_up_time = rexp(n, rate = 0.02),
-#'     mortality_event = sample(c(0, 1), n, replace = TRUE, prob = c(0.3, 0.7)),
-#'     expression_value = rnorm(n, mean = 6, sd = 2),
-#'     patient_age = rnorm(n, mean = 62, sd = 8)
-#'   )
-#'
-#'   # Locate the optimal threshold using adjusted grid partition models
-#'   cut_res <- find_cutpoint(
-#'     data = patient_cohort,
-#'     predictor = "expression_value",
-#'     outcome_time = "follow_up_time",
-#'     outcome_event = "mortality_event",
-#'     covariates = "patient_age",
-#'     num_cuts = 1,
-#'     method = "systematic",
-#'     criterion = "logrank",
-#'     nmin = 10
-#'   )
-#'   
-#'   # Inspect calculated results payload
-#'   print(cut_res$optimal_cuts)
-#' }
 find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
                           num_cuts = 1, method = c("systematic", "genetic"),
                           criterion = c("logrank", "hazard_ratio", "p_value"),
@@ -149,10 +119,10 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
                           grid_by = 0.01, quiet = FALSE, candidate_cuts = NULL, ...) {
   method <- match.arg(method)
   criterion <- match.arg(criterion)
-  
+
   .validate_find_cutpoint_inputs(data, predictor, outcome_time, outcome_event, num_cuts, method, criterion, covariates)
   userdata <- .prepare_cutpoint_data(data, predictor, outcome_time, outcome_event, covariates)
-  
+
   # Graceful NA return helper
   na_return <- function(nmin_abs = nmin) {
     res <- list(
@@ -166,43 +136,43 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
     class(res) <- "find_cutpoint"
     return(res)
   }
-  
+
   if (nrow(userdata) == 0) {
     if (!quiet) cli::cli_inform("No complete cases found after removing NAs.")
     return(na_return())
   }
-  
+
   val_res <- .validate_data_conditions(userdata, nmin, num_cuts, outcome_event, quiet)
   if (!val_res$valid) {
     return(na_return(val_res$nmin_abs))
   }
   nmin_abs <- val_res$nmin_abs
-  
+
   if (is.factor(userdata$factor) || is.character(userdata$factor)) {
     cli::cli_abort(c(
       "x" = "Unordered factors or characters are not allowed as continuous optimization inputs.",
       "i" = "Variable '{predictor}' must be passed as a continuous numeric vector."
     ))
   }
-  
+
   if (use_cpp && !exists("cpp_get_group_assignments", mode = "function")) {
     if (!quiet) cli::cli_alert_warning("Compiled C++ binary not loaded. Falling back gracefully to native R vector processing.")
     use_cpp <- FALSE
   }
-  
+
   if (!is.null(seed)) set.seed(seed)
-  
+
   # Compile underlying search lattice to verify data node supply bounds
   search_grid_probs <- if (!is.null(grid_by)) seq(grid_by, 1 - grid_by, by = grid_by) else seq(0.01, 0.99, by = 0.01)
   base_grid <- if (!is.null(candidate_cuts)) candidate_cuts else sort(unique(stats::quantile(userdata$factor, probs = search_grid_probs, na.rm = TRUE)))
-  
+
   # ===================================================================
   # UX COHORT HEADROOM CHECK (Dynamic Lot Defense)
   # ===================================================================
   n_total <- nrow(userdata)
   unique_values_needed <- (num_cuts + 1) * nmin_abs
   actual_available_nodes <- length(base_grid)
-  
+
   if (n_total < unique_values_needed || actual_available_nodes < num_cuts) {
     cli::cli_abort(c(
       "x" = "Insufficient data density for {num_cuts} cut-point(s) at nmin = {nmin_abs}.",
@@ -210,7 +180,7 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
       "*" = "Action: Reduce 'num_cuts' or lower your 'nmin' threshold."
     ))
   }
-  
+
   # --- UX AUTO-SCALING FOR REGULARIZED SPACE ENGINE OVERRIDES ---
   if (is.null(pop.size) || pop.size == 100) {
     pop.size <- switch(as.character(num_cuts),
@@ -222,14 +192,14 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
                               "1" = 30, "2" = 40, "3" = 50, "4" = 55,
                               "5" = 60, "6" = 65, "7" = 70, 80)
   }
-  
+
   extra_args <- list(...)
-  
+
   # Force hard boundary enforcement inside global genetic evaluations
   if (method == "genetic" && !("boundary.enforcement" %in% names(extra_args))) {
     extra_args$boundary.enforcement <- 2
   }
-  
+
   if (method == "systematic") {
     real_res <- do.call(.systematic_search, c(
       list(
@@ -242,7 +212,7 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
   } else {
     if (!quiet) cli::cli_alert_info("Starting regularized genetic search for {num_cuts} cut(s)...")
     confound_df <- if (!is.null(covariates)) userdata[, covariates, drop = FALSE] else NULL
-    
+
     real_res <- do.call(.run_genetic_search, c(
       list(
         target = userdata$factor, numcut = num_cuts, time = userdata$time,
@@ -252,7 +222,7 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
       ),
       extra_args
     ))
-    
+
     if (is.null(real_res) || !is.finite(real_res$value) || real_res$value <= -.Machine$double.xmax) {
       if (!quiet) cli::cli_inform("Genetic algorithm found no valid solution.")
       real_res <- list(optimal_cuts = rep(NA_real_, num_cuts), optimal_stat = NA_real_, all_stats = NULL)
@@ -260,11 +230,11 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
       real_res <- list(optimal_cuts = sort(real_res$par[1:num_cuts]), optimal_stat = real_res$value, all_stats = NULL)
     }
   }
-  
+
   p_perm <- NA
   if (n_perm > 0 && !any(is.na(real_res$optimal_cuts))) {
     if (requireNamespace("cli", quietly = TRUE) && !quiet) cli::cli_alert_info("Running {n_perm} permutations to calculate adjusted p-value...")
-    
+
     p_perm <- .run_permutations(
       time_vec = userdata$time,
       censor_vec = userdata$event,
@@ -285,7 +255,7 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
       candidate_cuts = candidate_cuts
     )
   }
-  
+
   output <- list(
     optimal_cuts = real_res$optimal_cuts,
     optimal_stat = real_res$optimal_stat,
@@ -300,7 +270,7 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
       use_cpp = use_cpp, grid_by = grid_by, quiet = quiet
     )
   )
-  
+
   class(output) <- "find_cutpoint"
   return(output)
 }
