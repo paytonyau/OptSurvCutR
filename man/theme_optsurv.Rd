@@ -21,6 +21,6 @@ background gridlines for high-precision tracing.
 library(ggplot2)
 mock_df <- data.frame(x = 1:10, y = 1:10)
 ggplot(mock_df, aes(x, y)) +
-  geom_point() +
-  theme_optsurv()
+    geom_point() +
+    theme_optsurv()
 }

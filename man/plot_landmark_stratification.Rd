@@ -22,14 +22,17 @@ Computes and visualizes conditional survival probabilities for patients
 who survive up to a specified landmark milestone.
 }
 \examples{
-mock_df <- data.frame(
-  time   = runif(25, 5, 50),
-  event  = sample(c(0, 1), 25, replace = TRUE),
-  factor = rnorm(25, 10, 2)
-)
-res <- find_cutpoint(
-  mock_df, "factor", "time", "event",
-  num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 3
-)
-p <- plot_landmark_stratification(res, landmark = 10)
+if (requireNamespace("survival", quietly = TRUE)) {
+  library(survival)
+  mock_df <- data.frame(
+     time   = runif(25, 5, 50),
+     event  = sample(c(0, 1), 25, replace = TRUE),
+     factor = rnorm(25, 10, 2)
+  )
+  res <- find_cutpoint(
+     mock_df, "factor", "time", "event",
+     num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 3
+  )
+  p <- plot_landmark_stratification(res, landmark = 10)
+}
 }

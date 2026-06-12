@@ -19,10 +19,13 @@ High-tier multi-panel diagnostic dashboard tracking the proportional hazards
 assumption with custom facets per risk cohort stratum.
 }
 \examples{
-mock_df <- data.frame(time = 1:30, event = rep(c(0, 1), 15), factor = rnorm(30))
-res <- find_cutpoint(
-  mock_df, "factor", "time", "event",
-  num_cuts = 1, method = "systematic", quiet = TRUE
-)
-p <- plot_cutpoint_residuals(res)
+if (requireNamespace("survival", quietly = TRUE)) {
+  library(survival)
+  mock_df <- data.frame(time = 1:30, event = rep(c(0, 1), 15), factor = rnorm(30))
+  res <- find_cutpoint(
+     mock_df, "factor", "time", "event",
+     num_cuts = 1, method = "systematic", quiet = TRUE
+  )
+  p <- plot_cutpoint_residuals(res)
+}
 }

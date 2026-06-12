@@ -14,7 +14,7 @@ test_that("find_cutpoint_number core loops and parameter validations execute cle
       "find_cutpoint_number_result"
     )
   }
-
+  
   # 2. Trap front-end input validation guards early
   expect_error(find_cutpoint_number(mock_data, "predictor", "time", "event", max_cuts = -1))
   expect_error(find_cutpoint_number(mock_data, "predictor", "time", "event", max_cuts = 1.5))
@@ -22,7 +22,7 @@ test_that("find_cutpoint_number core loops and parameter validations execute cle
   expect_error(find_cutpoint_number(mock_data, "predictor", NULL, "event"))
   expect_error(find_cutpoint_number(mock_data, "non_existent", "time", "event"), regexp = "Missing columns")
   expect_error(find_cutpoint_number(mock_data, "predictor", "time", "event", nmin = 0))
-
+  
   # 3. Trap factor/character input restrictions
   bad_data <- mock_data
   bad_data$predictor <- as.factor(sample(c("A", "B"), nrow(bad_data), replace = TRUE))
@@ -30,7 +30,6 @@ test_that("find_cutpoint_number core loops and parameter validations execute cle
 })
 
 test_that("High-level genetic method interface dispatches and tracks perfectly", {
-  # Forces open the genetic optimization complexity loops inside find_cutpoint_number.R
   res_num_gen <- suppressMessages(suppressWarnings(
     find_cutpoint_number(
       mock_data,
@@ -51,15 +50,14 @@ test_that("Defensive degradation and empty/insufficient data states return grace
   )
   expect_s3_class(res_empty_df, "find_cutpoint_number_result")
   expect_true(is.na(res_empty_df$optimal_num_cuts))
-
+  
   # B. Sample size mathematically insufficient for max_cuts constraint
-  # Use expect_message to cleanly capture the cli::cli_alert_warning message stream
   expect_message(
     res_insufficient <- find_cutpoint_number(mock_data[1:10, ], "predictor", "time", "event", max_cuts = 2, nmin = 5),
     "insufficient"
   )
   expect_s3_class(res_insufficient, "find_cutpoint_number_result")
-
+  
   # C. Predictor has too few unique values for max_cuts
   flat_df <- mock_data
   flat_df$predictor <- 5
@@ -76,14 +74,14 @@ test_that("S3 methods and layout switches degrade or route gracefully", {
     find_cutpoint_number(mock_data, "predictor", "time", "event",
                          max_cuts = 1, method = "systematic", criterion = "AIC", quiet = TRUE, nmin = 5)
   ))
-
+  
   # A. Summary Method: Test specific table configuration switches
   sum_alt <- OptSurvCutR:::summary.find_cutpoint_number_result(
     res_bench, show_comparison_table = FALSE, show_best_model_details = TRUE,
     show_group_counts = FALSE, show_medians = FALSE
   )
   expect_s3_class(sum_alt, "find_cutpoint_number_result")
-
+  
   # B. Empty State Print: Test layout routing when no valid models exist
   res_empty <- structure(
     list(optimal_num_cuts = NA_integer_,
@@ -91,23 +89,24 @@ test_that("S3 methods and layout switches degrade or route gracefully", {
          parameters = list(method = "systematic", criterion = "BIC", predictor = "predictor")),
     class = "find_cutpoint_number_result"
   )
-  expect_true(length(capture.output(print(res_empty))) >= 0)
-  expect_true(length(capture.output(summary(res_empty))) >= 0)
+  
+  # ✅ FIXED: Replaced legacy capture.output layout assertions with error-free validation bounds
+  expect_error(print(res_empty), NA)
+  expect_error(summary(res_empty), NA)
 })
 
 test_that("Direct internal engine sweeps trigger all objective and fallback routines", {
   pkg_env <- asNamespace("OptSurvCutR")
-
-  # Prepare uniform structural inputs matching engine-genetic expectations natively
+  
   userdata_genetic <- mock_data
   names(userdata_genetic)[names(userdata_genetic) == "predictor"] <- "factor"
   names(userdata_genetic)[names(userdata_genetic) == "time"] <- "time"
   names(userdata_genetic)[names(userdata_genetic) == "event"] <- "event"
-
-  # A. Direct Hit on .run_genetic_search: Evaluates criteria variants ("hazard_ratio", "loglik")
+  
+  # A. Direct Hit on .run_genetic_search
   if (exists(".run_genetic_search", envir = pkg_env, mode = "function")) {
     run_gen_func <- get(".run_genetic_search", envir = pkg_env)
-
+    
     for (crit in c("hazard_ratio", "loglik")) {
       res_raw_gen <- suppressMessages(suppressWarnings(
         run_gen_func(
@@ -119,8 +118,8 @@ test_that("Direct internal engine sweeps trigger all objective and fallback rout
       expect_true(is.null(res_raw_gen) || is.list(res_raw_gen))
     }
   }
-
-  # B. Direct Hit on .genetic_search_num: Covers the unexported model assembly loop wrapper
+  
+  # B. Direct Hit on .genetic_search_num
   if (exists(".genetic_search_num", envir = pkg_env, mode = "function")) {
     gen_num_func <- get(".genetic_search_num", envir = pkg_env)
     res_raw_num <- suppressMessages(suppressWarnings(
@@ -132,15 +131,14 @@ test_that("Direct internal engine sweeps trigger all objective and fallback rout
 })
 
 test_that("S3 rendering paths adjust for non-proportional hazards and vector dimensions cleanly", {
-  # 1. Non-Proportional Hazard Fixture: Forces global_p < 0.05 to hit Schoenfeld warning paths
+  # 1. Non-Proportional Hazard Fixture
   set.seed(101)
   ph_fail_df <- data.frame(
     time = c(runif(25, 1, 5), runif(25, 25, 50)),
     event = rep(1, 50),
     predictor = c(rnorm(25, 5, 1), rnorm(25, 20, 1))
   )
-
-  # Suppress internal numerical optimization limits warnings cleanly
+  
   suppressWarnings({
     res_ph_fail <- suppressMessages(
       find_cutpoint_number(
@@ -150,18 +148,17 @@ test_that("S3 rendering paths adjust for non-proportional hazards and vector dim
       )
     )
   })
-
-  expect_true(length(capture.output(OptSurvCutR:::summary.find_cutpoint_number_result(res_ph_fail, show_ph_test = TRUE))) > 0)
+  
+  expect_gt(length(capture.output(OptSurvCutR:::summary.find_cutpoint_number_result(res_ph_fail, show_ph_test = TRUE))), 0)
   expect_s3_class(plot(res_ph_fail), "ggplot")
-
+  
   # Cover early exit plot code
   res_ph_fail$results <- data.frame()
-  expect_true(length(capture.output(plot(res_ph_fail))) >= 0)
-
-  # 2. Matrix Drop Safeguard Fixture: Forces vector summary fallback branch by isolating a single item
+  expect_gt(length(capture.output(plot(res_ph_fail))), -1)
+  
+  # 2. Matrix Drop Safeguard Fixture
   matrix_drop_df <- data.frame(time = c(10, 12, 14, 16), event = rep(1, 4), predictor = c(1.0, 5.2, 5.4, 5.6))
-
-  # Suppress internal non-convergence limits warnings for ultra-small mock data arrays
+  
   suppressWarnings({
     res_drop <- find_cutpoint_number(
       matrix_drop_df, "predictor", "time", "event",
@@ -169,24 +166,22 @@ test_that("S3 rendering paths adjust for non-proportional hazards and vector dim
       quiet = TRUE, nmin = 1
     )
   })
-
+  
   res_drop$optimal_cuts <- 3.0
   res_drop$results$cuts[[2]] <- 3.0
-
-  # Suppress down-stream reporting evaluations warnings
+  
   suppressWarnings({
     summary_output <- capture.output(
       OptSurvCutR:::summary.find_cutpoint_number_result(res_drop, show_best_model_details = TRUE)
     )
   })
-  expect_true(length(summary_output) > 0)
+  expect_gt(length(summary_output), 0)
 })
 
 test_that("Model evaluation failures inside loops degrade safely via formula parsing errors", {
-  # Direct hit to .get_model_ic_num with invalid formula syntax to push coverage straight through the tryCatch fallback
   pkg_env <- asNamespace("OptSurvCutR")
   if (exists(".get_model_ic_num", envir = pkg_env, mode = "function")) {
-    expect_equal(
+    expect_identical(
       get(".get_model_ic_num", envir = pkg_env)(
         userdata = mock_data, factor_status = rep(1, nrow(mock_data)), k_cuts = 1, n = nrow(mock_data),
         criterion = "BIC", cov_part = "INVALID_SYNTAX_CRASH_NOW!!!"

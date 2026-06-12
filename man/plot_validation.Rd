@@ -2,12 +2,28 @@
 % Please edit documentation in R/plotting_functions.R
 \name{plot_validation}
 \alias{plot_validation}
-\title{Plot Cut-point Optimization Stability Surface}
+\alias{plot.validate_cutpoint_result}
+\alias{print.validate_cutpoint_result}
+\alias{summary.validate_cutpoint_result}
+\title{Plot Cut-point Optimization Stability Surface and S3 Class Interfaces}
 \usage{
 plot_validation(
   validation_result,
   main = "Resampling Convergence & Stability Landscape",
   focus_cuts = c(1, 2),
+  ...
+)
+
+\method{plot}{validate_cutpoint_result}(x, ...)
+
+\method{print}{validate_cutpoint_result}(x, ...)
+
+\method{summary}{validate_cutpoint_result}(
+  object,
+  show_descriptives = TRUE,
+  show_ci = TRUE,
+  show_params = TRUE,
+  plot.it = FALSE,
   ...
 )
 }
@@ -20,7 +36,13 @@ the validation log history dataset.}
 \item{focus_cuts}{A numeric vector of length 2 specifying which two cut-points to map
 if the model contains more than 2 cuts. Defaults to \code{c(1, 2)}.}
 
-\item{...}{Unused optional dots.}
+\item{...}{Unused optional dots or arguments passed to printing pipelines.}
+
+\item{x}{A validation result object for generic dispatch.}
+
+\item{object}{A validation result object for summary tracking.}
+
+\item{y}{Unused parameter.}
 }
 \value{
 A publication-ready \code{ggplot} canvas object displaying stability density bounds.
@@ -32,9 +54,9 @@ profiles. Automatically handles 1, 2, or multi-cut architectures dynamically.
 }
 \examples{
 mock_val <- list(
-  bootstrap_distribution = data.frame(Cut_point_1 = rnorm(30, 10, 1)),
-  original_cuts = 10.2,
-  parameters = list(predictor = "Biomarker")
+   bootstrap_distribution = data.frame(Cut_point_1 = rnorm(30, 10, 1)),
+   original_cuts = 10.2,
+   parameters = list(predictor = "Biomarker", num_replicates = 30, successful_reps = 30)
 )
 p <- plot_validation(mock_val)
 }

@@ -13,7 +13,7 @@
 
 The table below outlines how `OptSurvCutR` automatically routes execution and scales its internal tuning parameters (`pop.size` and `max.generations`) based on target complexity ($K$ Cuts) and data structure:
 
-| Target Complexity ($K$ Cuts) | Execution Method | Default Population Size (`pop.size`) | Default Search Lifespan (`max.generations`) | Optimization Mechanics |
+| Target Complexity ($K$ Cuts) | Execution Method | Default Population Size (`pop.size`) | Default Search Lifespan (`max.generations`) | Optimisation Mechanics |
 | --- | --- | --- | --- | --- |
 | **$K = 1$ Cut** | `systematic` | *N/A (Exhaustive Grid)* | *N/A (Exhaustive Grid)* | Full 1D Coordinate Vector Sweep |
 | **$K = 2$ Cuts** | `systematic` | *N/A (Exhaustive Grid)* | *N/A (Exhaustive Grid)* | Full 2D Cross-Lattice Matrix Sweep |
@@ -22,11 +22,11 @@ The table below outlines how `OptSurvCutR` automatically routes execution and sc
 | **$K = 5$ Cuts** | `genetic` | 150 | 60 | 5D Multi-Epitope Surface Clustering |
 | **$K = 6$ Cuts** | `genetic` | 180 | 65 | 6D High-Dimensional Coordinate Scan |
 | **$K = 7$ Cuts** | `genetic` | 200 | 70 | 7D Ultra-Deep Hyper-Volume Optimization |
-| **$K \ge 8$ Cuts** | `genetic` | 250 | 80 | Complex Deep Lattice Cluster Optimization |
-| **Low-Density Data (Discrete)** | `systematic` | *N/A (Auto-collapsed)* | *N/A (Auto-collapsed)* | Rigid Quantile Step Filtering / Cell Floor Defense |
+| **$K \ge 8$ Cuts** | `genetic` | 250 | 80 | Complex Deep Lattice Cluster Optimisation |
+| **Low-Density Data (Discrete)** | `systematic` | *N/A (Auto-collapsed)* | *N/A (Auto-collapsed)* | Rigid Quantile Step Filtering / Cell Floor Defence |
 | **Validation / Bootstrap Loop** | *Context Snapped* | 10 (Streamlined default) | 2 (Streamlined default) | Accelerated Resampling Stability Assessment |
 
-# OptSurvCutR 0.9.8 (3/6/2026)
+# OptSurvCutR 0.9.8 (2026-06-03)
 
 ## New Core Features & Architecture
 
@@ -58,18 +58,18 @@ The table below outlines how `OptSurvCutR` automatically routes execution and sc
 ## Major Performance Improvements & Memory Protections
 
 * **C-Level Interval Math**: Replaced `cut()` with `findInterval(..., left.open = TRUE)` within the fallback mathematical engines. This eliminates expensive string manipulations, making systematic grid searches faster while perfectly preserving the mathematical boundaries of the groups.
-* **Genetic Algorithm Memoization**: Implemented a hash-based evaluation cache (`eval_cache`) inside the genetic algorithm wrapper. The algorithm now remembers previously evaluated cut-points and bypasses the `survival::coxph` model entirely for redundant guesses, drastically cutting computation time on large datasets with many generations.
+* **Genetic Algorithm Memoisation**: Implemented a hash-based evaluation cache (`eval_cache`) inside the genetic algorithm wrapper. The algorithm now remembers previously evaluated cut-points and bypasses the `survival::coxph` model entirely for redundant guesses, drastically cutting computation time on large datasets with many generations.
 * **Pre-Allocation for Genetic Search**: Shifted text manipulation and formula generation outside the genetic algorithm loop. The algorithm now uses a pre-allocated `data.frame` template, eliminating thousands of redundant memory allocations.
-* **OS-Optimized Bootstrapping**: Upgraded the parallel processing backend in `validate_cutpoint()`. On Unix-based systems (Mac/Linux), the package now dynamically switches to **FORK clusters** (shared memory) instead of PSOCK. This drops data-transfer overhead to near-zero and drastically speeds up bootstrap validation.
+* **OS-Optimised Bootstrapping**: Upgraded the parallel processing backend in `validate_cutpoint()`. On Unix-based systems (Mac/Linux), the package now dynamically switches to **FORK clusters** (shared memory) instead of PSOCK. This drops data-transfer overhead to near-zero and drastically speeds up bootstrap validation.
 * **Environment Memory-Isolation via Explicit Binding**: Overhauled the internal execution layers to pass explicitly extracted atomic vector streams instead of raw, nested evaluations. This isolates the parent R session environments from leaking into parallel background threads, cutting down cumulative memory inflation during high-core execution.
 
 ## Advanced Visualisation & Reporting (New Features)
 
-* **Unified S3 Plotting Router**: Overhauled the `plot()` method (`plot.find_cutpoint()`). It now supports full `...` argument passthrough to `survminer` functions for deep customization, and includes a `return_data = TRUE` "escape hatch" to extract the raw, stratified plotting data.
+* **Unified S3 Plotting Router**: Overhauled the `plot()` method (`plot.find_cutpoint()`). It now supports full `...` argument passthrough to `survminer` functions for deep customisation, and includes a `return_data = TRUE` "escape hatch" to extract the raw, stratified plotting data.
 * **Schoenfeld Diagnostic Plots & 2-Tier Alert**: Added `type = "diagnostic"` to automatically evaluate the proportional hazards assumption via `survival::cox.zph()` and plot the residuals. The `summary()` function now includes a 2-Tier diagnostic alert to warn users if predictive power shifts significantly over time, gracefully handling singular matrix edge cases.
 * **Dashboard View**: Added `type = "all"` to generate a comprehensive, stacked composite plot (powered by `patchwork`) showing both the predictor distribution and the resulting survival outcome curve in a single clinical snapshot.
 * **Interactive Web Widgets**: Introduced `optsurv_interactive()`, a wrapper function that converts any static OptSurvCutR plot into an interactive HTML widget via `plotly` (ideal for Vignettes and RMarkdown).
-* **Clinical Aesthetics**: Implemented `theme_optsurv()` and defaulted to colorblind-safe palettes (e.g., "nejm") to enforce a unified, publication-ready aesthetic across all outputs.
+* **Clinical Aesthetics**: Implemented `theme_optsurv()` and defaulted to colourblind-safe palettes (e.g., "nejm") to enforce a unified, publication-ready aesthetic across all outputs.
 
 ## Bug Fixes & Edge Cases (`find_cutpoint`)
 
@@ -97,7 +97,7 @@ The table below outlines how `OptSurvCutR` automatically routes execution and sc
 # OptSurvCutR 0.2.1 (2026-04-20)
 
 ## CRAN Compliance & Quality of Life Improvements
-This patch release addresses CRAN reviewer feedback and polishes the package's console behavior and visual branding.
+This patch release addresses CRAN reviewer feedback and polishes the package's console behaviour and visual branding.
 
 * **Enhanced Console Control:** Replaced all informational `print()` and `cat()` statements with `message()` in the core functions (`find_cutpoint()`, `find_cutpoint_number()`, and `validate_cutpoint()`). Users can now easily silence progress text by wrapping functions in `suppressMessages()`.
 * **Cleaned Return Behaviors:** Removed forced `print()` calls from the end of the main S3 calculation functions. Results now return silently when assigned to a variable, while preserving formatted output when called directly.
@@ -108,7 +108,7 @@ This patch release addresses CRAN reviewer feedback and polishes the package's c
 
 ## DOCUMENTATION & STANDARDS
 * Initial CRAN submission.
-* Updated the package strucure (minor) to meet the submission requirement.
+* Updated the package structure (minor) to meet the submission requirement.
 
 # OptSurvCutR 0.1.9.3 (2026-03-22)
 
@@ -147,18 +147,7 @@ This patch release addresses CRAN reviewer feedback and polishes the package's c
 
 ---
 
-# OptSurvCutR 0.1.9.1 (2025-11-20)
-
-## POST-ROPENSCI INITIAL SUBMISSION
-
-* Renamed `plot_diagnostics()` → `plot_schoenfeld()` to avoid name clash with another package.
-* Stabilised and accepted all snapshot tests for pathological `find_cutpoint_number_result` S3 methods (now use real criterion `"BIC"`).
-* Cleaned DESCRIPTION: removed unused Suggests (`coxphf`, `patchwork`, `pROC`, `tibble`, `srr`) and Remotes (`ropensci-review-tools/srr`).
-* Test suite now passes with zero failures/warnings on R CMD check.
-
----
-
-# OptSurvCutR 0.1.9
+# OptSurvCutR 0.1.9 (2025-11-20)
 
 ## REFACTORING & MAINTENANCE
 
@@ -173,11 +162,11 @@ This patch release addresses CRAN reviewer feedback and polishes the package's c
 
 ## DOCUMENTATION
 
-* **Clarified Log-Rank Test:** The documentation for `find_cutpoint()` was updated to clarify that when `covariates` are provided, the `"logrank"` criterion is automatically generalized to the more appropriate **Cox score test**.
+* **Clarified Log-Rank Test:** The documentation for `find_cutpoint()` was updated to clarify that when `covariates` are provided, the `"logrank"` criterion is automatically generalised to the more appropriate **Cox score test**.
 
 ## IMPROVEMENTS
 * **Test Coverage:** Increased test coverage to **88.5%** with new unit tests for parallel reproducibility, S3 method edge cases, and internal validation helpers.
-- Planned:  A ROpenSci submission is planned for review.
+- Planned:  An rOpenSci submission is planned for review.
 - Planned:  A JOSS submission is planned post-rOpenSci review.
 
 ---
@@ -240,7 +229,7 @@ This patch release addresses CRAN reviewer feedback and polishes the package's c
 - **foreach NOTE Fix**: Resolved R CMD check `NOTE` regarding "no visible binding for global".
 
 ## IMPROVEMENTS
-- Planned:  A ROpenSci submission is planned for review.
+- Planned:  An rOpenSci submission is planned for review.
 - Planned:  A JOSS submission is planned post-rOpenSci review.
 
 ---
@@ -248,28 +237,28 @@ This patch release addresses CRAN reviewer feedback and polishes the package's c
 # OptSurvCutR 0.1.6
 
 ## NEW FEATURES
-- Added a vignette demonstrating the use of `find_cutpoint()` and `validate_cutpoint()` with TCGA virome data (for example, Alphapapillomavirus as a predictor), guiding users through cut-point optimisation and stability assessment for survival analysis [https://github.com/paytonyau/OptSurvCutR/commit/aa41ca3cb3ff7fdff4cbf6cf8d5de5e4494d3500].
-- Introduced comprehensive unit tests using `testthat`, covering core functions (`find_cutpoint()`, `find_cutpoint_number()`, `validate_cutpoint()`) and edge cases like missing data or small sample sizes, with code coverage reporting via `covr` to ensure reliability (>80% coverage) [https://github.com/paytonyau/OptSurvCutR/commit/6579072b087b880b448e101d8eef37f8c4fa5550].
+- Added a vignette demonstrating the use of `find_cutpoint()` and `validate_cutpoint()` with TCGA virome data (for example, Alphapapillomavirus as a predictor), guiding users through cut-point optimisation and stability assessment for survival analysis.
+- Introduced comprehensive unit tests using `testthat`, covering core functions (`find_cutpoint()`, `find_cutpoint_number()`, `validate_cutpoint()`) and edge cases like missing data or small sample sizes, with code coverage reporting via `covr` to ensure reliability (>80% coverage).
 
 ## IMPROVEMENTS
-- Optimised the genetic algorithm in `find_cutpoint()` by implementing adaptive `pop.size` (for example, 50 for `num_cuts = 1`) and `max.generations` (for example, 75), reducing runtime by 20–50% for survival datasets while maintaining accuracy for optimal cut-point selection [https://github.com/paytonyau/OptSurvCutR/commit/e0cec20c2a72e48b39e1833742e8d7d829621f39].
-- Enhanced error messages in `validate_cutpoint()` to provide specific feedback on bootstrap validation failures, such as insufficient sample sizes or non-converging `coxph` models, improving user debugging experience [https://github.com/paytonyau/OptSurvCutR/commit/92ef362cec36ee9ae976f12a61b65db51cc79d94].
-- Added a `pkgdown` GitHub Action to automatically build a package website, improving documentation accessibility, and updated README with badges for build status and code coverage to signal package reliability [https://github.com/paytonyau/OptSurvCutR/commit/38712b8aa3cb919556bdf0e9cba6ca27fda10a60].
-- Updated `DESCRIPTION` with corrected URLs, dependency versions, and regenerated Rd files for consistent documentation across all functions [https://github.com/paytonyau/OptSurvCutR/commit/d85d4a14a1a10fb7f68537ea64ef4007c3be465a].
+- Optimised the genetic algorithm in `find_cutpoint()` by implementing adaptive `pop.size` (for example, 50 for `num_cuts = 1`) and `max.generations` (for example, 75), reducing runtime by 20–50% for survival datasets while maintaining accuracy for optimal cut-point selection.
+- Enhanced error messages in `validate_cutpoint()` to provide specific feedback on bootstrap validation failures, such as insufficient sample sizes or non-converging `coxph` models, improving user debugging experience.
+- Added a `pkgdown` GitHub Action to automatically build a package website, improving documentation accessibility, and updated README with badges for build status and code coverage to signal package reliability.
+- Updated `DESCRIPTION` with corrected URLs, dependency versions, and regenerated Rd files for consistent documentation across all functions.
 
 ## BUG FIXES
-- Fixed NA handling in `find_cutpoint()` to robustly process survival datasets with missing predictor values, preventing errors in `coxph` or `survdiff` model fitting for real-world data like TCGA virome datasets [https://github.com/paytonyau/OptSurvCutR/commit/059a288363c9b7b30272301b709378cb58d76d2b].
+- Fixed NA handling in `find_cutpoint()` to robustly process survival datasets with missing predictor values, preventing errors in `coxph` or `survdiff` model fitting for real-world data like TCGA virome datasets.
 
 ---
 
 # OptSurvCutR 0.1.5
 
 ## IMPROVEMENTS
-- Updated core functions (for example, `find_cutpoint()`, `find_cutpoint_number()`) with improved numerical stability and accuracy for survival model fitting, particularly for genetic algorithm convergence in high-dimensional predictors [https://github.com/paytonyau/OptSurvCutR/commit/9338d0479c34069933562cb6b360428aad9dd6fc].
+- Updated core functions (for example, `find_cutpoint()`, `find_cutpoint_number()`) with improved numerical stability and accuracy for survival model fitting, particularly for genetic algorithm convergence in high-dimensional predictors.
 
 ## BUG FIXES
-- Fixed bugs in script handling and input validation, improving reliability for edge cases like small datasets or constant predictors in survival analysis [https://github.com/paytonyau/OptSurvCutR/commit/1de3e1048dcaa33fa8cbb6eab0fa8d89ec5d134c].
-- Reverted prior bug fixes to prevent potential regressions, ensuring stable behaviour in `validate_cutpoint()` during bootstrap validation runs [https://github.com/paytonyau/OptSurvCutR/commit/d65fa328634a480a27bde6f64f8d615205e12225].
+- Fixed bugs in script handling and input validation, improving reliability for edge cases like small datasets or constant predictors in survival analysis.
+- Reverted prior bug fixes to prevent potential regressions, ensuring stable behaviour in `validate_cutpoint()` during bootstrap validation runs.
 
 ---
 

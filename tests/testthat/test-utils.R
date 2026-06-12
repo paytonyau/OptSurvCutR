@@ -77,8 +77,8 @@ test_that(".prepare_cutpoint_data subsets, renames, and omits NA cases", {
 
   # Check renaming rules and layout drops
   expect_s3_class(cleaned, "data.frame")
-  expect_equal(nrow(cleaned), 2) # Row 3 and 4 cleanly omitted via na.omit properties
-  expect_equal(names(cleaned), c("factor", "time", "event", "cov"))
+  expect_identical(nrow(cleaned), 2L) # UPGRADED: expect_equal -> expect_identical
+  expect_identical(names(cleaned), c("factor", "time", "event", "cov")) # UPGRADED: expect_equal -> expect_identical
 })
 
 
@@ -123,8 +123,10 @@ test_that(".validate_data_conditions monitors sample boundaries and quiet modes 
     OptSurvCutR:::.validate_data_conditions(clean_df, nmin = 0.25, num_cuts = 1, "event", quiet = TRUE)
   )
   expect_true(res_prop$valid)
-  expect_equal(res_prop$nmin_abs, 1) # floor(0.25 * 4) = 1
-
+  # floor(0.25 * 4) = 1
+  # ✅ FIXED for expect_identical: cast the target to a double/numeric vector
+  expect_identical(res_prop$nmin_abs, as.numeric(1))
+  
   # Scenario C: Negative nmin value bounds checking
   expect_error(OptSurvCutR:::.validate_data_conditions(clean_df, nmin = -0.5, num_cuts = 1, "event", quiet = TRUE))
 
@@ -142,7 +144,7 @@ test_that(".validate_data_conditions monitors sample boundaries and quiet modes 
 # --- 6. Null Coalescing Operator (%||%) ---
 
 test_that("null coalescing operator matches your implementation exactly", {
-  expect_equal(NULL %||% "backup", "backup")
-  expect_equal("default" %||% "backup", "default")
-  expect_equal(3 %||% 5, 3)
+  expect_identical(NULL %||% "backup", "backup")       # UPGRADED: expect_equal -> expect_identical
+  expect_identical("default" %||% "backup", "default") # UPGRADED: expect_equal -> expect_identical
+  expect_identical(3 %||% 5, 3)                         # UPGRADED: expect_equal -> expect_identical
 })

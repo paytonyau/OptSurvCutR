@@ -12,8 +12,7 @@
 #' @srrstats {G5.8d}
 #' @srrstats {RE7.0}
 test_that("Package global data environments satisfy structural review properties", {
-  # Assert that mock data structures compiled in your helper exist and match parameters
   expect_true(exists("mock_data"))
   expect_true(exists("mock_data_pathological"))
-  expect_equal(n_test, 60)
+  expect_identical(n_test, 60) # UPGRADED: expect_equal -> expect_identical
 })
