@@ -133,15 +133,9 @@ NULL
 # Startup Message
 # ===================================================================
 .onAttach <- function(libname, pkgname) {
-  # Get the installed version of the package
-  ver <- utils::packageVersion(pkgname)
-
-  # Display branding only
-  cli::cli_rule(left = paste0("OptSurvCutR v", ver))
-
-  cli::cli_bullets(c(
-    " " = "Docs: {.url https://github.com/paytonyau/OptSurvCutR}",
-    " " = "Paper: Yau, Payton (2025) bioRxiv 10.1101/2025.10.08.681246",
-    " " = "Cite: {.code citation('OptSurvCutR')}"
-  ))
+  msg <- paste0("== OptSurvCutR v", utils::packageVersion(pkgname), " ==\n",
+                "  Docs: <https://github.com/paytonyau/OptSurvCutR>\n",
+                "  Paper: Yau, Payton (2025) bioRxiv 10.1101/2025.10.08.681246\n",
+                "  Cite: `citation('OptSurvCutR')`\n")
+  packageStartupMessage(msg)
 }

@@ -29,9 +29,6 @@
 #' @srrstats {G5.8} Edge cases (insufficient n) checked pre-bootstrap.
 #' @srrstats {RE4.0} Returns class \code{validate_cutpoint_result}.
 #' @srrstats {RE4.3} Computes 95\% Confidence Intervals via bootstrapping.
-#' @srrstats {RE4.17} \code{print()} method provided.
-#' @srrstats {RE4.18} \code{summary()} method provided.
-#' @srrstats {RE6.0} \code{plot()} method provided.
 #' @srrstats {RE1.3} Output retains original cut-points and parameters.
 #'
 #' @param cutpoint_result An object from \code{\link{find_cutpoint}}.
@@ -133,12 +130,12 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   # Reconstruct the raw data frame back into original named column metrics
   raw_reconstructed <- cutpoint_result$userdata
   names(raw_reconstructed)[names(raw_reconstructed) == "factor"] <- predictor
-  names(raw_reconstructed)[names(raw_reconstructed) == "time"] <- outcome_time <- "time_col"
-  names(raw_reconstructed)[names(raw_reconstructed) == "event"] <- outcome_event <- "event_col"
   
-  # Remap internal parameter tracking names to step past masking traps
-  names(raw_reconstructed)[names(raw_reconstructed) == "time_col"] <- outcome_time <- paste0("boot_", predictor, "_time")
-  names(raw_reconstructed)[names(raw_reconstructed) == "event_col"] <- outcome_event <- paste0("boot_", predictor, "_event")
+  # Remap internal parameter tracking names to step past masking traps safely
+  outcome_time <- paste0("boot_", predictor, "_time")
+  outcome_event <- paste0("boot_", predictor, "_event")
+  names(raw_reconstructed)[names(raw_reconstructed) == "time"] <- outcome_time
+  names(raw_reconstructed)[names(raw_reconstructed) == "event"] <- outcome_event
   
   n <- nrow(raw_reconstructed)
   
@@ -227,7 +224,6 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   i <- NULL
   extra_args <- list(...)
   
-  # Strip explicit overrides to let find_cutpoint switches flow natively
   if ("pop.size" %in% names(extra_args) && is.null(extra_args$pop.size)) extra_args$pop.size <- NULL
   if ("max.generations" %in% names(extra_args) && is.null(extra_args$max.generations)) extra_args$max.generations <- NULL
   
@@ -255,8 +251,8 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
         criterion = criterion,
         covariates = covariates,
         nmin = nmin,
-        pop.size = extra_args$pop.size,             # Lets find_cutpoint auto-scale memory
-        max.generations = extra_args$max.generations, # Lets find_cutpoint auto-scale lifespans
+        pop.size = extra_args$pop.size,
+        max.generations = extra_args$max.generations,
         use_cpp = original_params$use_cpp,
         grid_by = grid_by,
         quiet = TRUE,
@@ -279,17 +275,16 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   }
   
   # --- 5. Process Results and Calculate CIs ---
-  # Safely coerce results into an explicit matrix grid, preventing structural vector-collapse
   if (!is.matrix(bootstrap_results)) {
     bootstrap_matrix <- matrix(unlist(bootstrap_results),
                                nrow = num_replicates,
                                ncol = num_cuts, byrow = TRUE
     )
   } else {
-    bootstrap_matrix = bootstrap_results
+    bootstrap_matrix <- bootstrap_results
   }
   
-  # Ensure complete dimension alignment before naming assignments
+  # Ensure clean matrix topology and dimension tracking boundaries
   bootstrap_matrix <- matrix(as.numeric(bootstrap_matrix), nrow = num_replicates, ncol = num_cuts)
   colnames(bootstrap_matrix) <- paste0("Cut", 1:num_cuts)
   
@@ -316,7 +311,6 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   }
   bootstrap_matrix_clean <- na.omit(bootstrap_matrix)
   
-  # Force clean matrix topology on cleaned subset to isolate apply dimensions safely
   bootstrap_matrix_clean <- matrix(
     as.numeric(bootstrap_matrix_clean),
     nrow = successful_reps,
@@ -348,6 +342,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     )
   })
   names(boot_summary) <- paste0("Cut", 1:num_cuts)
+  
   bootstrap_df <- as.data.frame(bootstrap_matrix_clean)
   names(bootstrap_df) <- paste0("Cut_point_", 1:num_cuts)
   
