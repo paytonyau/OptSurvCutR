@@ -611,7 +611,7 @@ summary.validate_cutpoint_result <- function(object, ...) {
   num_cuts <- length(x$optimal_cuts)
   df$group <- cut(df$factor, breaks = c(-Inf, sort(x$optimal_cuts), Inf), labels = paste0("G", 1:(num_cuts + 1)))
   
-  if (reference_group %in=% levels(df$group)) {
+  if (reference_group %in% levels(df$group)) {
     df$group <- stats::relevel(df$group, ref = reference_group)
   }
   
