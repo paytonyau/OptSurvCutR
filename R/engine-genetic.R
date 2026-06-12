@@ -9,6 +9,8 @@
 #' Called by `rgenoud::genoud`. Translates incoming discrete integer board indices
 #' back to regularized biomarker coordinates and calculates fitness (maximised).
 #'
+#' @inheritParams find_cutpoint
+#' @inheritParams find_cutpoint_number
 #' @param params Numeric vector. First `numcut` are integer indices of the grid; remaining are betas.
 #' @param time Survival time vector.
 #' @param censor Survival event vector.
@@ -16,8 +18,6 @@
 #' @param confound Optional covariate data frame.
 #' @param numcut Number of cut-points.
 #' @param gap Minimum distance between cut-points (applied to decoded values).
-#' @param nmin Minimum observations per group.
-#' @param criterion "logrank", "p_value", "hazard_ratio" or "loglik".
 #' @param loglik0 Log-likelihood of the null model.
 #' @param cache Optional environment to cache and retrieve evaluations.
 #' @param base_df Pre-allocated data.frame template for speed.
@@ -41,7 +41,6 @@
 .obj <- function(params, time, censor, target, confound, numcut, gap, nmin,
                  criterion, loglik0 = NA_real_, cache = NULL,
                  base_df = NULL, precompiled_formula = NULL, grid_pool = NULL) {
-
   # Decode incoming parameter indices back into numeric cuts
   winning_indices <- round(params[1:numcut])
   cutoff <- sort(grid_pool[winning_indices])
@@ -73,49 +72,49 @@
   data_for_fit$cut_design <- cut_design
 
   stat_value <- switch(criterion,
-                       "logrank" = {
-                         if (is.null(confound) || ncol(confound) == 0) {
-                           fit <- tryCatch(survival::survdiff(precompiled_formula, data = data_for_fit), error = function(e) NULL)
-                           if (is.null(fit)) -Inf else fit$chisq
-                         } else {
-                           fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
-                           if (is.null(fit) || is.null(fit$score)) -Inf else fit$score
-                         }
-                       },
-                       "hazard_ratio" = {
-                         fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
-                         if (is.null(fit) || isTRUE(fit$nevent == 0)) {
-                           -Inf
-                         } else {
-                           target_coef <- paste0("cut_design", numcut + 1)
-                           if (!(target_coef %in% names(fit$coefficients)) || is.na(fit$coefficients[target_coef])) -Inf else exp(fit$coefficients[target_coef])
-                         }
-                       },
-                       "p_value" = {
-                         fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
-                         if (is.null(fit) || is.null(fit$loglik) || isTRUE(fit$nevent == 0)) {
-                           -Inf
-                         } else {
-                           if (!is.na(loglik0)) {
-                             pval <- stats::pchisq(-2 * (loglik0 - fit$loglik[2]), numcut, lower.tail = FALSE)
-                             1 - pval
-                           } else {
-                             sfit <- tryCatch(summary(fit), error = function(e) NULL)
-                             if (is.null(sfit) || is.null(sfit$logtest)) -Inf else 1 - sfit$logtest["pvalue"]
-                           }
-                         }
-                       },
-                       "loglik" = {
-                         beta_init <- params[(numcut + 1):length(params)]
-                         if (length(beta_init) == 0 || is.null(confound) || ncol(confound) == 0) {
-                           fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
-                           if (is.null(fit) || is.null(fit$loglik) || isTRUE(fit$nevent == 0)) -Inf else fit$loglik[2]
-                         } else {
-                           fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit, init = beta_init, iter.max = 0), error = function(e) NULL)
-                           if (is.null(fit) || is.null(fit$loglik) || isTRUE(fit$nevent == 0)) -Inf else fit$loglik[2]
-                         }
-                       },
-                       -Inf
+    "logrank" = {
+      if (is.null(confound) || ncol(confound) == 0) {
+        fit <- tryCatch(survival::survdiff(precompiled_formula, data = data_for_fit), error = function(e) NULL)
+        if (is.null(fit)) -Inf else fit$chisq
+      } else {
+        fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
+        if (is.null(fit) || is.null(fit$score)) -Inf else fit$score
+      }
+    },
+    "hazard_ratio" = {
+      fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
+      if (is.null(fit) || isTRUE(fit$nevent == 0)) {
+        -Inf
+      } else {
+        target_coef <- paste0("cut_design", numcut + 1)
+        if (!(target_coef %in% names(fit$coefficients)) || is.na(fit$coefficients[target_coef])) -Inf else exp(fit$coefficients[target_coef])
+      }
+    },
+    "p_value" = {
+      fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
+      if (is.null(fit) || is.null(fit$loglik) || isTRUE(fit$nevent == 0)) {
+        -Inf
+      } else {
+        if (!is.na(loglik0)) {
+          pval <- stats::pchisq(-2 * (loglik0 - fit$loglik[2]), numcut, lower.tail = FALSE)
+          1 - pval
+        } else {
+          sfit <- tryCatch(summary(fit), error = function(e) NULL)
+          if (is.null(sfit) || is.null(sfit$logtest)) -Inf else 1 - sfit$logtest["pvalue"]
+        }
+      }
+    },
+    "loglik" = {
+      beta_init <- params[(numcut + 1):length(params)]
+      if (length(beta_init) == 0 || is.null(confound) || ncol(confound) == 0) {
+        fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit), error = function(e) NULL)
+        if (is.null(fit) || is.null(fit$loglik) || isTRUE(fit$nevent == 0)) -Inf else fit$loglik[2]
+      } else {
+        fit <- tryCatch(survival::coxph(precompiled_formula, data = data_for_fit, init = beta_init, iter.max = 0), error = function(e) NULL)
+        if (is.null(fit) || is.null(fit$loglik) || isTRUE(fit$nevent == 0)) -Inf else fit$loglik[2]
+      }
+    },
+    -Inf
   )
 
   if (!is.null(cache)) cache[[key]] <- stat_value
@@ -127,19 +126,15 @@
 #' @description
 #' Sets up and runs `rgenoud::genoud` to optimize discrete indices over a regularized pool.
 #'
+#' @inheritParams find_cutpoint
+#' @inheritParams find_cutpoint_number
 #' @param target Continuous predictor vector.
 #' @param numcut Number of cut-points.
 #' @param time Survival time vector.
 #' @param censor Survival event vector.
 #' @param confound Optional covariate data frame.
-#' @param nmin Minimum observations per group.
-#' @param criterion Optimisation criterion.
-#' @param max.generations Max generations (adaptive fallback).
-#' @param pop.size Population size (adaptive fallback).
 #' @param gap Minimum distance between cut-points.
 #' @param print.level Console output level.
-#' @param candidate_cuts Optional vector of pre-filtered cuts from Step 1.
-#' @param ... Additional arguments passed to `.obj` and `genoud`.
 #'
 #' @return A list containing decoded `par` values and final fitness `value`.
 #'
@@ -168,7 +163,9 @@
   }
 
   G <- length(grid_pool)
-  if (G < numcut) return(NULL)
+  if (G < numcut) {
+    return(NULL)
+  }
 
   num_confound_vars <- if (is.null(confound)) 0 else ncol(confound)
   optimising_betas <- (criterion == "loglik")
@@ -213,8 +210,8 @@
     fn = .obj, nvars = nvars, max = TRUE, pop.size = pop.size,
     max.generations = max.generations, wait.generations = 5, hard.generation.limit = TRUE,
     starting.values = initial_values, Domains = domain, print.level = print.level,
-    data.type = 1,          # DISCRETE INTEGER SEARCH MODE
-    P9 = 0,                 # Turn off continuous local gradient optimization
+    data.type = 1, # DISCRETE INTEGER SEARCH MODE
+    P9 = 0, # Turn off continuous local gradient optimization
     boundary.enforcement = 2,
     gradient.check = FALSE, # Bypass expensive fractional checking loops
     time = time, censor = censor, target = target, confound = confound,
@@ -223,7 +220,9 @@
     precompiled_formula = stats::as.formula(formula_str), grid_pool = grid_pool
   ), error = function(e) NULL)
 
-  if (is.null(optim_result)) return(NULL)
+  if (is.null(optim_result)) {
+    return(NULL)
+  }
 
   # Decode winning integer parameters back to real clinical coordinates
   final_indices <- round(optim_result$par[1:numcut])
@@ -241,14 +240,9 @@
 #' Evaluates models from 1 to `max_cuts` using the `rgenoud` evolutionary engine,
 #' computing Information Criteria (AIC/BIC) to penalize complexity.
 #'
+#' @inheritParams find_cutpoint
+#' @inheritParams find_cutpoint_number
 #' @param userdata Cleaned survival data frame.
-#' @param max_cuts Maximum number of cut-points to test.
-#' @param nmin Minimum observations per group.
-#' @param criterion IC to calculate (AIC, AICc, BIC).
-#' @param covariates Optional covariates.
-#' @param max.generations Iterations for rgenoud.
-#' @param pop.size Population size for rgenoud.
-#' @param ... Unused arguments safely passed down.
 #'
 #' @return A data.frame of model selection results.
 #'
@@ -314,10 +308,10 @@
 #' @description
 #' Computes AIC, AICc, or BIC from a `coxph` object or log-likelihood.
 #'
+#' @inheritParams find_cutpoint_number
 #' @param model Fitted `coxph` object or list with `loglik` component.
 #' @param k Number of parameters (degrees of freedom).
 #' @param n Sample size.
-#' @param criterion `"AIC"`, `"AICc"` or `"BIC"`.
 #'
 #' @return Single numeric IC value (or `NA` on failure).
 #'

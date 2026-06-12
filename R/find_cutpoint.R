@@ -14,31 +14,31 @@
 #' @section srrstats compliance:
 #' .
 #' @srrstats {G1.1} Implements genetic + systematic search for optimal
-#'    multi-cutpoint survival groupings.
+#'   multi-cutpoint survival groupings.
 #' @srrstats {G1.0} References provided for Cox, log-rank, genetic optimisation.
 #' @srrstats {G1.3} Systematic grid search (1–2 cuts) and `rgenoud` global
-#'    optimisation documented.
+#'   optimisation documented.
 #' @srrstats {G1.5} Compared with `cutpointr` and `survminer` in package
-#'    vignette.
+#'   vignette.
 #' @srrstats {G1.6} Numerical stability via `survival::coxph` and `rgenoud`;
-#'    edge cases return `NA`.
+#'   edge cases return `NA`.
 #' @srrstats {G2.3a} Uses `match.arg()` to validate `method` and `criterion`
-#'    arguments.
+#'   arguments.
 #' @srrstats {G2.3b} Uses `as.formula` and safe subsetting (NSE safe).
 #' @srrstats {G2.4} `NA` removed via `stats::na.omit()`.
 #' @srrstats {G2.5} Factor ordering is handled by `cut()` which creates ordered
-#'    factors by default.
+#'   factors by default.
 #' @srrstats {RE4.0} Returns class `find_cutpoint` with model details.
 #' @srrstats {G5.2} `optimal_cuts` and `optimal_stat` are `NA` when no valid
-#'    solution found (Graceful failure).
+#'   solution found (Graceful failure).
 #' @srrstats {G2.6} Validates inputs via helpers.
 #' @srrstats {G2.8} Informative errors via `cli::cli_abort()`.
 #' @srrstats {G5.2} Warnings via `cli::cli_alert_warning()`.
 #' @srrstats {G5.2} Graceful degradation via `na_result()` for empty data or
-#'    model failures.
+#'   model failures.
 #' @srrstats {G2.13} `cli_abort()` for invalid input (missingness checks).
 #' @srrstats {G2.15} Explicit checks prevent passing missing data to analytic
-#'    functions (via `na.omit`).
+#'   functions (via `na.omit`).
 #' @srrstats {G2.0} `cli_abort()` checks for missing `rgenoud` dependency.
 #' @srrstats {G2.14c} `NA` propagation controlled.
 #' @srrstats {RE6.0} `plot()` method provided.
@@ -82,34 +82,57 @@
 #' \doi{10.18637/jss.v042.i11}
 #'
 #' @param data A data frame containing the analysis variables.
-#' @param predictor The continuous predictor variable.
-#' @param outcome_time The time-to-event variable.
-#' @param outcome_event The event status variable (0 or 1).
+#' @param predictor The continuous predictor variable name (character).
+#' @param outcome_time The time-to-event variable name (character).
+#' @param outcome_event The event status variable name (character, 0 or 1).
 #' @param num_cuts The number of cut-points to find. Default is 1.
-#' @param method Algorithm: `"systematic"` or `"genetic"`.
-#' @param criterion The statistic to optimise: `"logrank"` (max),
-#'    `"hazard_ratio"` (max), or `"p_value"` (min).
-#' @param covariates Character vector of covariate names.
+#' @param method Algorithm search type: `"systematic"` or `"genetic"`.
+#' @param criterion The statistic to optimise: `"logrank"`, `"hazard_ratio"`, or `"p_value"`.
+#' @param covariates Character vector of covariate names (optional).
 #' @param nmin Min. group size (integer count or proportion).
 #' @param seed Optional integer seed for reproducible genetic search.
-#' @param max.generations Integer; max generations for genetic algorithm. If `NULL`, dynamically scales.
-#' @param pop.size Integer; population size for genetic algorithm. If `NULL`, dynamically scales.
-#' @param n_perm Integer. Number of permutations to run for an adjusted p-value.
-#'    Default is 0. Highly recommended for `num_cuts >= 2` to account for optimization bias.
-#' @param n_cores Integer. Number of CPU cores for parallel permutations. Default is 1.
-#' @param use_cpp Logical. Automatically checks and calls compiled C++ routines via `Rcpp`.
-#'    Can be overridden if required. Default is `TRUE`.
-#' @param grid_by Numeric. Percentile step increment for systematic grid downsampling (e.g., 0.01
-#'    tests every 1st percentile). If `NULL`, tests all unique values. Default is 0.01.
-#' @param quiet Logical. If `TRUE`, suppresses final print.
+#' @param max.generations Max generations for genetic algorithm. If `NULL`, dynamically scales.
+#' @param pop.size Population size for genetic algorithm. If `NULL`, dynamically scales.
+#' @param n_perm Number of permutations to run for an adjusted p-value. Default is 0.
+#' @param n_cores Number of CPU cores for parallel permutations. Default is 1.
+#' @param use_cpp Logical. Checks and calls compiled C++ routines via `Rcpp`. Default is `TRUE`.
+#' @param grid_by Percentile step increment for systematic grid downsampling. Default is 0.01.
+#' @param quiet Logical. If `TRUE`, suppresses operational console alerts.
 #' @param candidate_cuts Optional vector of pre-filtered cuts defining a narrow search space.
-#' @param ... Additional arguments passed to the genetic algorithm.
+#' @param ... Additional arguments passed directly to `rgenoud::genoud`.
 #'
 #' @return An object of class `find_cutpoint` containing the
-#'    optimal cut-points, statistic, and analysis parameters.
+#'      optimal cut-points, statistic, and analysis parameters.
 #' @useDynLib OptSurvCutR, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
 #' @export
+#'
+#' @examples
+#' if (requireNamespace("survival", quietly = TRUE)) {
+#'   library(survival)
+#'
+#'   # Create a lightweight, reproducible simulation baseline dataset
+#'   set.seed(42)
+#'   sim_data <- data.frame(
+#'     time = rexp(30, rate = 0.1),
+#'     event = sample(c(0, 1), 30, replace = TRUE),
+#'     biomarker = rnorm(30, mean = 5, sd = 1.5)
+#'   )
+#'
+#'   # Execute an exhaustive systematic threshold discovery sweep
+#'   fit <- find_cutpoint(
+#'     data = sim_data,
+#'     predictor = "biomarker",
+#'     outcome_time = "time",
+#'     outcome_event = "event",
+#'     num_cuts = 1,
+#'     method = "systematic",
+#'     criterion = "logrank",
+#'     nmin = 5,
+#'     quiet = TRUE
+#'   )
+#'   print(fit)
+#' }
 find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
                           num_cuts = 1, method = c("systematic", "genetic"),
                           criterion = c("logrank", "hazard_ratio", "p_value"),
@@ -184,13 +207,27 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
   # --- UX AUTO-SCALING FOR REGULARIZED SPACE ENGINE OVERRIDES ---
   if (is.null(pop.size) || pop.size == 100) {
     pop.size <- switch(as.character(num_cuts),
-                       "1" = 30, "2" = 60, "3" = 100, "4" = 120,
-                       "5" = 150, "6" = 180, "7" = 200, 250)
+      "1" = 30,
+      "2" = 60,
+      "3" = 100,
+      "4" = 120,
+      "5" = 150,
+      "6" = 180,
+      "7" = 200,
+      250
+    )
   }
   if (is.null(max.generations) || max.generations == 100) {
     max.generations <- switch(as.character(num_cuts),
-                              "1" = 30, "2" = 40, "3" = 50, "4" = 55,
-                              "5" = 60, "6" = 65, "7" = 70, 80)
+      "1" = 30,
+      "2" = 40,
+      "3" = 50,
+      "4" = 55,
+      "5" = 60,
+      "6" = 65,
+      "7" = 70,
+      80
+    )
   }
 
   extra_args <- list(...)
@@ -232,7 +269,7 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
   }
 
   p_perm <- NA
-  if (n_perm > 0 && !any(is.na(real_res$optimal_cuts))) {
+  if (n_perm > 0 && !anyNA(real_res$optimal_cuts)) {
     if (requireNamespace("cli", quietly = TRUE) && !quiet) cli::cli_alert_info("Running {n_perm} permutations to calculate adjusted p-value...")
 
     p_perm <- .run_permutations(

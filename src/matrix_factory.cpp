@@ -3,6 +3,7 @@ using namespace Rcpp;
 
 //' @importFrom Rcpp evalCpp
 //' @useDynLib OptSurvCutR, .registration = TRUE
+//' @noRd
 // [[Rcpp::export]]
 IntegerVector cpp_get_group_assignments(NumericVector predictor, NumericVector cuts) {
     int n = predictor.size();

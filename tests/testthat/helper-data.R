@@ -78,7 +78,7 @@ valid_fc_result_for_boot <- suppressMessages(suppressWarnings(
   )
 ))
 
-if (is.null(valid_fc_result_for_boot) || any(is.na(valid_fc_result_for_boot$optimal_cuts))) {
+if (is.null(valid_fc_result_for_boot) || anyNA(valid_fc_result_for_boot$optimal_cuts)) {
   valid_fc_result_for_boot <- list(
     optimal_cuts = 50,
     optimal_stat = 12.5,

@@ -6,7 +6,7 @@
 \alias{OptSurvCutR-package}
 \title{OptSurvCutR: Optimal Survival Cut-Point Discovery for Time-to-Event Analysis with 'OptSurvCutR'}
 \description{
-Provides a robust workflow for optimal cut-point analysis in time-to-event (survival) data. Functions determine the optimal number of cut-points via find_cutpoint_number(), find their precise locations via find_cutpoint() using systematic or genetic algorithms (via the 'rgenoud' package), and validate stability via bootstrapping using validate_cutpoint(). Features include covariate adjustment, parallel processing, and an extensible S3 plotting engine for clinical dashboards and diagnostics.
+Provides a robust workflow for optimal cut-point analysis in time-to-event ('survival') data. Functions determine the optimal number of cut-points via find_cutpoint_number(), find their precise locations via find_cutpoint() using systematic or genetic algorithms (via the 'rgenoud' package), and validate stability via bootstrapping using validate_cutpoint(). Features include covariate adjustment, parallel processing, and an extensible S3 plotting engine for clinical dashboards and diagnostics.
 }
 \seealso{
 Useful links:

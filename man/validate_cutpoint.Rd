@@ -47,7 +47,7 @@ survival (time-to-event) analysis.
 \dontrun{
 if (requireNamespace("survival", quietly = TRUE)) {
   library(survival)
-  
+
   # 1. Create a tiny simulated baseline clinical cohort dataset
   set.seed(123)
   n <- 45
@@ -67,7 +67,7 @@ if (requireNamespace("survival", quietly = TRUE)) {
   # 3. Run a lightweight bootstrap validation stress-test execution loop
   val_res <- validate_cutpoint(
     cutpoint_result = initial_cut,
-    num_replicates = 25,  # Small iteration tier for rapid check verification
+    num_replicates = 25, # Small iteration tier for rapid check verification
     n_cores = 1,
     seed = 123
   )

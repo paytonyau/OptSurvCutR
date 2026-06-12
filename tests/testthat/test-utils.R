@@ -126,7 +126,7 @@ test_that(".validate_data_conditions monitors sample boundaries and quiet modes 
   # floor(0.25 * 4) = 1
   # ✅ FIXED for expect_identical: cast the target to a double/numeric vector
   expect_identical(res_prop$nmin_abs, as.numeric(1))
-  
+
   # Scenario C: Negative nmin value bounds checking
   expect_error(OptSurvCutR:::.validate_data_conditions(clean_df, nmin = -0.5, num_cuts = 1, "event", quiet = TRUE))
 
@@ -144,7 +144,7 @@ test_that(".validate_data_conditions monitors sample boundaries and quiet modes 
 # --- 6. Null Coalescing Operator (%||%) ---
 
 test_that("null coalescing operator matches your implementation exactly", {
-  expect_identical(NULL %||% "backup", "backup")       # UPGRADED: expect_equal -> expect_identical
+  expect_identical(NULL %||% "backup", "backup") # UPGRADED: expect_equal -> expect_identical
   expect_identical("default" %||% "backup", "default") # UPGRADED: expect_equal -> expect_identical
-  expect_identical(3 %||% 5, 3)                         # UPGRADED: expect_equal -> expect_identical
+  expect_identical(3 %||% 5, 3) # UPGRADED: expect_equal -> expect_identical
 })

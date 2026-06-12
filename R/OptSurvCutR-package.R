@@ -133,9 +133,11 @@ NULL
 # Startup Message
 # ===================================================================
 .onAttach <- function(libname, pkgname) {
-  msg <- paste0("== OptSurvCutR v", utils::packageVersion(pkgname), " ==\n",
-                "  Docs: <https://github.com/paytonyau/OptSurvCutR>\n",
-                "  Paper: Yau, Payton (2025) bioRxiv 10.1101/2025.10.08.681246\n",
-                "  Cite: `citation('OptSurvCutR')`\n")
+  msg <- paste0(
+    "== OptSurvCutR v", utils::packageVersion(pkgname), " ==\n",
+    "  Docs: <https://github.com/paytonyau/OptSurvCutR>\n",
+    "  Paper: Yau, Payton (2025) bioRxiv 10.1101/2025.10.08.681246\n",
+    "  Cite: `citation('OptSurvCutR')`\n"
+  )
   packageStartupMessage(msg)
 }

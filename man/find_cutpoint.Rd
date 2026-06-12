@@ -43,41 +43,37 @@ find_cutpoint(
 \arguments{
 \item{data}{A data frame containing the analysis variables.}
 
-\item{predictor}{The continuous predictor variable.}
+\item{predictor}{The continuous predictor variable name (character).}
 
-\item{outcome_time}{The time-to-event variable.}
+\item{outcome_time}{The time-to-event variable name (character).}
 
-\item{outcome_event}{The event status variable (0 or 1).}
+\item{outcome_event}{The event status variable name (character, 0 or 1).}
 
 \item{num_cuts}{The number of cut-points to find. Default is 1.}
 
-\item{method}{Algorithm: `"systematic"` or `"genetic"`.}
+\item{method}{Algorithm search type: `"systematic"` or `"genetic"`.}
 
-\item{criterion}{The statistic to optimise: `"logrank"` (max),
-`"hazard_ratio"` (max), or `"p_value"` (min).}
+\item{criterion}{The statistic to optimise: `"logrank"`, `"hazard_ratio"`, or `"p_value"`.}
 
-\item{covariates}{Character vector of covariate names.}
+\item{covariates}{Character vector of covariate names (optional).}
 
 \item{nmin}{Min. group size (integer count or proportion).}
 
 \item{seed}{Optional integer seed for reproducible genetic search.}
 
-\item{max.generations}{Integer; max generations for genetic algorithm. If `NULL`, dynamically scales.}
+\item{max.generations}{Max generations for genetic algorithm. If `NULL`, dynamically scales.}
 
-\item{pop.size}{Integer; population size for genetic algorithm. If `NULL`, dynamically scales.}
+\item{pop.size}{Population size for genetic algorithm. If `NULL`, dynamically scales.}
 
-\item{n_perm}{Integer. Number of permutations to run for an adjusted p-value.
-Default is 0. Highly recommended for `num_cuts >= 2` to account for optimization bias.}
+\item{n_perm}{Number of permutations to run for an adjusted p-value. Default is 0.}
 
-\item{n_cores}{Integer. Number of CPU cores for parallel permutations. Default is 1.}
+\item{n_cores}{Number of CPU cores for parallel permutations. Default is 1.}
 
-\item{use_cpp}{Logical. Automatically checks and calls compiled C++ routines via `Rcpp`.
-Can be overridden if required. Default is `TRUE`.}
+\item{use_cpp}{Logical. Checks and calls compiled C++ routines via `Rcpp`. Default is `TRUE`.}
 
-\item{grid_by}{Numeric. Percentile step increment for systematic grid downsampling (e.g., 0.01
-tests every 1st percentile). If `NULL`, tests all unique values. Default is 0.01.}
+\item{grid_by}{Percentile step increment for systematic grid downsampling. Default is 0.01.}
 
-\item{quiet}{Logical. If `TRUE`, suppresses final print.}
+\item{quiet}{Logical. If `TRUE`, suppresses operational console alerts.}
 
 \item{candidate_cuts}{Optional vector of pre-filtered cuts defining a narrow search space.}
 
@@ -99,7 +95,7 @@ tests every 1st percentile). If `NULL`, tests all unique values. Default is 0.01
 }
 \value{
 An object of class `find_cutpoint` containing the
-   optimal cut-points, statistic, and analysis parameters.
+     optimal cut-points, statistic, and analysis parameters.
 }
 \description{
 Finds optimal cut-point(s) for a continuous predictor in a
@@ -125,6 +121,33 @@ Core vector partitions are calculated in compiled C++ via `Rcpp` for optimal per
 .
 }
 
+\examples{
+if (requireNamespace("survival", quietly = TRUE)) {
+  library(survival)
+
+  # Create a lightweight, reproducible simulation baseline dataset
+  set.seed(42)
+  sim_data <- data.frame(
+    time = rexp(30, rate = 0.1),
+    event = sample(c(0, 1), 30, replace = TRUE),
+    biomarker = rnorm(30, mean = 5, sd = 1.5)
+  )
+
+  # Execute an exhaustive systematic threshold discovery sweep
+  fit <- find_cutpoint(
+    data = sim_data,
+    predictor = "biomarker",
+    outcome_time = "time",
+    outcome_event = "event",
+    num_cuts = 1,
+    method = "systematic",
+    criterion = "logrank",
+    nmin = 5,
+    quiet = TRUE
+  )
+  print(fit)
+}
+}
 \references{
 Altman, D. G., Lausen, B., Sauerbrei, W., & Schumacher,
 M. (1994). Dangers of Using “Optimal” Cutpoints in the Evaluation of

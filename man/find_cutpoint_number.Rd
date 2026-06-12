@@ -132,3 +132,30 @@ Core vector partitions are calculated in compiled C++ via `Rcpp` for optimal per
 .
 }
 
+\examples{
+if (requireNamespace("survival", quietly = TRUE)) {
+  library(survival)
+
+  # Generate a pristine simulated clinical tracking baseline template
+  set.seed(42)
+  sim_data <- data.frame(
+    time = rexp(40, rate = 0.1),
+    event = sample(c(0, 1), 40, replace = TRUE),
+    biomarker = rnorm(40, mean = 6, sd = 1.2)
+  )
+
+  # Sweep information criteria fit columns up to a 2-cut matrix max
+  num_fit <- find_cutpoint_number(
+    data = sim_data,
+    predictor = "biomarker",
+    outcome_time = "time",
+    outcome_event = "event",
+    max_cuts = 2,
+    method = "systematic",
+    criterion = "BIC",
+    nmin = 5,
+    quiet = TRUE
+  )
+  summary(num_fit)
+}
+}

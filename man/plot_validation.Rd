@@ -72,9 +72,9 @@ profiles. Automatically handles 1, 2, or multi-cut architectures dynamically.
 
 \examples{
 mock_val <- list(
-   bootstrap_distribution = data.frame(Cut_point_1 = rnorm(30, 10, 1)),
-   original_cuts = 10.2,
-   parameters = list(predictor = "Biomarker", num_replicates = 30, successful_reps = 30)
+  bootstrap_distribution = data.frame(Cut_point_1 = rnorm(30, 10, 1)),
+  original_cuts = 10.2,
+  parameters = list(predictor = "Biomarker", num_replicates = 30, successful_reps = 30)
 )
 p <- plot_validation(mock_val)
 }

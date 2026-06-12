@@ -60,7 +60,7 @@
 #' \dontrun{
 #' if (requireNamespace("survival", quietly = TRUE)) {
 #'   library(survival)
-#'   
+#'
 #'   # 1. Create a tiny simulated baseline clinical cohort dataset
 #'   set.seed(123)
 #'   n <- 45
@@ -80,7 +80,7 @@
 #'   # 3. Run a lightweight bootstrap validation stress-test execution loop
 #'   val_res <- validate_cutpoint(
 #'     cutpoint_result = initial_cut,
-#'     num_replicates = 25,  # Small iteration tier for rapid check verification
+#'     num_replicates = 25, # Small iteration tier for rapid check verification
 #'     n_cores = 1,
 #'     seed = 123
 #'   )
@@ -99,7 +99,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     cli::cli_abort("Input must be a `find_cutpoint` object.")
   }
   if (!is.numeric(num_replicates) || num_replicates < 1 ||
-      num_replicates != round(num_replicates)) {
+    num_replicates != round(num_replicates)) {
     cli::cli_abort("`num_replicates` must be a positive integer.")
   }
   if (num_replicates < 20) {
@@ -109,16 +109,16 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     set.seed(seed)
     cli::cli_alert_info("Using random seed {seed} for reproducibility.")
   }
-  
+
   # --- 2. Extract Original Parameters and Reconstruction Layers ---
   original_params <- cutpoint_result$parameters
   original_cuts <- cutpoint_result$optimal_cuts
   candidate_cuts <- cutpoint_result$candidate_cuts
-  
-  if (any(is.na(original_cuts))) {
+
+  if (anyNA(original_cuts)) {
     cli::cli_abort("Input `find_cutpoint` object has NA cut-points.")
   }
-  
+
   # Map environmental naming parameters out cleanly
   predictor <- original_params$predictor
   num_cuts <- original_params$num_cuts
@@ -126,19 +126,19 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   criterion <- original_params$criterion
   covariates <- original_params$covariates
   grid_by <- original_params$grid_by
-  
+
   # Reconstruct the raw data frame back into original named column metrics
   raw_reconstructed <- cutpoint_result$userdata
   names(raw_reconstructed)[names(raw_reconstructed) == "factor"] <- predictor
-  
+
   # Remap internal parameter tracking names to step past masking traps safely
   outcome_time <- paste0("boot_", predictor, "_time")
   outcome_event <- paste0("boot_", predictor, "_event")
   names(raw_reconstructed)[names(raw_reconstructed) == "time"] <- outcome_time
   names(raw_reconstructed)[names(raw_reconstructed) == "event"] <- outcome_event
-  
+
   n <- nrow(raw_reconstructed)
-  
+
   if (is.null(nmin)) {
     original_nmin_param <- original_params$nmin
     if (original_nmin_param > 0 && original_nmin_param < 1) {
@@ -153,7 +153,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
       "Using {nmin} (90% of original) to improve stability."
     ))
   }
-  
+
   if (nmin > 0 && nmin < 1) {
     nmin_abs <- floor(nmin * n)
     if (nmin_abs < 1) nmin_abs <- 1
@@ -166,25 +166,25 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   } else {
     cli::cli_abort("`nmin` must be a positive number.")
   }
-  
+
   if (n < nmin * (num_cuts + 1)) {
     cli::cli_abort(
       "Not enough data ({n}) for nmin ({nmin}) and {num_cuts} cut(s)."
     )
   }
-  
+
   cli::cli_alert_info(paste(
     "Validating {num_cuts} cut(s) from '{method}' search",
     "using '{criterion}' over regularized coordinate lattice."
   ))
-  
+
   # --- 3. Setup Backend (Parallel or Sequential) ---
   if (n_cores < 1) n_cores <- 1
   cores_to_use <- 1
   if (n_cores > 1) {
     cores_available <- parallel::detectCores()
     if (is.na(cores_available) || is.null(cores_available)) cores_available <- 2
-    
+
     cores_to_use <- min(cores_available - 1, n_cores, num_replicates)
     if (cores_to_use > 1) {
       if (!requireNamespace("doParallel", quietly = TRUE)) {
@@ -196,7 +196,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
       cli::cli_alert_info(
         "Running {num_replicates} replicates on {cores_to_use} cores..."
       )
-      
+
       if (!is.null(seed)) {
         if (!requireNamespace("doRNG", quietly = TRUE)) {
           cli::cli_abort(
@@ -215,18 +215,18 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
       "Running {num_replicates} replicates sequentially (n_cores = 1)."
     )
   }
-  
+
   # --- 4. Main Bootstrap Loop ---
   if (cores_to_use == 1) {
     pb <- cli::cli_progress_bar("Bootstrapping", total = num_replicates)
   }
-  
+
   i <- NULL
   extra_args <- list(...)
-  
+
   if ("pop.size" %in% names(extra_args) && is.null(extra_args$pop.size)) extra_args$pop.size <- NULL
   if ("max.generations" %in% names(extra_args) && is.null(extra_args$max.generations)) extra_args$max.generations <- NULL
-  
+
   bootstrap_results <- foreach::foreach(
     i = 1:num_replicates,
     .combine = "rbind",
@@ -236,10 +236,10 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     if (cores_to_use == 1) {
       cli::cli_progress_update(id = pb)
     }
-    
+
     boot_indices <- sample(1:n, n, replace = TRUE)
     boot_data <- raw_reconstructed[boot_indices, ]
-    
+
     final_args <- c(
       list(
         data = boot_data,
@@ -260,37 +260,37 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
       ),
       extra_args[!(names(extra_args) %in% c("pop.size", "max.generations"))]
     )
-    
+
     res <- tryCatch(
       suppressWarnings(suppressMessages(do.call(OptSurvCutR::find_cutpoint, final_args))),
       error = function(e) {
         return(NULL)
       }
     )
-    
-    if (is.null(res) || any(is.na(res$optimal_cuts)) || length(res$optimal_cuts) != num_cuts) {
+
+    if (is.null(res) || anyNA(res$optimal_cuts) || length(res$optimal_cuts) != num_cuts) {
       return(matrix(rep(NA_real_, num_cuts), nrow = 1, ncol = num_cuts))
     }
     matrix(sort(res$optimal_cuts), nrow = 1, ncol = num_cuts)
   }
-  
+
   # --- 5. Process Results and Calculate CIs ---
-  if (!is.matrix(bootstrap_results)) {
-    bootstrap_matrix <- matrix(unlist(bootstrap_results),
-                               nrow = num_replicates,
-                               ncol = num_cuts, byrow = TRUE
-    )
-  } else {
+  if (is.matrix(bootstrap_results)) {
     bootstrap_matrix <- bootstrap_results
+  } else {
+    bootstrap_matrix <- matrix(unlist(bootstrap_results),
+      nrow = num_replicates,
+      ncol = num_cuts, byrow = TRUE
+    )
   }
-  
+
   # Ensure clean matrix topology and dimension tracking boundaries
   bootstrap_matrix <- matrix(as.numeric(bootstrap_matrix), nrow = num_replicates, ncol = num_cuts)
   colnames(bootstrap_matrix) <- paste0("Cut", 1:num_cuts)
-  
+
   successful_reps <- sum(stats::complete.cases(bootstrap_matrix))
   failed_reps <- num_replicates - successful_reps
-  
+
   if (failed_reps > 0) {
     cli::cli_alert_warning(
       "{failed_reps} of {num_replicates} replicates failed."
@@ -310,15 +310,15 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     )
   }
   bootstrap_matrix_clean <- na.omit(bootstrap_matrix)
-  
+
   bootstrap_matrix_clean <- matrix(
     as.numeric(bootstrap_matrix_clean),
     nrow = successful_reps,
     ncol = num_cuts
   )
-  
+
   ci <- apply(bootstrap_matrix_clean, 2, stats::quantile,
-              probs = c(0.025, 0.975), na.rm = TRUE
+    probs = c(0.025, 0.975), na.rm = TRUE
   )
   if (num_cuts == 1) {
     ci_df <- data.frame(Lower = ci[1], Upper = ci[2])
@@ -327,7 +327,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     names(ci_df) <- c("Lower", "Upper")
   }
   row.names(ci_df) <- paste0("Cut ", 1:num_cuts)
-  
+
   boot_summary <- lapply(1:num_cuts, function(i) {
     valid_cuts <- bootstrap_matrix_clean[, i]
     if (length(valid_cuts) == 0) {
@@ -342,10 +342,10 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     )
   })
   names(boot_summary) <- paste0("Cut", 1:num_cuts)
-  
+
   bootstrap_df <- as.data.frame(bootstrap_matrix_clean)
   names(bootstrap_df) <- paste0("Cut_point_", 1:num_cuts)
-  
+
   output <- list(
     original_cuts = original_cuts,
     confidence_intervals = ci_df,

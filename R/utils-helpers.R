@@ -68,21 +68,16 @@
 #' @description
 #' Centralised validation for `find_cutpoint()` arguments.
 #'
-#' @param method,criterion,num_cuts,covariates,predictor,outcome_time,
-#' outcome_event,data Arguments from `find_cutpoint()`.
+#' @param data Input data frame.
+#' @param predictor Continuous predictor variable name.
+#' @param outcome_time Time-to-event variable name.
+#' @param outcome_event Event indicator name.
+#' @param num_cuts Number of cut-points to test.
+#' @param method Search method.
+#' @param criterion Metric threshold selection criterion.
+#' @param covariates Optional vector of covariate strings.
 #'
 #' @return `invisible(TRUE)` on success; aborts on failure.
-#'
-#' @section srrstats compliance:
-#' .
-#' @srrstats {G2.0} Validates `method`, `criterion`, `num_cuts`.
-#' @srrstats {G2.1} Type checks.
-#' @srrstats {G2.4b} `match.arg()` for controlled vocabularies.
-#' @srrstats {G2.4c} Conversion mechanisms explicitly account for logical vectors during argument verification.
-#' @srrstats {G2.0} `requireNamespace()` for optional `rgenoud`.
-#' @srrstats {G2.9} Column-name existence checks.
-#' @srrstats {G2.13} `cli_abort()` for invalid inputs.
-#' @srrstats {G1.4a} Internal use only (`@noRd`).
 #'
 #' @noRd
 .validate_find_cutpoint_inputs <- function(data, predictor, outcome_time,
@@ -90,28 +85,28 @@
                                            criterion, covariates) {
   method <- match.arg(method, choices = c("systematic", "genetic"))
   criterion <- match.arg(criterion,
-                         choices = c("logrank", "hazard_ratio", "p_value")
+    choices = c("logrank", "hazard_ratio", "p_value")
   )
   if (!is.numeric(num_cuts) || num_cuts < 0 || num_cuts != round(num_cuts)) {
     stop("num_cuts must be a non-negative integer.", call. = FALSE)
   }
   if (criterion == "hazard_ratio" && num_cuts > 1) {
     stop("'hazard_ratio' is only supported for num_cuts = 1.",
-         call. = FALSE
+      call. = FALSE
     )
   }
   if (method == "genetic" && !requireNamespace("rgenoud", quietly = TRUE)) {
     cli::cli_abort(
       c(
         "'genetic' method requires 'rgenoud'.",
-        "i" = "Install with: install.packages(\"rgenoud\")",
-        "i" = "Or use `method = \"systematic\"` (for num_cuts <= 2)."
+        "i1" = "Install with: install.packages(\"rgenoud\")",
+        "i2" = "Or use `method = \"systematic\"` (for num_cuts <= 2)."
       )
     )
   }
   if (method == "systematic" && !num_cuts %in% c(1, 2)) {
     stop("Systematic search only supports num_cuts = 1 or 2.",
-         call. = FALSE
+      call. = FALSE
     )
   }
   if (is.null(predictor)) {
@@ -119,17 +114,16 @@
   }
   if (is.null(outcome_time) || is.null(outcome_event)) {
     stop("Both 'outcome_time' and 'outcome_event' are required.",
-         call. = FALSE
+      call. = FALSE
     )
   }
   required_vars <- c(predictor, outcome_time, outcome_event, covariates)
   missing_vars <- setdiff(required_vars, names(data))
   if (length(missing_vars) > 0) {
-    stop(
-      paste0(
-        "Missing required columns: '",
-        paste(missing_vars, collapse = "', '"), "'"
-      ),
+    missing_collapsed <- paste(missing_vars, collapse = "', '")
+
+    cli::cli_abort(
+      "Missing required columns: '{missing_collapsed}'",
       call. = FALSE
     )
   }

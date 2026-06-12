@@ -30,13 +30,13 @@ if (requireNamespace("survival", quietly = TRUE)) {
   # to populate the 2D grid matrix log array
   set.seed(123)
   mock_df <- data.frame(
-     time   = c(runif(10, 50, 100), runif(10, 20, 60), runif(10, 5, 25)),
-     event  = rep(1, 30),
-     factor = c(rnorm(10, 2, 0.2), rnorm(10, 7, 0.2), rnorm(10, 15, 0.2))
+    time   = c(runif(10, 50, 100), runif(10, 20, 60), runif(10, 5, 25)),
+    event  = rep(1, 30),
+    factor = c(rnorm(10, 2, 0.2), rnorm(10, 7, 0.2), rnorm(10, 15, 0.2))
   )
   res <- find_cutpoint(
-     mock_df, "factor", "time", "event",
-     num_cuts = 2, method = "systematic", quiet = TRUE, nmin = 3
+    mock_df, "factor", "time", "event",
+    num_cuts = 2, method = "systematic", quiet = TRUE, nmin = 3
   )
   p <- plot_optimisation_curve(res)
 }

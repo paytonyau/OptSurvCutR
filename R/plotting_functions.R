@@ -19,15 +19,15 @@
 #' library(ggplot2)
 #' mock_df <- data.frame(x = 1:10, y = 1:10)
 #' ggplot(mock_df, aes(x, y)) +
-#'      geom_point() +
-#'      theme_optsurv()
+#'   geom_point() +
+#'   theme_optsurv()
 theme_optsurv <- function(base_size = 14) {
   ggplot2::theme_minimal(base_size = base_size) +
     ggplot2::theme(
       # --- UNIFORM LIGHT-GREY GRIDLINES ---
       panel.grid.major = ggplot2::element_line(color = "grey92", linewidth = 0.5),
       panel.grid.minor = ggplot2::element_line(color = "grey96", linewidth = 0.25),
-      
+
       # --- TYPOGRAPHY & LAYOUT ESTHETICS ---
       plot.title = ggplot2::element_text(face = "bold", size = ggplot2::rel(1.15)),
       plot.subtitle = ggplot2::element_text(color = "grey40", size = ggplot2::rel(0.9)),
@@ -70,51 +70,53 @@ theme_optsurv <- function(base_size = 14) {
 #'   # Build clean local simulation objects with an explicit survival risk split
 #'   set.seed(123)
 #'   mock_df <- data.frame(
-#'      time   = c(runif(15, 50, 100), runif(15, 5, 25)),
-#'      event  = rep(1, 30),
-#'      factor = c(rnorm(15, 5, 0.5), rnorm(15, 15, 0.5))
+#'     time   = c(runif(15, 50, 100), runif(15, 5, 25)),
+#'     event  = rep(1, 30),
+#'     factor = c(rnorm(15, 5, 0.5), rnorm(15, 15, 0.5))
 #'   )
 #'   res <- find_cutpoint(
-#'      mock_df, "factor", "time", "event",
-#'      num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 3
+#'     mock_df, "factor", "time", "event",
+#'     num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 3
 #'   )
 #'   p <- plot(res, type = "distribution")
 #' }
-plot.find_cutpoint <- function(x, type = c(
-  "outcome", "distribution", "forest",
-  "surface", "trajectory",
-  "diagnostic", "landmark"
-),
-return_data = FALSE, landmark = NULL, ...) {
+plot.find_cutpoint <- function(
+  x, type = c(
+    "outcome", "distribution", "forest",
+    "surface", "trajectory",
+    "diagnostic", "landmark"
+  ),
+  return_data = FALSE, landmark = NULL, ...
+) {
   type <- match.arg(type)
-  
-  if (is.null(x$optimal_cuts) || any(is.na(x$optimal_cuts))) {
+
+  if (is.null(x$optimal_cuts) || anyNA(x$optimal_cuts)) {
     cli::cli_abort("Cannot generate plots: No valid optimal cut-points found in this object.")
   }
-  
+
   df <- x$userdata
   cuts <- sort(x$optimal_cuts)
   num_cuts <- length(cuts)
-  
+
   if (exists("cpp_get_group_assignments", mode = "function") && isTRUE(x$parameters$use_cpp)) {
     grp_vector <- cpp_get_group_assignments(df$factor, cuts)
     df$group <- structure(grp_vector, levels = as.character(1:(num_cuts + 1)), class = "factor")
   } else {
     df$group <- as.factor(findInterval(df$factor, cuts, left.open = TRUE) + 1L)
   }
-  
+
   if (return_data) {
     return(df)
   }
-  
+
   switch(type,
-         "outcome"      = .plot_km_curve(x, df, ...),
-         "distribution" = .plot_density_cuts(x, df, ...),
-         "forest"       = .plot_hr_forest(x, df, ...),
-         "surface"      = plot_optimisation_curve(x, ...),
-         "trajectory"   = .plot_genetic_trajectory(x, ...),
-         "diagnostic"   = plot_cutpoint_residuals(x, ...),
-         "landmark"     = plot_landmark_stratification(x, landmark = landmark, ...)
+    "outcome"      = .plot_km_curve(x, df, ...),
+    "distribution" = .plot_density_cuts(x, df, ...),
+    "forest"       = .plot_hr_forest(x, df, ...),
+    "surface"      = plot_optimisation_curve(x, ...),
+    "trajectory"   = .plot_genetic_trajectory(x, ...),
+    "diagnostic"   = plot_cutpoint_residuals(x, ...),
+    "landmark"     = plot_landmark_stratification(x, landmark = landmark, ...)
   )
 }
 
@@ -143,13 +145,13 @@ return_data = FALSE, landmark = NULL, ...) {
 #'   # to populate the 2D grid matrix log array
 #'   set.seed(123)
 #'   mock_df <- data.frame(
-#'      time   = c(runif(10, 50, 100), runif(10, 20, 60), runif(10, 5, 25)),
-#'      event  = rep(1, 30),
-#'      factor = c(rnorm(10, 2, 0.2), rnorm(10, 7, 0.2), rnorm(10, 15, 0.2))
+#'     time   = c(runif(10, 50, 100), runif(10, 20, 60), runif(10, 5, 25)),
+#'     event  = rep(1, 30),
+#'     factor = c(rnorm(10, 2, 0.2), rnorm(10, 7, 0.2), rnorm(10, 15, 0.2))
 #'   )
 #'   res <- find_cutpoint(
-#'      mock_df, "factor", "time", "event",
-#'      num_cuts = 2, method = "systematic", quiet = TRUE, nmin = 3
+#'     mock_df, "factor", "time", "event",
+#'     num_cuts = 2, method = "systematic", quiet = TRUE, nmin = 3
 #'   )
 #'   p <- plot_optimisation_curve(res)
 #' }
@@ -157,7 +159,7 @@ plot_optimisation_curve <- function(cutpoint_result, ...) {
   if (!inherits(cutpoint_result, "find_cutpoint")) {
     cli::cli_abort("Input must be an object from the {.fn find_cutpoint} function.")
   }
-  
+
   params <- cutpoint_result$parameters
   if (params$method != "systematic") {
     cli::cli_abort("Surface mapping (`type = 'surface'`) is only available for `method = 'systematic'`.")
@@ -165,17 +167,17 @@ plot_optimisation_curve <- function(cutpoint_result, ...) {
   if (is.null(cutpoint_result$all_stats) || !is.data.frame(cutpoint_result$all_stats)) {
     cli::cli_abort("The results object must contain a valid grid log array in `all_stats`.")
   }
-  
+
   plot_data <- cutpoint_result$all_stats
   criterion <- params$criterion
-  
+
   y_label <- switch(criterion,
-                    "logrank" = "Log-Rank Statistic",
-                    "hazard_ratio" = "Hazard Ratio",
-                    "p_value" = "P-value",
-                    criterion
+    "logrank" = "Log-Rank Statistic",
+    "hazard_ratio" = "Hazard Ratio",
+    "p_value" = "P-value",
+    criterion
   )
-  
+
   if (params$num_cuts == 1) {
     optimal_cut <- cutpoint_result$optimal_cuts[1]
     p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data$cut1, y = .data$stat)) +
@@ -186,7 +188,7 @@ plot_optimisation_curve <- function(cutpoint_result, ...) {
         x = "Cut-point Threshold Location", y = y_label
       ) +
       theme_optsurv()
-    
+
     if (!is.na(optimal_cut)) {
       p <- p + ggplot2::geom_vline(
         xintercept = optimal_cut, linetype = "dashed",
@@ -234,57 +236,57 @@ plot_optimisation_curve <- function(cutpoint_result, ...) {
 #'   library(survival)
 #'   mock_df <- data.frame(time = 1:30, event = rep(c(0, 1), 15), factor = rnorm(30))
 #'   res <- find_cutpoint(
-#'      mock_df, "factor", "time", "event",
-#'      num_cuts = 1, method = "systematic", quiet = TRUE
+#'     mock_df, "factor", "time", "event",
+#'     num_cuts = 1, method = "systematic", quiet = TRUE
 #'   )
 #'   p <- plot_cutpoint_residuals(res)
 #' }
 plot_cutpoint_residuals <- function(x, ...) {
-  if (is.null(x$optimal_cuts) || any(is.na(x$optimal_cuts))) {
+  if (is.null(x$optimal_cuts) || anyNA(x$optimal_cuts)) {
     cli::cli_inform("No valid cut-points mapped; diagnostics skipped.")
     return(invisible(NULL))
   }
-  
+
   data <- x$userdata
   cuts <- sort(x$optimal_cuts)
   num_cuts <- length(cuts)
-  
+
   if (exists("cpp_get_group_assignments", mode = "function") && isTRUE(x$parameters$use_cpp)) {
     grp_vector <- cpp_get_group_assignments(data$factor, cuts)
     data$group <- structure(grp_vector, levels = as.character(1:(num_cuts + 1)), class = "factor")
   } else {
     data$group <- as.factor(findInterval(data$factor, cuts, left.open = TRUE) + 1L)
   }
-  
+
   formula_str <- "survival::Surv(time, event) ~ group"
   covariates <- x$parameters$covariates
   if (!is.null(covariates)) {
     formula_str <- paste(formula_str, "+", paste(covariates, collapse = " + "))
   }
-  
+
   fit <- tryCatch(survival::coxph(stats::as.formula(formula_str), data = data), error = function(e) NULL)
   if (is.null(fit)) {
     cli::cli_inform("Cox fit model failed during residuals generation.")
     return(invisible(NULL))
   }
-  
+
   fit$call$formula <- stats::as.formula(formula_str)
   zph <- tryCatch(survival::cox.zph(fit), error = function(e) NULL)
-  
+
   if (is.null(zph)) {
     cli::cli_abort("Proportional hazards evaluation failed due to a singular model matrix.")
   }
-  
+
   time_vec <- zph$x
   residual_matrix <- zph$y
   col_names <- colnames(residual_matrix)
-  
-  target_cols = grep("^group", col_names, value = TRUE)
+
+  target_cols <- grep("^group", col_names, value = TRUE)
   if (length(target_cols) == 0) {
     cli::cli_inform("No stratified group metrics available for diagnostic modeling.")
     return(invisible(NULL))
   }
-  
+
   long_list <- lapply(target_cols, function(col) {
     data.frame(
       Time = time_vec,
@@ -293,9 +295,9 @@ plot_cutpoint_residuals <- function(x, ...) {
     )
   })
   plot_df <- do.call(rbind, long_list)
-  
+
   global_p <- round(zph$table[nrow(zph$table), "p"], 4)
-  
+
   g <- ggplot2::ggplot(plot_df, ggplot2::aes(x = .data$Time, y = .data$Residual)) +
     ggplot2::geom_hline(yintercept = 0, linetype = "dashed", color = "gray50", linewidth = 0.8) +
     ggplot2::geom_point(color = "#2c3e50", alpha = 0.40, size = 1.8, shape = 16) +
@@ -311,7 +313,7 @@ plot_cutpoint_residuals <- function(x, ...) {
       y = "Scaled Schoenfeld Residual Metrics"
     ) +
     theme_optsurv()
-  
+
   return(g)
 }
 
@@ -330,13 +332,13 @@ plot_cutpoint_residuals <- function(x, ...) {
 #' if (requireNamespace("survival", quietly = TRUE)) {
 #'   library(survival)
 #'   mock_df <- data.frame(
-#'      time   = runif(25, 5, 50),
-#'      event  = sample(c(0, 1), 25, replace = TRUE),
-#'      factor = rnorm(25, 10, 2)
+#'     time   = runif(25, 5, 50),
+#'     event  = sample(c(0, 1), 25, replace = TRUE),
+#'     factor = rnorm(25, 10, 2)
 #'   )
 #'   res <- find_cutpoint(
-#'      mock_df, "factor", "time", "event",
-#'      num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 3
+#'     mock_df, "factor", "time", "event",
+#'     num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 3
 #'   )
 #'   p <- plot_landmark_stratification(res, landmark = 10)
 #' }
@@ -344,32 +346,32 @@ plot_landmark_stratification <- function(x, landmark = NULL, ...) {
   df <- x$userdata
   cuts <- sort(x$optimal_cuts)
   num_cuts <- length(cuts)
-  
+
   if (exists("cpp_get_group_assignments", mode = "function") && isTRUE(x$parameters$use_cpp)) {
     grp_vector <- cpp_get_group_assignments(df$factor, cuts)
     df$group <- structure(grp_vector, levels = as.character(1:(num_cuts + 1)), class = "factor")
   } else {
     df$group <- as.factor(findInterval(df$factor, cuts, left.open = TRUE) + 1L)
   }
-  
+
   if (is.null(landmark)) {
     landmark <- round(max(df$time, na.rm = TRUE) * 0.20, 1)
   }
-  
+
   landmark_df <- df[df$time > landmark, ]
-  
+
   if (nrow(landmark_df) < 15) {
     cli::cli_abort("Insufficient sample size remaining (N < 15) to calculate a stable landmark model at time {landmark}.")
   }
-  
+
   landmark_df$time <- landmark_df$time - landmark
-  
+
   cli::cli_alert_info("Generating Landmark Survival Curve for survivors remaining at time milestone: {landmark}")
-  
+
   title_text <- paste("Landmark Survival Analysis (T =", landmark, ")")
   p <- .plot_km_curve(x, landmark_df,
-                      title = title_text,
-                      xlab = paste("Time Passed Post-Landmark Milestone (Marker Zero =", landmark, ")"), ...
+    title = title_text,
+    xlab = paste("Time Passed Post-Landmark Milestone (Marker Zero =", landmark, ")"), ...
   )
   return(p)
 }
@@ -402,39 +404,39 @@ plot_landmark_stratification <- function(x, landmark = NULL, ...) {
 #' @export
 #' @examples
 #' mock_val <- list(
-#'    bootstrap_distribution = data.frame(Cut_point_1 = rnorm(30, 10, 1)),
-#'    original_cuts = 10.2,
-#'    parameters = list(predictor = "Biomarker", num_replicates = 30, successful_reps = 30)
+#'   bootstrap_distribution = data.frame(Cut_point_1 = rnorm(30, 10, 1)),
+#'   original_cuts = 10.2,
+#'   parameters = list(predictor = "Biomarker", num_replicates = 30, successful_reps = 30)
 #' )
 #' p <- plot_validation(mock_val)
 plot_validation <- function(validation_result,
                             main = "Resampling Convergence & Stability Landscape",
                             focus_cuts = c(1, 2), ...) {
   log_df <- validation_result$bootstrap_distribution
-  
+
   if (is.null(log_df) || !is.data.frame(log_df)) {
     cli::cli_abort(c(
       "Input must contain a valid statistical log array dataframe inside {.code bootstrap_distribution}.",
       "x" = "Please verify that the validation object was successfully compiled by the bootstrap loop."
     ))
   }
-  
+
   # Extract true original optimal cut-point coordinates
   orig_cuts <- validation_result$original_cuts
   if (is.null(orig_cuts)) orig_cuts <- validation_result$optimal_cuts # Fallback anchor
-  
+
   # Identify available cut-point columns in the dataset
   cut_cols <- grep("^Cut_point_", colnames(log_df), value = TRUE)
   num_available_cuts <- length(cut_cols)
-  
+
   if (num_available_cuts == 0) {
     cli::cli_abort("No columns matching 'Cut_point_X' found in the bootstrap distribution dataset.")
   }
-  
+
   # ===================================================================
   # CONDITIONAL RENDERING MATRIX BASED ON USER CUT ARCHITECTURE
   # ===================================================================
-  
+
   if (num_available_cuts == 1) {
     # --- 1D FALLBACK: Simple single cut-point density ---
     p <- ggplot2::ggplot(log_df, ggplot2::aes(x = .data$Cut_point_1)) +
@@ -448,7 +450,7 @@ plot_validation <- function(validation_result,
       )
   } else {
     # --- 2D CONTOUR ENGINE: For 2, 3, or more cut-points ---
-    
+
     # Safety checks on user input coordinates for multi-cut focus mapping
     if (length(focus_cuts) != 2 || !is.numeric(focus_cuts)) {
       cli::cli_abort("{.arg focus_cuts} must be a numeric vector of length 2 (e.g., c(1, 2) or c(2, 3)).")
@@ -456,14 +458,14 @@ plot_validation <- function(validation_result,
     if (any(focus_cuts > num_available_cuts) || any(focus_cuts < 1)) {
       cli::cli_abort("Requested focus cuts [c({focus_cuts[1]}, {focus_cuts[2]})] exceed available model dimensions (Total cuts found: {num_available_cuts}).")
     }
-    
+
     col_x_name <- paste0("Cut_point_", focus_cuts[1])
     col_y_name <- paste0("Cut_point_", focus_cuts[2])
-    
+
     # Extract the paired baseline points for our orange target diamond
     dot_x <- orig_cuts[focus_cuts[1]]
     dot_y <- orig_cuts[focus_cuts[2]]
-    
+
     p <- ggplot2::ggplot(log_df, ggplot2::aes(x = .data[[col_x_name]], y = .data[[col_y_name]])) +
       # Layer 1: Smooth 2D filled density contour ribbons
       ggplot2::geom_density_2d_filled(bins = 10, alpha = 0.95) +
@@ -486,7 +488,7 @@ plot_validation <- function(validation_result,
         y = paste0(validation_result$parameters$predictor, " Cut-point ", focus_cuts[2], " Threshold")
       )
   }
-  
+
   # Apply uniform package aesthetic parameters
   p <- p +
     theme_optsurv() +
@@ -498,7 +500,7 @@ plot_validation <- function(validation_result,
       legend.title = ggplot2::element_text(size = ggplot2::rel(0.85), face = "bold"),
       legend.text = ggplot2::element_text(size = ggplot2::rel(0.80))
     )
-  
+
   return(p)
 }
 
@@ -509,31 +511,31 @@ plot_validation <- function(validation_result,
   if (!requireNamespace("survminer", quietly = TRUE)) {
     cli::cli_abort("Package {.pkg survminer} is required to render outcome tracking charts.")
   }
-  
+
   target_formula <- stats::as.formula("survival::Surv(time, event) ~ group")
   fit_km <- survival::survfit(target_formula, data = df)
   fit_km$call$formula <- target_formula
-  
+
   # Count the actual number of categorical risk strata present in the model fit
   num_strata <- length(names(fit_km$strata))
-  
+
   # Generate a publication-ready color spectrum that scales dynamically to match num_strata
   dynamic_palette <- if (num_strata <= 4) {
     c("#0072B2", "#D55E00", "#009E73", "#CC79A7")[1:num_strata]
   } else {
     grDevices::colorRampPalette(c("#0072B2", "#009E73", "#D55E00", "#CC79A7"))(num_strata)
   }
-  
+
   p <- survminer::ggsurvplot(fit_km,
-                             data = df, title = title, xlab = xlab, ylab = ylab,
-                             palette = dynamic_palette,
-                             pval = TRUE, ggtheme = theme_optsurv(), ...
+    data = df, title = title, xlab = xlab, ylab = ylab,
+    palette = dynamic_palette,
+    pval = TRUE, ggtheme = theme_optsurv(), ...
   )
-  
+
   if (!is.null(p$plot)) p$plot <- p$plot + theme_optsurv()
   if (!is.null(p$table)) p$table <- p$table + theme_optsurv()
   if (!is.null(p$ncensor.plot)) p$ncensor.plot <- p$ncensor.plot + theme_optsurv()
-  
+
   return(p)
 }
 
@@ -545,23 +547,23 @@ plot_validation <- function(validation_result,
       x = paste(x$parameters$predictor, "(Continuous Range)"), y = "Population Density Profile"
     ) +
     theme_optsurv()
-  
+
   stagger_vjust <- c(1.5, 3.8, 6.1, 8.4)
   idx <- 1
-  
+
   for (cut_val in x$optimal_cuts) {
     current_vjust <- stagger_vjust[((idx - 1) %% length(stagger_vjust)) + 1]
-    
+
     p <- p +
       ggplot2::geom_vline(
         xintercept = cut_val, linetype = "dashed",
         color = "#D55E00", linewidth = 0.8, alpha = 0.5
       ) +
       ggplot2::annotate("text",
-                        x = cut_val, y = Inf,
-                        label = paste0("Cut ", idx, ": ", round(cut_val, 2)),
-                        vjust = current_vjust, hjust = -0.1,
-                        color = "#2c3e50", fontface = "bold", size = 3.5
+        x = cut_val, y = Inf,
+        label = paste0("Cut ", idx, ": ", round(cut_val, 2)),
+        vjust = current_vjust, hjust = -0.1,
+        color = "#2c3e50", fontface = "bold", size = 3.5
       )
     idx <- idx + 1
   }
@@ -575,6 +577,7 @@ plot_validation <- function(validation_result,
 #' @importFrom patchwork wrap_plots plot_layout
 #' @importFrom stats as.formula aggregate relevel symnum
 #' @importFrom rlang .data
+#' @noRd
 .plot_hr_forest <- function(x, df, reference_group = "G1", main = "Adjusted Clinical Risk Profile", ...) {
   if (!requireNamespace("survival", quietly = TRUE)) {
     cli::cli_abort("Package {.pkg survival} is required to compute forest metrics.")
@@ -582,33 +585,33 @@ plot_validation <- function(validation_result,
   if (!requireNamespace("patchwork", quietly = TRUE)) {
     cli::cli_abort("Package {.pkg patchwork} is required for space-optimized ribbon forest plots.")
   }
-  
+
   covariates <- x$parameters$covariates
   cov_part <- if (!is.null(covariates)) paste(" +", paste(covariates, collapse = " + ")) else ""
-  
+
   # Reconstruct biomarker risk cohorts from optimal cuts
   num_cuts <- length(x$optimal_cuts)
   df$group <- cut(df$factor, breaks = c(-Inf, sort(x$optimal_cuts), Inf), labels = paste0("G", 1:(num_cuts + 1)))
-  
+
   if (reference_group %in% levels(df$group)) {
     df$group <- stats::relevel(df$group, ref = reference_group)
   }
-  
+
   # 1. Fit Cox Regression Model
   formula_str <- paste("survival::Surv(time, event) ~ group", cov_part)
   fit <- tryCatch(survival::coxph(stats::as.formula(formula_str), data = df), error = function(e) NULL)
   if (is.null(fit)) cli::cli_abort("Could not compile forest plots: Cox regression alignment failure.")
-  
+
   sum_cox <- summary(fit)
   coefs <- as.data.frame(sum_cox$coefficients)
   conf <- as.data.frame(sum_cox$conf.int)
-  
+
   # Identify model coefficients
   biomarker_rows <- grep("^group", rownames(coefs))
   covariate_rows <- which(!seq_len(nrow(coefs)) %in% biomarker_rows)
-  
+
   if (length(biomarker_rows) == 0) cli::cli_abort("No valid categorical group contrasts found to chart.")
-  
+
   # 2. Calculate Biomarker Cohort Sample Sizes (N & Events)
   counts_df <- as.data.frame(table(df$group))
   names(counts_df) <- c("g_id", "N")
@@ -616,10 +619,10 @@ plot_validation <- function(validation_result,
   names(event_df) <- c("g_id", "Events")
   km_sum <- merge(counts_df, event_df, by = "g_id")
   rownames(km_sum) <- km_sum$g_id
-  
+
   # 3. Compile Master Dataset for the Left Panel (Forest Rows)
   forest_list <- list()
-  
+
   # A. Inject Reference Group Row Explicitly
   ref_label <- paste0("Cohort ", reference_group, " (Reference)")
   forest_list[[1]] <- data.frame(
@@ -632,7 +635,7 @@ plot_validation <- function(validation_result,
     SortOrder = 1,
     g_id      = reference_group
   )
-  
+
   # B. Inject Stratified Biomarker Rows
   idx <- 2
   for (r_idx in biomarker_rows) {
@@ -640,11 +643,11 @@ plot_validation <- function(validation_result,
     g_id <- gsub("group", "", rname, fixed = TRUE)
     pval <- coefs[rname, "Pr(>|z|)"]
     p_text <- if (pval < 0.001) "p < 0.001" else paste0("p = ", round(pval, 3))
-    
+
     hr_val <- conf[r_idx, "exp(coef)"]
     low_val <- conf[r_idx, "lower .95"]
     up_val <- conf[r_idx, "upper .95"]
-    
+
     forest_list[[idx]] <- data.frame(
       Variable  = paste0("Cohort ", g_id, " (", p_text, ")"),
       Type      = "Biomarker",
@@ -657,18 +660,18 @@ plot_validation <- function(validation_result,
     )
     idx <- idx + 1
   }
-  
+
   # C. Inject Clinical Adjusters Covariate Rows (Dynamic Coloring Category)
   if (length(covariate_rows) > 0) {
     for (r_idx in covariate_rows) {
       rname <- rownames(coefs)[r_idx]
       pval <- coefs[r_idx, "Pr(>|z|)"]
       p_text <- if (pval < 0.001) "p < 0.001" else paste0("p = ", round(pval, 3))
-      
+
       hr_val <- conf[r_idx, "exp(coef)"]
       low_val <- conf[r_idx, "lower .95"]
       up_val <- conf[r_idx, "upper .95"]
-      
+
       forest_list[[idx]] <- data.frame(
         Variable  = paste0(rname, " (", p_text, ")"),
         Type      = "Covariate",
@@ -682,18 +685,18 @@ plot_validation <- function(validation_result,
       idx <- idx + 1
     }
   }
-  
+
   forest_df <- do.call(rbind, forest_list)
   forest_df$Variable <- factor(forest_df$Variable, levels = rev(forest_df$Variable[order(forest_df$SortOrder)]))
-  
+
   # 4. Assemble Right Panel Dataset (Guaranteed level-safe binding match)
   bar_list <- list()
   b_idx <- 1
-  
+
   for (f_row in seq_len(nrow(forest_df))) {
     current_gid <- forest_df$g_id[f_row]
     current_var <- forest_df$Variable[f_row]
-    
+
     if (!is.na(current_gid)) {
       bar_list[[b_idx]] <- data.frame(
         Variable = rep(current_var, 2),
@@ -709,14 +712,14 @@ plot_validation <- function(validation_result,
     }
     b_idx <- b_idx + 1
   }
-  
+
   bar_df <- do.call(rbind, bar_list)
   bar_df$Variable <- factor(bar_df$Variable, levels = levels(forest_df$Variable))
   bar_df$Metric <- factor(bar_df$Metric, levels = c("Censored", "Events"))
-  
+
   max_upper <- max(forest_df$Upper, na.rm = TRUE)
   x_limit_upper <- max_upper * 1.05
-  
+
   # ===================================================================
   # PANE 1: THE REFACTORED FOREST DATA CANVAS
   # ===================================================================
@@ -742,7 +745,7 @@ plot_validation <- function(validation_result,
     ggplot2::scale_color_manual(values = c("Biomarker" = "black", "Covariate" = "#7f8c8d")) +
     ggplot2::xlim(0, x_limit_upper) +
     ggplot2::labs(title = main, subtitle = NULL, x = "Hazard Ratio (95% CI)", y = "")
-  
+
   # ===================================================================
   # PANE 2: THE VARIABLE-SCALE SIDEBAR RIBBON (1:10 Ratio Scale)
   # ===================================================================
@@ -761,11 +764,11 @@ plot_validation <- function(validation_result,
     ) +
     ggplot2::geom_col(width = 0.35, position = "stack") +
     ggplot2::scale_fill_manual(name = "", values = c("Censored" = "#0072B2", "Events" = "#D55E00"))
-  
+
   combined_layout <- patchwork::wrap_plots(p_forest, p_ribbon, ncol = 2, widths = c(10, 1)) +
     patchwork::plot_layout(guides = "collect") &
     ggplot2::theme(legend.position = "bottom")
-  
+
   return(combined_layout)
 }
 

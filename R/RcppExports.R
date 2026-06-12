@@ -3,6 +3,7 @@
 
 #' @importFrom Rcpp evalCpp
 #' @useDynLib OptSurvCutR, .registration = TRUE
+#' @noRd
 cpp_get_group_assignments <- function(predictor, cuts) {
     .Call(`_OptSurvCutR_cpp_get_group_assignments`, predictor, cuts)
 }

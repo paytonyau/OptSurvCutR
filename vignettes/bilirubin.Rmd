@@ -117,27 +117,27 @@ num_res <- find_cutpoint_number(
   # ==========================================
   # 1. CORE DATA & COVARIATE INPUTS
   # ==========================================
-  data = pbc_clean,                    # The patient dataset
-  predictor = "bili",                  # The continuous biomarker
-  outcome_time = "time",               # Survival time column
-  outcome_event = "event",             # Survival event column
+  data = pbc_clean, # The patient dataset
+  predictor = "bili", # The continuous biomarker
+  outcome_time = "time", # Survival time column
+  outcome_event = "event", # Survival event column
   covariates = c("age", "sex", "edema"), # Confounders to control for
 
   # ==========================================
   # 2. SEARCH ENGINE SETTINGS
   # ==========================================
-  method = "genetic",                  # The evolutionary search engine
-  criterion = "AIC",                   # Evaluates adjusted model fit
-  max_cuts = 5,                        # Test models ranging from 0 to 5 cuts
-  nmin = 0.15,                         # SAFETY LIMIT: Minimum 15% of patients per group
-     
+  method = "genetic", # The evolutionary search engine
+  criterion = "AIC", # Evaluates adjusted model fit
+  max_cuts = 5, # Test models ranging from 0 to 5 cuts
+  nmin = 0.15, # SAFETY LIMIT: Minimum 15% of patients per group
+
   # ==========================================
   # 3. ADVANCED GENETIC TUNING
   # ==========================================
-  max.generations = NULL,              # LIFESPAN: Number of evolutionary cycles to run
-  pop.size = NULL,                     # SEARCH PARTY: Number of random guesses per generation
-  boundary.enforcement = 2,            # EDGE CONTROL: 2 = Soft boundary configuration
-  seed = 123                           # REPRODUCIBILITY
+  max.generations = NULL, # LIFESPAN: Number of evolutionary cycles to run
+  pop.size = NULL, # SEARCH PARTY: Number of random guesses per generation
+  boundary.enforcement = 2, # EDGE CONTROL: 2 = Soft boundary configuration
+  seed = 123 # REPRODUCIBILITY
 )
 ```
 
@@ -151,11 +151,13 @@ To easily track the inflection points where adding more thresholds yields dimini
 
 ```{r loess}
 plot(num_res) +
-  geom_smooth(method = "loess", 
-              se = FALSE, 
-              colour = "darkgrey", 
-              linetype = "dashed", 
-              alpha = 0.5)
+  geom_smooth(
+    method = "loess",
+    se = FALSE,
+    colour = "darkgrey",
+    linetype = "dashed",
+    alpha = 0.5
+  )
 ```
 
 **Interpretation:** The model that minimises the information landscape layout is identified at **2 cut-points** (which divides the patient cohort into 3 distinct risk groups). This confirms that even after controlling for the confounding baseline effects of age and sex, a multi-tier risk classification model is statistically superior to a traditional binary median split.
@@ -180,20 +182,20 @@ cut_res <- find_cutpoint(
   # ==========================================
   # 2. SEARCH ENGINE SETTINGS
   # ==========================================
-  method = "genetic", 
-  criterion = "logrank", 
-  num_cuts = 3,       # Setting 3 cuts for clinical tier separation
-  nmin = 0.15,         # SAFETY LIMIT: Minimum patients per risk cohort
-  n_perm = 20,        # Streamlined permutation cycle
+  method = "genetic",
+  criterion = "logrank",
+  num_cuts = 3, # Setting 3 cuts for clinical tier separation
+  nmin = 0.15, # SAFETY LIMIT: Minimum patients per risk cohort
+  n_perm = 20, # Streamlined permutation cycle
 
   # ==========================================
   # 3. ADVANCED GENETIC TUNING
   # ==========================================
-  max.generations = NULL,   
-  pop.size = NULL,          
-  boundary.enforcement = 2, 
-  seed = 123,                
-  n_cores = 1                
+  max.generations = NULL,
+  pop.size = NULL,
+  boundary.enforcement = 2,
+  seed = 123,
+  n_cores = 1
 )
 ```
 
@@ -233,17 +235,17 @@ val_res <- validate_cutpoint(
   # ==========================================
   # 1. VALIDATION INPUTS
   # ==========================================
-  cutpoint_result = cut_res, 
-  num_replicates = 30,       # 500+ is the standard for final publication
-  n_cores = 1, 
+  cutpoint_result = cut_res,
+  num_replicates = 30, # 500+ is the standard for final publication
+  n_cores = 1,
 
   # ==========================================
   # 2. ADVANCED SETTINGS (Must match Step 2)
   # ==========================================
-  max.generations = NULL, 
-  pop.size = NULL, 
-  boundary.enforcement = 2, 
-  seed = 123 
+  max.generations = NULL,
+  pop.size = NULL,
+  boundary.enforcement = 2,
+  seed = 123
 )
 ```
 

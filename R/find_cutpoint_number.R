@@ -82,6 +82,33 @@
 #' @importFrom ggplot2 theme_minimal scale_x_continuous element_text theme
 #' @importFrom tools toTitleCase
 #' @export
+#'
+#' @examples
+#' if (requireNamespace("survival", quietly = TRUE)) {
+#'   library(survival)
+#'
+#'   # Generate a pristine simulated clinical tracking baseline template
+#'   set.seed(42)
+#'   sim_data <- data.frame(
+#'     time = rexp(40, rate = 0.1),
+#'     event = sample(c(0, 1), 40, replace = TRUE),
+#'     biomarker = rnorm(40, mean = 6, sd = 1.2)
+#'   )
+#'
+#'   # Sweep information criteria fit columns up to a 2-cut matrix max
+#'   num_fit <- find_cutpoint_number(
+#'     data = sim_data,
+#'     predictor = "biomarker",
+#'     outcome_time = "time",
+#'     outcome_event = "event",
+#'     max_cuts = 2,
+#'     method = "systematic",
+#'     criterion = "BIC",
+#'     nmin = 5,
+#'     quiet = TRUE
+#'   )
+#'   summary(num_fit)
+#' }
 find_cutpoint_number <- function(data, predictor,
                                  outcome_time, outcome_event,
                                  method = "systematic", criterion = "BIC",
@@ -105,8 +132,8 @@ find_cutpoint_number <- function(data, predictor,
     cli::cli_abort(
       c(
         "'genetic' method requires the 'rgenoud' package.",
-        "i" = "Install with: install.packages(\"rgenoud\")",
-        "i" = "Or, use `method = \"systematic\"` (for max_cuts <= 2)."
+        "i1" = "Install with: install.packages(\"rgenoud\")",
+        "i2" = "Or, use `method = \"systematic\"` (for max_cuts <= 2)."
       )
     )
   }
@@ -157,7 +184,8 @@ find_cutpoint_number <- function(data, predictor,
     cli::cli_abort("'nmin' must be a positive number.")
   }
 
-  na_result <- function(userdata, method, criterion) {
+  # ✅ FIXED: Keep ... in the function signature if needed, but drop it from the list constructor below
+  na_result <- function(userdata, ...) {
     output <- list(
       results = data.frame(),
       parameters = list(
@@ -186,14 +214,14 @@ find_cutpoint_number <- function(data, predictor,
 
   if (n == 0) {
     cli::cli_inform("No complete cases found after removing NAs.")
-    return(na_result(userdata, method, criterion))
+    return(na_result(userdata))
   }
 
   if (n < nmin_abs * (max_cuts + 1)) {
     cli::cli_alert_warning(
       "Sample size ({n}) is mathematically insufficient to support {max_cuts} cuts with a minimum group size constraint of {nmin_abs} patients ({max_cuts + 1} groups required)."
     )
-    return(na_result(userdata, method, criterion))
+    return(na_result(userdata))
   }
 
   # Build the base Regularized Grid Space lattice to gauge unique data supply
@@ -219,7 +247,7 @@ find_cutpoint_number <- function(data, predictor,
       "Predictor has too few unique values",
       "({length(unique(userdata$factor))}) for max_cuts ({max_cuts})."
     ))
-    return(na_result(userdata, method, criterion))
+    return(na_result(userdata))
   }
 
   cli::cli_alert_info("Finding optimal cut number: method = {.strong {method}}")
@@ -257,13 +285,27 @@ find_cutpoint_number <- function(data, predictor,
       current_gen <- max.generations
       if (is.null(pop.size) || pop.size == 100) {
         current_pop <- switch(as.character(k),
-                              "1" = 30, "2" = 60, "3" = 100, "4" = 120,
-                              "5" = 150, "6" = 180, "7" = 200, 250)
+          "1" = 30,
+          "2" = 60,
+          "3" = 100,
+          "4" = 120,
+          "5" = 150,
+          "6" = 180,
+          "7" = 200,
+          250
+        )
       }
       if (is.null(max.generations) || max.generations == 100) {
         current_gen <- switch(as.character(k),
-                              "1" = 30, "2" = 40, "3" = 50, "4" = 55,
-                              "5" = 60, "6" = 65, "7" = 70, 80)
+          "1" = 30,
+          "2" = 40,
+          "3" = 50,
+          "4" = 55,
+          "5" = 60,
+          "6" = 65,
+          "7" = 70,
+          80
+        )
       }
 
       params_k <- list(
@@ -311,10 +353,10 @@ find_cutpoint_number <- function(data, predictor,
 
   if (is.null(results) || !is.data.frame(results) || nrow(results) == 0) {
     cli::cli_inform("Search algorithm failed to produce results.")
-    return(na_result(userdata, method, criterion))
+    return(na_result(userdata))
   }
 
-  if (all(is.na(results[[criterion]]))) {
+  if (anyNA(results[[criterion]])) {
     cli::cli_alert_warning("All tested model cut-points violated localized subgroup size constraints during runtime search iterations.")
   }
 
@@ -448,7 +490,7 @@ print.find_cutpoint_number_result <- function(x, ...) {
       "\nConclusion: {best_result$num_cuts} cut-point(s) is",
       "best based on {criterion_text}."
     ))
-    if (length(best_cuts_vals) > 0 && !any(is.na(best_cuts_vals))) {
+    if (length(best_cuts_vals) > 0 && !anyNA(best_cuts_vals)) {
       rounded_cuts <- round(best_cuts_vals, 2)
       cli::cli_text("   Optimal cuts at: {.strong {rounded_cuts}}")
     }
@@ -468,18 +510,18 @@ print.find_cutpoint_number_result <- function(x, ...) {
 #' @rdname find_cutpoint_number
 #' @export
 summary.find_cutpoint_number_result <- function(
-    object, show_comparison_table = TRUE,
-    show_best_model_details = TRUE,
-    show_group_counts = TRUE, show_medians = TRUE,
-    plot.it = FALSE, ...
+  object, show_comparison_table = TRUE,
+  show_best_model_details = TRUE,
+  show_group_counts = TRUE, show_medians = TRUE,
+  plot.it = FALSE, ...
 ) {
   criterion_text <- object$parameters$criterion %||% "IC"
 
   cli::cli_h1("Optimal Cut-point Number Analysis")
 
   if (is.null(object) || is.null(object$results) ||
-      nrow(object$results) == 0 ||
-      all(is.na(object$results[[criterion_text]]))) {
+    nrow(object$results) == 0 ||
+    all(is.na(object$results[[criterion_text]]))) {
     cli::cli_inform("Cannot summarise: no valid model was found.")
     return(invisible(object))
   }
@@ -489,7 +531,7 @@ summary.find_cutpoint_number_result <- function(
   best_cuts_vals <- best_result$cuts[[1]]
 
   cli::cli_alert_success("Best Model: {.strong {num_cuts} Cut-points} (Criterion: {toupper(criterion_text)})")
-  if (length(best_cuts_vals) > 0 && !any(is.na(best_cuts_vals))) {
+  if (length(best_cuts_vals) > 0 && !anyNA(best_cuts_vals)) {
     cli::cli_alert_info("Optimal Thresholds: {.val {paste(round(best_cuts_vals, 3), collapse = ', ')}}")
   }
   cat("\n")
@@ -521,10 +563,10 @@ summary.find_cutpoint_number_result <- function(
     data <- object$userdata
     cov_part <- if (!is.null(object$parameters$covariates)) paste(" +", paste(object$parameters$covariates, collapse = " + ")) else ""
 
-    if (num_cuts > 0 && length(best_cuts_vals) > 0 && !any(is.na(best_cuts_vals))) {
+    if (num_cuts > 0 && length(best_cuts_vals) > 0 && !anyNA(best_cuts_vals)) {
       data$group <- cut(data$factor,
-                        breaks = c(-Inf, best_cuts_vals, Inf),
-                        labels = paste0("G", 1:(num_cuts + 1))
+        breaks = c(-Inf, best_cuts_vals, Inf),
+        labels = paste0("G", 1:(num_cuts + 1))
       )
 
       if (show_group_counts || show_medians) {
@@ -562,8 +604,8 @@ summary.find_cutpoint_number_result <- function(
     }
 
     cli::cli_h2("3. Cox Proportional-Hazards")
-    formula_str <- if (num_cuts > 0 && length(best_cuts_vals) > 0 && !any(is.na(best_cuts_vals))) paste("survival::Surv(time, event) ~ group", cov_part) else paste("survival::Surv(time, event) ~ factor", cov_part)
-    model_data <- if (num_cuts > 0 && length(best_cuts_vals) > 0 && !any(is.na(best_cuts_vals))) data else object$userdata
+    formula_str <- if (num_cuts > 0 && length(best_cuts_vals) > 0 && !anyNA(best_cuts_vals)) paste("survival::Surv(time, event) ~ group", cov_part) else paste("survival::Surv(time, event) ~ factor", cov_part)
+    model_data <- if (num_cuts > 0 && length(best_cuts_vals) > 0 && !anyNA(best_cuts_vals)) data else object$userdata
 
     fit_cox <- tryCatch(
       survival::coxph(as.formula(formula_str), data = model_data),
@@ -587,9 +629,9 @@ summary.find_cutpoint_number_result <- function(
         )
 
         cox_df$Signif <- as.character(stats::symnum(cox_df$P_Value,
-                                                    corr = FALSE, na = FALSE,
-                                                    cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1),
-                                                    symbols = c("***", "**", "*", ".", " ")
+          corr = FALSE, na = FALSE,
+          cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1),
+          symbols = c("***", "**", "*", ".", " ")
         ))
 
         print(cox_df, row.names = FALSE, right = TRUE)
@@ -612,17 +654,19 @@ summary.find_cutpoint_number_result <- function(
   cli::cli_h2("4. Analysis Parameters")
   params <- object$parameters
 
+  # ✅ FIXED: Strip out duplicate explicit names ("*" =)
   param_bullets <- c(
-    "*" = "Search Method: {tools::toTitleCase(params$method %||% 'Unknown')}",
-    "*" = "Predictor: {params$predictor %||% 'Unknown'}",
-    "*" = "Criterion: {params$criterion %||% 'Unknown'}",
-    "*" = "Maximum Cuts: {params$max_cuts %||% NA}",
-    "*" = "Minimum Group Size (nmin): {params$nmin %||% NA}"
+    paste0("* Search Method: ", tools::toTitleCase(params$method %||% "Unknown")),
+    paste0("* Predictor: ", params$predictor %||% "Unknown"),
+    paste0("* Criterion: ", params$criterion %||% "Unknown"),
+    paste0("* Maximum Cuts: ", params$max_cuts %||% NA),
+    paste0("* Minimum Group Size (nmin): ", params$nmin %||% NA)
   )
+
   if (!is.null(params$covariates)) {
     param_bullets <- c(
       param_bullets,
-      "*" = "Covariates: {paste(params$covariates, collapse = ', ')}"
+      paste0("* Covariates: ", paste(params$covariates, collapse = ", "))
     )
   }
 

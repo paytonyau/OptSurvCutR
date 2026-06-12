@@ -9,7 +9,7 @@ Authors@R:
            email = "tungon@gmail.com",
            comment = c(ORCID = "0000-0002-3283-0370"))
 Description: Provides a robust workflow for optimal cut-point analysis in
-    time-to-event (survival) data. Functions determine the optimal number
+    time-to-event ('survival') data. Functions determine the optimal number
     of cut-points via find_cutpoint_number(), find their precise locations
     via find_cutpoint() using systematic or genetic algorithms (via the
     'rgenoud' package), and validate stability via bootstrapping using

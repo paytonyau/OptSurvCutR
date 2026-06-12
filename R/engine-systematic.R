@@ -10,15 +10,10 @@
 #' to evaluate possible thresholds for 1 or 2 cut-points, respecting the minimum
 #' group size constraints.
 #'
+#' @inheritParams find_cutpoint
+#' @inheritParams find_cutpoint_number
 #' @param userdata Cleaned survival data frame containing columns 'factor', 'time', and 'event'.
-#' @param num_cuts Number of cut-points to evaluate (1 or 2).
-#' @param criterion Statistic to optimise: "logrank", "hazard_ratio", or "p_value".
-#' @param covariates Optional vector of covariate names.
-#' @param nmin Absolute minimum number of observations per group.
 #' @param predictor_name Original name of the predictor (for messaging).
-#' @param quiet Logical to suppress console output.
-#' @param candidate_cuts Optional vector of pre-filtered cuts defining a narrow search space.
-#' @param ... Additional unused arguments (absorbed safely).
 #'
 #' @return A list containing `optimal_cuts`, `optimal_stat`, and `all_stats`.
 #'
@@ -85,10 +80,10 @@
     }
 
     stats_per_cut <- vapply(search_grid, .get_stat,
-                            num_cuts = 1, data_in = userdata,
-                            criterion = criterion, cov_formula = cov_part,
-                            nmin = nmin, fit_null = fit_null_model,
-                            FUN.VALUE = numeric(1)
+      num_cuts = 1, data_in = userdata,
+      criterion = criterion, cov_formula = cov_part,
+      nmin = nmin, fit_null = fit_null_model,
+      FUN.VALUE = numeric(1)
     )
 
     if (all(is.na(stats_per_cut))) {
@@ -99,7 +94,6 @@
     best_cut_val <- search_grid[best_idx]
     best_stat <- stats_per_cut[best_idx]
     all_stats_df <- data.frame(cut1 = search_grid, stat = stats_per_cut)
-
   } else { # num_cuts == 2
     if (!quiet) cli::cli_alert_info("Searching for 2 cuts over regularized coordinate space...")
     foreach::registerDoSEQ()
@@ -114,18 +108,22 @@
 
       # Ensure structural ordering where c2 is downstream of c1
       grid2_values <- search_grid[search_grid > c1]
-      if (length(grid2_values) == 0) return(NULL)
+      if (length(grid2_values) == 0) {
+        return(NULL)
+      }
 
       for (c2 in grid2_values) {
         stat <- .get_stat(c(c1, c2), 2, userdata, criterion, cov_part, nmin, fit_null = fit_null_model)
         if (is.na(stat)) next
         is_better <- if (direction == "min") (stat < best_local_stat) else (stat > best_local_stat)
         if (is_better && !is.infinite(stat)) {
-          best_local_stat = stat
-          best_local_c2 = c2
+          best_local_stat <- stat
+          best_local_c2 <- c2
         }
       }
-      if (is.na(best_local_c2)) return(NULL)
+      if (is.na(best_local_c2)) {
+        return(NULL)
+      }
       data.frame(stat = best_local_stat, c1 = c1, c2 = best_local_c2)
     }
 
@@ -281,7 +279,7 @@
     if (requireNamespace("cli", quietly = TRUE)) cli::cli_alert_info(paste("Profiling IC surface for", k_cuts, "cut-point(s)..."))
 
     res <- .systematic_search(userdata, k_cuts, "p_value", covariates, nmin, "factor", quiet = TRUE)
-    if (any(is.na(res$optimal_cuts))) {
+    if (anyNA(res$optimal_cuts)) {
       if (requireNamespace("cli", quietly = TRUE)) cli::cli_inform(paste("No valid cut-points found for", k_cuts, "cut(s)."))
       results <- rbind(results, data.frame(num_cuts = k_cuts, IC = NA_real_, cuts = I(list(NULL))))
       next
@@ -324,12 +322,12 @@
 #' Computes the Information Criterion dynamically for the systematic engine
 #' based on the best discovered grouping factors.
 #'
+#' @inheritParams find_cutpoint_number
 #' @param userdata Cleaned survival data frame.
 #' @param factor_status The cut survival factor.
 #' @param k_cuts Number of cuts evaluated.
 #' @param n Sample size.
-#' @param criterion IC to calculate (AIC, AICc, BIC).
-#' @param cov_part Formula string for covariates.
+#' @param cov_part Character vector of covariate column names.
 #'
 #' @return Single numeric IC value.
 #'
@@ -343,11 +341,22 @@
 #' @importFrom stats as.formula
 #' @noRd
 .get_model_ic_num <- function(userdata, factor_status, k_cuts, n, criterion, cov_part) {
-  num_cov <- length(cov_part[cov_part != ""])
-  formula_str <- paste("survival::Surv(time, event) ~ factor_status", cov_part)
-  fit <- tryCatch(survival::coxph(stats::as.formula(formula_str), data = userdata), error = function(e) NULL)
+  # Cleanly filter out empty strings and measure active covariate footprint
+  active_covs <- cov_part[cov_part != ""]
+  num_cov <- length(active_covs)
+
+  # ✅ FIXED: Safely collapse covariates with '+' signs to build a valid R formula
+  cov_string <- if (num_cov > 0) paste(" +", paste(active_covs, collapse = " + ")) else ""
+  formula_str <- paste("survival::Surv(time, event) ~ factor_status", cov_string)
+
+  fit <- tryCatch(
+    survival::coxph(stats::as.formula(formula_str), data = userdata),
+    error = function(e) NULL
+  )
+
   if (is.null(fit)) {
     return(Inf)
   }
+
   .calc_ic(fit, k_cuts + num_cov, n, criterion)
 }

@@ -180,7 +180,7 @@ summary.find_cutpoint_number_result <- function(
             surv_df$Group <- as.character(cohort_df$Group[cohort_df$N > 0][1])
           } else {
             surv_df <- as.data.frame(surv_summary)
-            surv_df$Group <- gsub("group=", "", rownames(surv_df))
+            surv_df$Group <- gsub("group=", "", rownames(surv_df), fixed = TRUE)
           }
 
           target_cols <- intersect(c("Group", "median", "0.95LCL", "0.95UCL"), names(surv_df))
@@ -221,7 +221,7 @@ summary.find_cutpoint_number_result <- function(
 
       if (nrow(coefs) > 0) {
         cox_df <- data.frame(
-          Group = gsub("group", "", rownames(coefs)),
+          Group = gsub("group|factor", "", rownames(coefs), fixed = TRUE),
           HR = round(conf[, "exp(coef)"], 3),
           Lower = round(conf[, "lower .95"], 3),
           Upper = round(conf[, "upper .95"], 3),
@@ -271,20 +271,22 @@ summary.find_cutpoint_number_result <- function(
     cat("\n")
   }
 
-  # --- 5. PARAMETERS ---
+  # --- 5. PARAMETERS (Deduplicated Call Structure) ---
   cli::cli_h2("5. Analysis Parameters")
   params <- object$parameters
+
   param_bullets <- c(
-    "*" = "Search Method: {tools::toTitleCase(params$method %||% \"Unknown\")}",
-    "*" = "Predictor: {params$predictor %||% \"Unknown\"}",
-    "*" = "Criterion: {params$criterion %||% \"Unknown\"}",
-    "*" = "Maximum Cuts Evaluated: {params$max_cuts %||% NA}",
-    "*" = "Minimum Group Size (nmin): {params$nmin %||% NA}"
+    paste0("* Search Method: ", tools::toTitleCase(params$method %||% "Unknown")),
+    paste0("* Predictor: ", params$predictor %||% "Unknown"),
+    paste0("* Criterion: ", params$criterion %||% "Unknown"),
+    paste0("* Maximum Cuts: ", params$max_cuts %||% NA),
+    paste0("* Minimum Group Size (nmin): ", params$nmin %||% NA)
   )
+
   if (!is.null(params$covariates)) {
     param_bullets <- c(
       param_bullets,
-      "*" = "Covariates: {paste(params$covariates, collapse = ', ')}"
+      paste0("* Covariates: ", paste(params$covariates, collapse = ", "))
     )
   }
 

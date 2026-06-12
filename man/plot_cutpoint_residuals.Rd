@@ -23,8 +23,8 @@ if (requireNamespace("survival", quietly = TRUE)) {
   library(survival)
   mock_df <- data.frame(time = 1:30, event = rep(c(0, 1), 15), factor = rnorm(30))
   res <- find_cutpoint(
-     mock_df, "factor", "time", "event",
-     num_cuts = 1, method = "systematic", quiet = TRUE
+    mock_df, "factor", "time", "event",
+    num_cuts = 1, method = "systematic", quiet = TRUE
   )
   p <- plot_cutpoint_residuals(res)
 }
