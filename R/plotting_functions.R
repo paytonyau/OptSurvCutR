@@ -506,6 +506,24 @@ plot_validation <- function(validation_result,
 
 # --- BACKGROUND INTERIOR ENGINE PLOTTING MODULES ---
 
+#' Internal helper: Render Kaplan-Meier Curves
+#'
+#' @description
+#' Generates a structured ggsurvplot layout for classified clinical risk strata,
+#' dynamically scaling color palettes to match group depth profiles.
+#'
+#' @inheritParams find_cutpoint
+#' @param df Cleaned data frame ready for survival plotting.
+#' @param title Chart main title string.
+#' @param xlab,ylab Plot axis text labels.
+#' @param ... Unused arguments passed down cleanly.
+#'
+#' @return A standard `ggsurvplot` graphics canvas array object.
+#'
+#' @importFrom survival survfit Surv
+#' @importFrom stats as.formula
+#' @importFrom grDevices colorRampPalette
+#' @noRd
 .plot_km_curve <- function(x, df, title = "Kaplan-Meier Survival Estimation",
                            xlab = "Follow-up Time", ylab = "Overall Survival Probability", ...) {
   if (!requireNamespace("survminer", quietly = TRUE)) {
@@ -539,6 +557,21 @@ plot_validation <- function(validation_result,
   return(p)
 }
 
+#' Internal helper: Render Biomarker Population Density Map
+#'
+#' @description
+#' Generates a continuous kernel density graph tracking patient distributions, overlaying
+#' staggered dashed lines indicating discovered optimal division boundaries.
+#'
+#' @inheritParams find_cutpoint
+#' @param df Cleaned internal workspace tracking matrix frame.
+#' @param title Chart main title string.
+#' @param ... Unused arguments passed down cleanly.
+#'
+#' @return A standard `ggplot2` visualization matrix layer node.
+#'
+#' @importFrom ggplot2 ggplot aes geom_density labs geom_vline annotate .data
+#' @noRd
 .plot_density_cuts <- function(x, df, title = "Predictor Cohort Distribution Map", ...) {
   p <- ggplot2::ggplot(df, ggplot2::aes(x = .data$factor)) +
     ggplot2::geom_density(fill = "#0072B2", alpha = 0.15, color = "#0072B2", linewidth = 1) +
@@ -772,6 +805,19 @@ plot_validation <- function(validation_result,
   return(combined_layout)
 }
 
+#' Internal helper: Placeholder for Genetic Trajectory Plots
+#'
+#' @description
+#' Intercepts calls for evolutionary trajectory tracking plots and informs the user
+#' regarding engine-specific plotting availability constraints.
+#'
+#' @inheritParams find_cutpoint
+#' @param ... Unused arguments passed down safely.
+#'
+#' @return `invisible(NULL)` cleanly.
+#'
+#' @importFrom cli cli_inform
+#' @noRd
 .plot_genetic_trajectory <- function(x, ...) {
   cli::cli_inform("Trajectory tracking plots (`type = 'trajectory'`) are reserved for downstream optimization tracking structures in evolutionary models.")
   return(invisible(NULL))

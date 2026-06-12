@@ -414,6 +414,27 @@ find_cutpoint_number <- function(data, predictor,
   return(output)
 }
 
+#' Internal helper: Compute IC from standard factors for number selection
+#'
+#' @description
+#' Computes the Information Criterion dynamically for the selection engine
+#' based on the evaluated grouping factors, defensively capturing model singularities.
+#'
+#' @inheritParams find_cutpoint_number
+#' @param factor_status The cut survival factor.
+#' @param k_cuts Number of cuts evaluated.
+#' @param n Sample size.
+#' @param cov_part Character vector of covariate column names.
+#'
+#' @return Single numeric IC value (or `Inf` on failure).
+#'
+#' @section srrstats compliance:
+#' .
+#' @srrstats {RE3.1} Singularity and non-convergence exceptions in the variance-covariance matrix are gracefully intercepted via tryCatch blocks.
+#' @srrstats {G1.4a} Internal use only (`@noRd`).
+#'
+#' @importFrom survival coxph Surv
+#' @importFrom stats as.formula
 #' @noRd
 .get_model_ic_num <- function(userdata, factor_status, k_cuts, n,
                               criterion, cov_part) {

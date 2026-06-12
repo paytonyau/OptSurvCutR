@@ -68,16 +68,14 @@
 #' @description
 #' Centralised validation for `find_cutpoint()` arguments.
 #'
-#' @param data Input data frame.
-#' @param predictor Continuous predictor variable name.
-#' @param outcome_time Time-to-event variable name.
-#' @param outcome_event Event indicator name.
-#' @param num_cuts Number of cut-points to test.
-#' @param method Search method.
-#' @param criterion Metric threshold selection criterion.
-#' @param covariates Optional vector of covariate strings.
+#' @inheritParams find_cutpoint
+#' @inheritParams find_cutpoint_number
 #'
 #' @return `invisible(TRUE)` on success; aborts on failure.
+#'
+#' @section srrstats compliance:
+#' .
+#' @srrstats {G2.0a} Explicit type and class checks implemented for all incoming user function arguments.
 #'
 #' @noRd
 .validate_find_cutpoint_inputs <- function(data, predictor, outcome_time,
@@ -197,13 +195,16 @@
 #' Checks post-cleaning: non-negative time, valid 0/1 event,
 #' sufficient data, non-constant predictor.
 #'
+#' @inheritParams find_cutpoint
+#' @inheritParams find_cutpoint_number
 #' @param userdata Cleaned data from `.prepare_cutpoint_data()`.
-#' @param nmin,num_cuts,quiet,outcome_event Args from `find_cutpoint()`.
+#' @param outcome_event Args from `find_cutpoint()`.
 #'
 #' @return List with `valid` (logical) and `nmin_abs` (int).
 #'
 #' @section srrstats compliance:
 #' .
+#' @srrstats {RE1.2} Verification guards ensure survival time arrays contain strictly non-negative timelines.
 #' @srrstats {G2.1} Event column must be numeric 0/1.
 #' @srrstats {G2.13} `cli_abort()` for invalid event data.
 #' @srrstats {G5.8} Edge cases (constant predictor, insufficient data).
