@@ -207,6 +207,7 @@
 #' @srrstats {RE1.2} Verification guards ensure survival time arrays contain strictly non-negative timelines.
 #' @srrstats {G2.1} Event column must be numeric 0/1.
 #' @srrstats {G2.13} `cli_abort()` for invalid event data.
+#' @srrstats {G2.4c} Numeric parameters are explicitly typed using structural coercion functions like as.integer() before engine processing.
 #' @srrstats {G5.8} Edge cases (constant predictor, insufficient data).
 #' @srrstats {G5.8d} Intercepts zero-length groups or data rows falling below relative minimum cohort size allocations.
 #' @srrstats {G1.4a} Internal use only (`@noRd`).

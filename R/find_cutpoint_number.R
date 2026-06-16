@@ -21,6 +21,7 @@
 #' and `rgenoud`; edge cases return `NA`.
 #' @srrstats {G2.3b} Uses `as.formula()`/`data[...]`; no unsafe eval.
 #' @srrstats {G2.4} `NA` removed via `stats::na.omit()`.
+#' @srrstats {G2.4b} Explicit conversion checks prevent factors or character strings from causing silent optimization failures.
 #' @srrstats {G5.2} `optimal_num_cuts` is `NA` when no valid solution found.
 #' @srrstats {G2.6} Input validation via direct checks.
 #' @srrstats {G2.8} Informative errors via `cli::cli_abort()`.

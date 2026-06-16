@@ -26,6 +26,7 @@
 #'   arguments.
 #' @srrstats {G2.3b} Uses `as.formula` and safe subsetting (NSE safe).
 #' @srrstats {G2.4} `NA` removed via `stats::na.omit()`.
+#' @srrstats {G2.4b} Explicit conversion checks prevent factors or characterstrings from causing silent optimization failures.
 #' @srrstats {G2.5} Factor ordering is handled by `cut()` which creates ordered
 #'   factors by default.
 #' @srrstats {RE4.0} Returns class `find_cutpoint` with model details.
