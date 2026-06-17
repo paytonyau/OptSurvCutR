@@ -8,11 +8,11 @@
 
 `OptSurvCutR` (**Opt**imal **Surv**ival **Cut**-points **R**) provides a rigorous, reproducible, and rOpenSci-compliant framework for discovering the optimal number and location of patient stratification thresholds in time-to-event (survival) data. Designed specifically for continuous predictors (such as gene expression measurements, microbiome abundance, or clinical biomarkers), this package moves beyond arbitrary median splits to deliver fully **data-driven, covariate-adjusted stratification**.
 
-## What's New in Version 0.9.9
+## What's New in Version 0.10.0
 We have significantly overhauled the validation and diagnostic engines to ensure your discovered thresholds are mathematically stable, rOpenSci-compliant, and ready for publication:
 * **Integer Index-Space Mapping:** Replaced continuous floating-point search spaces with a discrete, bounded integer lattice mapped directly to sorted unique data indices. This shifts the engine mathematics from an infinite decimal space to a finite spectrum of actual observations, eliminating micro-decimal overfitting and stochastic seed drift.
 * **The Four-Tier Stability Assessment:** Bootstrap validation now automatically grades thresholds into four distinct tiers (Optimal, Distinct, Caution, and Unstable) based on confidence interval width and overlap metrics.
-* **Automated Schoenfeld Diagnostics:** The package now evaluates time-varying effects natively during the optimization phase to ensure your thresholds do not violate the proportional hazards assumption.
+* **Automated Schoenfeld Diagnostics:** The package now evaluates time-varying effects natively during the optimisation phase to ensure your thresholds do not violate the proportional hazards assumption.
 * **Enhanced Parameter Controls:** Fine-tune the underlying genetic algorithm using minimum group size (`nmin`) wedges and soft boundaries to rescue unstable thresholds and control for overfitting.
 * **Continuous 2D Contour Validation Landscapes:** Added native S3 routing support to project complex, multi-dimensional bootstrap distribution horizons onto smooth contour peaks.
 
@@ -28,13 +28,13 @@ We have significantly overhauled the validation and diagnostic engines to ensure
 | **Publication-ready plots** | Renders Kaplan–Meier curves, distribution splits, forest plots, and 2D topology surfaces. |
 
 ## Installation
-You can install the development version of `OptSurvCutR` directly from GitHub. Note that the genetic algorithm optimization (`method = "genetic"`) requires the `rgenoud` package, which should be installed separately from CRAN if you plan to search for multiple cut-points.
+You can install the development version of `OptSurvCutR` directly from GitHub. Note that the genetic algorithm optimisation (`method = "genetic"`) requires the `rgenoud` package, which should be installed separately from CRAN if you plan to search for multiple cut-points.
 
 ```r
 # Core dependencies
 install.packages(c("remotes", "survival"))
 
-# Optional but highly recommended for multi-cut genetic optimization
+# Optional but highly recommended for multi-cut genetic optimisation
 install.packages("rgenoud")
 
 # Install the package from GitHub
@@ -103,7 +103,7 @@ plot_validation(val_res, focus_cuts = c(1, 2)) # 2D Contour Elevation Stability 
 
 ## Resources
 - **Vignettes & Tutorials**: Run `browseVignettes("OptSurvCutR")` within your R session to access complete walk-throughs.
-- **Troubleshooting & FAQ**: Review detailed optimization and deployment notes located directly in the `vignettes/troubleshooting.Rmd` source path.
+- **Troubleshooting & FAQ**: Review detailed optimisation and deployment notes located directly in the `vignettes/troubleshooting.Rmd` source path.
 - **Manuscript**: Yau, Payton T. O. "OptSurvCutR: Validated Cut-point Selection for Survival Analysis." bioRxiv preprint, posted October 18, 2025. https://doi.org/10.1101/2025.10.08.681246.
 
 ## Citation

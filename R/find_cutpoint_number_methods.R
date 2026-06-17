@@ -84,7 +84,7 @@ print.find_cutpoint_number_result <- function(x, ...) {
 #' @param object A \code{find_cutpoint_number_result} object for analysis overview.
 #' @param show_comparison_table Logical. Show information criteria comparison matrix?
 #' @param show_best_model_details Logical. Show descriptive layers for the optimal selection?
-#' @param show_group_counts Logical. Show categorized patient split breakdowns?
+#' @param show_group_counts Logical. Show categorised patient split breakdowns?
 #' @param show_medians Logical. Show Kaplan-Meier time threshold tracking?
 #' @param show_ph_test Logical. Display Schoenfeld residuals test?
 #' @param plot.it Logical. If \code{TRUE}, automatically prints the information criterion line chart.

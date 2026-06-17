@@ -8,7 +8,7 @@
 #'   predictor values (NA handling), and low data-density profiles to ensure
 #'   robust handling of boundary conditions.
 #' @srrstats {G5.4} Runs low-dimensional matrices to save continuous integration memory.
-#' @srrstats {G5.4a} Restricts iterations to single-generation optimization loops during test sequences.
+#' @srrstats {G5.4a} Restricts iterations to single-generation optimisation loops during test sequences.
 #' @srrstats {G5.4b} Forces single-core cluster routing as active package defaults during checks.
 #' @srrstats {G5.4c} Validates return object class types rather than extracting high-dimensional matrices.
 #' @srrstats {G5.6} Fixes seeds to confirm exact numeric search parameter recovery.

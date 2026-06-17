@@ -1,4 +1,15 @@
-# OptSurvCutR v0.9.9 (2026-06)
+# OptSurvCutR v0.10.0 (2026-06-17)
+
+## Documentation Updates
+
+* Updated package documentation and supporting materials for clarity and consistency.
+* Refreshed version references and release documentation.
+* Performed general project maintenance and housekeeping.
+
+**Note:** This release contains no code changes, feature additions, bug fixes, or API modifications.
+
+
+# OptSurvCutR v0.9.9 (2026-06-12)
 
 ## Major Engine Enhancements
 

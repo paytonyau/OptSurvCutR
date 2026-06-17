@@ -21,7 +21,7 @@
 #' and `rgenoud`; edge cases return `NA`.
 #' @srrstats {G2.3b} Uses `as.formula()`/`data[...]`; no unsafe eval.
 #' @srrstats {G2.4} `NA` removed via `stats::na.omit()`.
-#' @srrstats {G2.4b} Explicit conversion checks prevent factors or character strings from causing silent optimization failures.
+#' @srrstats {G2.4b} Explicit conversion checks prevent factors or character strings from causing silent optimisation failures.
 #' @srrstats {G5.2} `optimal_num_cuts` is `NA` when no valid solution found.
 #' @srrstats {G2.6} Input validation via direct checks.
 #' @srrstats {G2.8} Informative errors via `cli::cli_abort()`.
@@ -158,7 +158,7 @@ find_cutpoint_number <- function(data, predictor,
 
   if (is.factor(userdata[[predictor]]) || is.character(userdata[[predictor]])) {
     cli::cli_abort(c(
-      "x" = "Unordered factors or characters are not allowed as continuous optimization inputs.",
+      "x" = "Unordered factors or characters are not allowed as continuous optimisation inputs.",
       "i" = "Variable '{predictor}' must be passed as a continuous numeric vector."
     ))
   }
@@ -225,7 +225,7 @@ find_cutpoint_number <- function(data, predictor,
     return(na_result(userdata))
   }
 
-  # Build the base Regularized Grid Space lattice to gauge unique data supply
+  # Build the base Regularised Grid Space lattice to gauge unique data supply
   grid_probs_vec <- seq(0.01, 0.99, by = 0.01)
   permissible_cuts <- sort(unique(stats::quantile(userdata$factor, probs = grid_probs_vec, na.rm = TRUE)))
 
@@ -281,7 +281,7 @@ find_cutpoint_number <- function(data, predictor,
     for (k in 1:max_cuts) {
       cli::cli_inform("Running discrete genetic algorithm for {k} cut-point(s)...")
 
-      # --- SYSTEM SYNCHRONIZED MEMORY-SAFE TUNING ---
+      # --- SYSTEM SYNCHRONISED MEMORY-SAFE TUNING ---
       current_pop <- pop.size
       current_gen <- max.generations
       if (is.null(pop.size) || pop.size == 100) {
@@ -358,7 +358,7 @@ find_cutpoint_number <- function(data, predictor,
   }
 
   if (anyNA(results[[criterion]])) {
-    cli::cli_alert_warning("All tested model cut-points violated localized subgroup size constraints during runtime search iterations.")
+    cli::cli_alert_warning("All tested model cut-points violated localised subgroup size constraints during runtime search iterations.")
   }
 
   min_ic <- min(results[[criterion]], na.rm = TRUE)

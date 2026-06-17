@@ -7,7 +7,7 @@
 #'
 #' @description
 #' Called by `rgenoud::genoud`. Translates incoming discrete integer board indices
-#' back to regularized biomarker coordinates and calculates fitness (maximised).
+#' back to regularised biomarker coordinates and calculates fitness (maximised).
 #'
 #' @inheritParams find_cutpoint
 #' @inheritParams find_cutpoint_number
@@ -22,7 +22,7 @@
 #' @param cache Optional environment to cache and retrieve evaluations.
 #' @param base_df Pre-allocated data.frame template for speed.
 #' @param precompiled_formula Pre-parsed survival formula.
-#' @param grid_pool The underlying regularized numeric coordinates vector.
+#' @param grid_pool The underlying regularised numeric coordinates vector.
 #'
 #' @return Single numeric fitness value.
 #'
@@ -121,10 +121,10 @@
   return(stat_value)
 }
 
-#' Internal helper: Wrapper for the rgenoud Genetic Algorithm over Regularized Space
+#' Internal helper: Wrapper for the rgenoud Genetic Algorithm over Regularised Space
 #'
 #' @description
-#' Sets up and runs `rgenoud::genoud` to optimize discrete indices over a regularized pool.
+#' Sets up and runs `rgenoud::genoud` to optimise discrete indices over a regularised pool.
 #'
 #' @inheritParams find_cutpoint
 #' @inheritParams find_cutpoint_number
@@ -211,7 +211,7 @@
     max.generations = max.generations, wait.generations = 5, hard.generation.limit = TRUE,
     starting.values = initial_values, Domains = domain, print.level = print.level,
     data.type = 1, # DISCRETE INTEGER SEARCH MODE
-    P9 = 0, # Turn off continuous local gradient optimization
+    P9 = 0, # Turn off continuous local gradient optimisation
     boundary.enforcement = 2,
     gradient.check = FALSE, # Bypass expensive fractional checking loops
     time = time, censor = censor, target = target, confound = confound,
@@ -238,7 +238,7 @@
 #'
 #' @description
 #' Evaluates models from 1 to `max_cuts` using the `rgenoud` evolutionary engine,
-#' computing Information Criteria (AIC/BIC) to penalize complexity.
+#' computing Information Criteria (AIC/BIC) to penalise complexity.
 #'
 #' @inheritParams find_cutpoint
 #' @inheritParams find_cutpoint_number

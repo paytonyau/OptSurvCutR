@@ -175,7 +175,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
 
   cli::cli_alert_info(paste(
     "Validating {num_cuts} cut(s) from '{method}' search",
-    "using '{criterion}' over regularized coordinate lattice."
+    "using '{criterion}' over regularised coordinate lattice."
   ))
 
   # --- 3. Setup Backend (Parallel or Sequential) ---

@@ -182,7 +182,7 @@ test_that("Graphics engine stress test via aesthetic argument toggles and confid
   print(p_forest_custom)
 })
 
-# --- 5. Milestone Optimization Clearing Blocks ---
+# --- 5. Milestone Optimisation Clearing Blocks ---
 
 test_that("Force plot_optimisation_curve to render 3D/2-cut surface logic or trap missing grids", {
   fixtures <- .generate_clean_plotting_fixtures()

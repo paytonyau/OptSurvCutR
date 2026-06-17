@@ -1,6 +1,6 @@
 # ===================================================================
 # PLOTTING FUNCTIONS
-# Diagnostic, publication-ready, and optimized static plots.
+# Diagnostic, publication-ready, and optimised static plots.
 # ===================================================================
 
 #' Custom Clinical Theme for OptSurvCutR
@@ -11,7 +11,7 @@
 #' background gridlines for high-precision tracing.
 #'
 #' @param base_size Base font size, default is 14.
-#' @return A \code{ggplot2} theme object containing customized layout parameters.
+#' @return A \code{ggplot2} theme object containing customised layout parameters.
 #'
 #' @importFrom ggplot2 theme_minimal theme element_text element_line rel element_rect
 #' @export
@@ -123,7 +123,7 @@ plot.find_cutpoint <- function(
 #' Plot Optimisation Curve or Surface from Search
 #'
 #' @description
-#' Plots the metric landscape evaluated across coordinates. Maps a 1D optimization line
+#' Plots the metric landscape evaluated across coordinates. Maps a 1D optimisation line
 #' for 1-cut systematic setups, or a 2D topographic grid profile for 2-cut layouts.
 #'
 #' @param cutpoint_result A \code{find_cutpoint} object.
@@ -132,7 +132,7 @@ plot.find_cutpoint <- function(
 #'
 #' @section srrstats compliance:
 #' .
-#' @srrstats {RE6.2} Visualizes the continuous fitted values and optimization landscape of the model.
+#' @srrstats {RE6.2} Visualises the continuous fitted values and optimisation landscape of the model.
 #'
 #' @importFrom ggplot2 ggplot aes geom_line geom_vline geom_hline labs geom_tile scale_fill_viridis_c scale_color_manual element_blank
 #' @importFrom rlang .data
@@ -319,7 +319,7 @@ plot_cutpoint_residuals <- function(x, ...) {
 
 #' Plot Landmark Stratification Curves
 #'
-#' @description Computes and visualizes conditional survival probabilities for patients
+#' @description Computes and visualises conditional survival probabilities for patients
 #' who survive up to a specified landmark milestone.
 #'
 #' @param x A \code{find_cutpoint} result object.
@@ -376,7 +376,7 @@ plot_landmark_stratification <- function(x, landmark = NULL, ...) {
   return(p)
 }
 
-#' Plot Cut-point Optimization Stability Surface and Help Catalog Page
+#' Plot Cut-point Optimisation Stability Surface and Help Catalog Page
 #'
 #' @description
 #' Generates a premium, continuous 2D contour surface density topology map tracking the
@@ -568,7 +568,7 @@ plot_validation <- function(validation_result,
 #' @param title Chart main title string.
 #' @param ... Unused arguments passed down cleanly.
 #'
-#' @return A standard `ggplot2` visualization matrix layer node.
+#' @return A standard `ggplot2` visualisation matrix layer node.
 #'
 #' @importFrom ggplot2 ggplot aes geom_density labs geom_vline annotate .data
 #' @noRd
@@ -616,7 +616,7 @@ plot_validation <- function(validation_result,
     cli::cli_abort("Package {.pkg survival} is required to compute forest metrics.")
   }
   if (!requireNamespace("patchwork", quietly = TRUE)) {
-    cli::cli_abort("Package {.pkg patchwork} is required for space-optimized ribbon forest plots.")
+    cli::cli_abort("Package {.pkg patchwork} is required for space-optimised ribbon forest plots.")
   }
 
   covariates <- x$parameters$covariates
@@ -819,6 +819,6 @@ plot_validation <- function(validation_result,
 #' @importFrom cli cli_inform
 #' @noRd
 .plot_genetic_trajectory <- function(x, ...) {
-  cli::cli_inform("Trajectory tracking plots (`type = 'trajectory'`) are reserved for downstream optimization tracking structures in evolutionary models.")
+  cli::cli_inform("Trajectory tracking plots (`type = 'trajectory'`) are reserved for downstream optimisation tracking structures in evolutionary models.")
   return(invisible(NULL))
 }

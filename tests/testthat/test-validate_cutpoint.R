@@ -24,7 +24,7 @@ test_that("validate_cutpoint parameter variations across different seed splits",
 
 #' @srrstats {G5.2b}
 test_that("validate_cutpoint edge cases, failure modes, and message string checks", {
-  # Force error branches using short, localization-safe regex match expectations
+  # Force error branches using short, localisation-safe regex match expectations
   error_cases <- list(
     list(args = list(num_replicates = 5), err = "replicates"),
     list(args = list(num_replicates = 20.5), err = "integer"),
@@ -102,7 +102,7 @@ test_that("Stress test validate_cutpoint with row shuffle permutations to verify
 })
 
 # ===================================================================
-# COVR WORKAROUND: Force single-threaded state for optimization lines
+# COVR WORKAROUND: Force single-threaded state for optimisation lines
 # ===================================================================
 
 test_that("Run sequential overrides to log parallel blocks safely", {

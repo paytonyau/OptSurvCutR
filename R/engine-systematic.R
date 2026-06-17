@@ -3,10 +3,10 @@
 # Handles exhaustive grid searches for find_cutpoint and find_cutpoint_number
 # ===================================================================
 
-#' Internal helper: Systematic Grid Search over Regularized Space
+#' Internal helper: Systematic Grid Search over Regulared Space
 #'
 #' @description
-#' Implements an exhaustive grid search over a regularized percentile space
+#' Implements an exhaustive grid search over a regulared percentile space
 #' to evaluate possible thresholds for 1 or 2 cut-points, respecting the minimum
 #' group size constraints.
 #'
@@ -30,7 +30,7 @@
 .systematic_search <- function(userdata, num_cuts, criterion,
                                covariates, nmin, predictor_name,
                                quiet, candidate_cuts = NULL, ...) {
-  if (!quiet) cli::cli_alert_info("Running regularized systematic search for {num_cuts} cut-point(s)...")
+  if (!quiet) cli::cli_alert_info("Running regulared systematic search for {num_cuts} cut-point(s)...")
   userdata <- userdata[order(userdata$factor), ]
 
   cov_part <- if (!is.null(covariates)) paste(" +", paste(covariates, collapse = " + ")) else ""
@@ -66,7 +66,7 @@
   best_cut_val <- rep(NA_real_, num_cuts)
   all_stats_df <- NULL
 
-  # Establish the core regularized grid structure
+  # Establish the core regulared grid structure
   if (!is.null(candidate_cuts)) {
     search_grid <- candidate_cuts
   } else {
@@ -95,7 +95,7 @@
     best_stat <- stats_per_cut[best_idx]
     all_stats_df <- data.frame(cut1 = search_grid, stat = stats_per_cut)
   } else { # num_cuts == 2
-    if (!quiet) cli::cli_alert_info("Searching for 2 cuts over regularized coordinate space...")
+    if (!quiet) cli::cli_alert_info("Searching for 2 cuts over regulared coordinate space...")
     foreach::registerDoSEQ()
 
     if (length(search_grid) < 2) {
@@ -137,7 +137,7 @@
     all_stats_df <- results_list
   }
 
-  if (!quiet) cli::cli_alert_success("Systematic grid optimization complete.")
+  if (!quiet) cli::cli_alert_success("Systematic grid optimation complete.")
   return(list(
     optimal_cuts = best_cut_val,
     optimal_stat = best_stat,
@@ -225,7 +225,7 @@
 #' Internal helper: Systematic Model Selection and Delta IC Range Mining
 #'
 #' @description
-#' Evaluates models from 1 to `max_cuts` using the regularized systematic
+#' Evaluates models from 1 to `max_cuts` using the regulared systematic
 #' sweeper, computing Information Criteria (AIC/BIC) and profiling the permissible range.
 #'
 #' @param userdata Cleaned survival data frame.

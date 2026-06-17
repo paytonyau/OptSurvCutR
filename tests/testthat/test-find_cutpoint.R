@@ -1,6 +1,6 @@
 # ===================================================================
 # TESTS: find_cutpoint()
-# Core optimization engines, metric switches, and covariate logic
+# Core optimisation engines, metric switches, and covariate logic
 # ===================================================================
 
 if (!exists("mock_data", envir = .GlobalEnv)) {
@@ -112,7 +112,7 @@ test_that("find_cutpoint traps front-end argument anomalies before pipeline entr
   )
 })
 
-# --- 4. Empty Class and Optimization Crash Resiliency ---
+# --- 4. Empty Class and Optimisation Crash Resiliency ---
 
 test_that("S3 router for find_cutpoint gracefully degrades on zero-variance pathological inputs", {
   res_empty <- suppressMessages(suppressWarnings(
@@ -162,7 +162,7 @@ test_that("find_cutpoint handles data constraint violations and na_return branch
   }
 })
 
-# --- 5. Genetic Optimization Boundary Stress Tests ---
+# --- 5. Genetic Optimisation Boundary Stress Tests ---
 
 test_that("engine-genetic handles un-converged states and covariate adjustments cleanly", {
   # 1. TRIGGER COVARIATE ADJUSTED GENETIC SEARCH

@@ -1,9 +1,9 @@
 # ===================================================================
 # INTERNAL UTILITY: PERMUTATION TESTING
-# Calculates exact p-values to correct for optimization bias
+# Calculates exact p-values to correct for optimisation bias
 # ===================================================================
 
-#' Internal helper: Permutation Testing for Optimization Bias
+#' Internal helper: Permutation Testing for Optimisation Bias
 #'
 #' @importFrom foreach %dopar% foreach registerDoSEQ
 #' @importFrom doParallel registerDoParallel

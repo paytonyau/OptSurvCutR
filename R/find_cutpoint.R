@@ -26,7 +26,7 @@
 #'   arguments.
 #' @srrstats {G2.3b} Uses `as.formula` and safe subsetting (NSE safe).
 #' @srrstats {G2.4} `NA` removed via `stats::na.omit()`.
-#' @srrstats {G2.4b} Explicit conversion checks prevent factors or characterstrings from causing silent optimization failures.
+#' @srrstats {G2.4b} Explicit conversion checks prevent factors or characterstrings from causing silent optimisation failures.
 #' @srrstats {G2.5} Factor ordering is handled by `cut()` which creates ordered
 #'   factors by default.
 #' @srrstats {RE4.0} Returns class `find_cutpoint` with model details.
@@ -78,7 +78,7 @@
 #' Chemotherapy Reports*, 50(3).
 #'
 #' Mebane Jr, W. R., & Sekhon, J. S. (2011). Genetic
-#' Optimization Using Derivatives: The rgenoud Package for R.
+#' Optimisation Using Derivatives: The rgenoud Package for R.
 #' *Journal of Statistical Software*, 42, 1–26.
 #' \doi{10.18637/jss.v042.i11}
 #'
@@ -174,7 +174,7 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
 
   if (is.factor(userdata$factor) || is.character(userdata$factor)) {
     cli::cli_abort(c(
-      "x" = "Unordered factors or characters are not allowed as continuous optimization inputs.",
+      "x" = "Unordered factors or characters are not allowed as continuous optimisation inputs.",
       "i" = "Variable '{predictor}' must be passed as a continuous numeric vector."
     ))
   }
@@ -205,7 +205,7 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
     ))
   }
 
-  # --- UX AUTO-SCALING FOR REGULARIZED SPACE ENGINE OVERRIDES ---
+  # --- UX AUTO-SCALING FOR REGULARISED SPACE ENGINE OVERRIDES ---
   if (is.null(pop.size) || pop.size == 100) {
     pop.size <- switch(as.character(num_cuts),
       "1" = 30,
@@ -248,7 +248,7 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
       extra_args
     ))
   } else {
-    if (!quiet) cli::cli_alert_info("Starting regularized genetic search for {num_cuts} cut(s)...")
+    if (!quiet) cli::cli_alert_info("Starting regularised genetic search for {num_cuts} cut(s)...")
     confound_df <- if (!is.null(covariates)) userdata[, covariates, drop = FALSE] else NULL
 
     real_res <- do.call(.run_genetic_search, c(
