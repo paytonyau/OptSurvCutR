@@ -11,7 +11,7 @@ iterations via Rcpp compilation hooks and robust UX constraint warnings."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">OptSurvCutR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.9.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -186,7 +186,7 @@ iterations via Rcpp compilation hooks and robust UX constraint warnings.</p>
 
 
 <dt id="arg-show-group-counts">show_group_counts<a class="anchor" aria-label="anchor" href="#arg-show-group-counts"></a></dt>
-<dd><p>Logical. Show categorized patient split breakdowns?</p></dd>
+<dd><p>Logical. Show categorised patient split breakdowns?</p></dd>
 
 
 <dt id="arg-show-medians">show_medians<a class="anchor" aria-label="anchor" href="#arg-show-medians"></a></dt>
@@ -231,6 +231,74 @@ Core vector partitions are calculated in compiled C++ via `Rcpp` for optimal per
 <p>.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"survival"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/therneau/survival" class="external-link">survival</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Generate a pristine simulated clinical tracking baseline template</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">sim_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="fl">40</span>, rate <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    event <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, <span class="fl">40</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    biomarker <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">40</span>, mean <span class="op">=</span> <span class="fl">6</span>, sd <span class="op">=</span> <span class="fl">1.2</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span>  <span class="co"># Sweep information criteria fit columns up to a 2-cut matrix max</span></span></span>
+<span class="r-in"><span>  <span class="va">num_fit</span> <span class="op">&lt;-</span> <span class="fu">find_cutpoint_number</span><span class="op">(</span></span></span>
+<span class="r-in"><span>    data <span class="op">=</span> <span class="va">sim_data</span>,</span></span>
+<span class="r-in"><span>    predictor <span class="op">=</span> <span class="st">"biomarker"</span>,</span></span>
+<span class="r-in"><span>    outcome_time <span class="op">=</span> <span class="st">"time"</span>,</span></span>
+<span class="r-in"><span>    outcome_event <span class="op">=</span> <span class="st">"event"</span>,</span></span>
+<span class="r-in"><span>    max_cuts <span class="op">=</span> <span class="fl">2</span>,</span></span>
+<span class="r-in"><span>    method <span class="op">=</span> <span class="st">"systematic"</span>,</span></span>
+<span class="r-in"><span>    criterion <span class="op">=</span> <span class="st">"BIC"</span>,</span></span>
+<span class="r-in"><span>    nmin <span class="op">=</span> <span class="fl">5</span>,</span></span>
+<span class="r-in"><span>    quiet <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">num_fit</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Finding optimal cut number: method = <span style="font-weight: bold;">systematic</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Profiling IC surface for 1 cut-point(s)...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> No valid cut-points found for 1 cut(s).</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Profiling IC surface for 2 cut-point(s)...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> No valid cut-points found for 2 cut(s).</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> All tested model cut-points violated localized subgroup size constraints during runtime search iterations.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Optimal Cut-point Number Analysis (Systematic)</span> <span style="color: #00BBBB;">──────────────────────────────</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Best Model: <span style="font-weight: bold;">0 Cut-points</span> (Criterion: BIC)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ── <span style="font-weight: bold;">1. Model Comparison</span> ──</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  Marker num_cuts   BIC Delta_BIC BIC_Weight    Evidence</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       &gt;        0 120.5         0       100% Substantial</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                1    NA        NA        NA%        &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                2    NA        NA        NA%        &lt;NA&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ── <span style="font-weight: bold;">3. Cox Proportional-Hazards</span> ──</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Group    HR Lower Upper P_Value Signif</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  factor 1.621 1.034 2.543   0.035      *</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Overall Model: Concordance = <span style="color: #0000BB;">0.679</span> | Log-rank p = <span style="color: #0000BB;">0.035</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ── <span style="font-weight: bold;">4. Time-Dependent Diagnostics (Schoenfeld)</span> ──</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Passed: The proportional hazards assumption holds across the follow-up period (Global p = <span style="color: #0000BB;">0.17</span>).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ── <span style="font-weight: bold;">5. Analysis Parameters</span> ──</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> * Search Method: Systematic</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> * Predictor: biomarker</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> * Criterion: BIC</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> * Maximum Cuts: 2</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> * Minimum Group Size (nmin): 5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
@@ -240,7 +308,7 @@ Core vector partitions are calculated in compiled C++ via `Rcpp` for optimal per
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

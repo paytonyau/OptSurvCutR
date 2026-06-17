@@ -92,7 +92,7 @@ find_cutpoint_number(
 
 \item{show_best_model_details}{Logical. Show descriptive layers for the optimal selection?}
 
-\item{show_group_counts}{Logical. Show categorized patient split breakdowns?}
+\item{show_group_counts}{Logical. Show categorised patient split breakdowns?}
 
 \item{show_medians}{Logical. Show Kaplan-Meier time threshold tracking?}
 

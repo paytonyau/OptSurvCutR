@@ -28,10 +28,11 @@ interactive web reporting.
   [`summary(`*`<find_cutpoint_number_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md)
   [`plot(`*`<find_cutpoint_number_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md)
   : Find Optimal Number of Cut-points for Survival Data
-- [`plot(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/plot.validate_cutpoint_result.md)
-  : Plot Bootstrap Threshold Distributions
 - [`plot_validation()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
-  : Plot Cut-point Optimization Stability Surface
+  [`print(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
+  [`plot(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
+  [`summary(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
+  : Plot Cut-point Optimisation Stability Surface and Help Catalog Page
 - [`plot_optimisation_curve()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_optimisation_curve.md)
   : Plot Optimisation Curve or Surface from Search
 - [`plot_cutpoint_residuals()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_cutpoint_residuals.md)
@@ -54,7 +55,8 @@ Methods for summarising analysis objects and extracting raw data.
   [`summary(`*`<find_cutpoint_number_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md)
   [`plot(`*`<find_cutpoint_number_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md)
   : Find Optimal Number of Cut-points for Survival Data
-- [`summary(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/summary.validate_cutpoint_result.md)
-  : Summary of Bootstrap Stability Validation
-- [`print(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/print.validate_cutpoint_result.md)
-  : Print Method for Bootstrap Validation Results
+- [`plot_validation()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
+  [`print(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
+  [`plot(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
+  [`summary(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
+  : Plot Cut-point Optimisation Stability Surface and Help Catalog Page

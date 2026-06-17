@@ -54,15 +54,15 @@ summary(
 
 - predictor:
 
-  The continuous predictor variable.
+  The continuous predictor variable name (character).
 
 - outcome_time:
 
-  The time-to-event variable.
+  The time-to-event variable name (character).
 
 - outcome_event:
 
-  The event status variable (0 or 1).
+  The event status variable name (character, 0 or 1).
 
 - num_cuts:
 
@@ -70,16 +70,16 @@ summary(
 
 - method:
 
-  Algorithm: \`"systematic"\` or \`"genetic"\`.
+  Algorithm search type: \`"systematic"\` or \`"genetic"\`.
 
 - criterion:
 
-  The statistic to optimise: \`"logrank"\` (max), \`"hazard_ratio"\`
-  (max), or \`"p_value"\` (min).
+  The statistic to optimise: \`"logrank"\`, \`"hazard_ratio"\`, or
+  \`"p_value"\`.
 
 - covariates:
 
-  Character vector of covariate names.
+  Character vector of covariate names (optional).
 
 - nmin:
 
@@ -91,38 +91,35 @@ summary(
 
 - max.generations:
 
-  Integer; max generations for genetic algorithm. If \`NULL\`,
-  dynamically scales.
+  Max generations for genetic algorithm. If \`NULL\`, dynamically
+  scales.
 
 - pop.size:
 
-  Integer; population size for genetic algorithm. If \`NULL\`,
-  dynamically scales.
+  Population size for genetic algorithm. If \`NULL\`, dynamically
+  scales.
 
 - n_perm:
 
-  Integer. Number of permutations to run for an adjusted p-value.
-  Default is 0. Highly recommended for \`num_cuts \>= 2\` to account for
-  optimization bias.
+  Number of permutations to run for an adjusted p-value. Default is 0.
 
 - n_cores:
 
-  Integer. Number of CPU cores for parallel permutations. Default is 1.
+  Number of CPU cores for parallel permutations. Default is 1.
 
 - use_cpp:
 
-  Logical. Automatically checks and calls compiled C++ routines via
-  \`Rcpp\`. Can be overridden if required. Default is \`TRUE\`.
+  Logical. Checks and calls compiled C++ routines via \`Rcpp\`. Default
+  is \`TRUE\`.
 
 - grid_by:
 
-  Numeric. Percentile step increment for systematic grid downsampling
-  (e.g., 0.01 tests every 1st percentile). If \`NULL\`, tests all unique
-  values. Default is 0.01.
+  Percentile step increment for systematic grid downsampling. Default is
+  0.01.
 
 - quiet:
 
-  Logical. If \`TRUE\`, suppresses final print.
+  Logical. If \`TRUE\`, suppresses operational console alerts.
 
 - candidate_cuts:
 
@@ -197,7 +194,44 @@ Mantel, N. (1966). Evaluation of survival data and two new rank order
 statistics arising in its consideration. \*Cancer Chemotherapy
 Reports\*, 50(3).
 
-Mebane Jr, W. R., & Sekhon, J. S. (2011). Genetic Optimization Using
+Mebane Jr, W. R., & Sekhon, J. S. (2011). Genetic Optimisation Using
 Derivatives: The rgenoud Package for R. \*Journal of Statistical
 Software\*, 42, 1–26.
 [doi:10.18637/jss.v042.i11](https://doi.org/10.18637/jss.v042.i11)
+
+## Examples
+
+``` r
+if (requireNamespace("survival", quietly = TRUE)) {
+  library(survival)
+
+  # Create a lightweight, reproducible simulation baseline dataset
+  set.seed(42)
+  sim_data <- data.frame(
+    time = rexp(30, rate = 0.1),
+    event = sample(c(0, 1), 30, replace = TRUE),
+    biomarker = rnorm(30, mean = 5, sd = 1.5)
+  )
+
+  # Execute an exhaustive systematic threshold discovery sweep
+  fit <- find_cutpoint(
+    data = sim_data,
+    predictor = "biomarker",
+    outcome_time = "time",
+    outcome_event = "event",
+    num_cuts = 1,
+    method = "systematic",
+    criterion = "logrank",
+    nmin = 5,
+    quiet = TRUE
+  )
+  print(fit)
+}
+#> 
+#> ── Optimal Cut-point Analysis for Survival Data (Systematic) ───────────────────
+#> • Predictor: biomarker
+#> • Criterion: logrank
+#> • Optimal Log-Rank Statistic: 12.4395
+#> ✔ Recommended Cut-point(s): 4.827
+#> Hint: Use `summary()` for clinical details and Cox regression.
+```

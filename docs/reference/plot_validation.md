@@ -1,4 +1,4 @@
-# Plot Cut-point Optimization Stability Surface
+# Plot Cut-point Optimisation Stability Surface and Help Catalog Page
 
 Generates a premium, continuous 2D contour surface density topology map
 tracking the statistical stability of paired discovered cut-points
@@ -12,6 +12,22 @@ plot_validation(
   validation_result,
   main = "Resampling Convergence & Stability Landscape",
   focus_cuts = c(1, 2),
+  ...
+)
+
+# S3 method for class 'validate_cutpoint_result'
+print(x, ...)
+
+# S3 method for class 'validate_cutpoint_result'
+plot(x, ...)
+
+# S3 method for class 'validate_cutpoint_result'
+summary(
+  object,
+  show_descriptives = TRUE,
+  show_ci = TRUE,
+  show_params = TRUE,
+  plot.it = FALSE,
   ...
 )
 ```
@@ -35,12 +51,49 @@ plot_validation(
 
 - ...:
 
-  Unused optional dots.
+  Additional arguments passed down to downstream rendering pipelines.
+
+- x:
+
+  A validation result object for generic printing or plotting methods
+  dispatch.
+
+- object:
+
+  A validation result object passed to down-stream summary tracking.
+
+- show_descriptives:
+
+  Logical. Show complete bootstrap distribution descriptives? Defaults
+  to `TRUE`.
+
+- show_ci:
+
+  Logical. Print 95% Empirical Confidence Interval boundaries? Defaults
+  to `TRUE`.
+
+- show_params:
+
+  Logical. Display original metadata loop execution parameters? Defaults
+  to `TRUE`.
+
+- plot.it:
+
+  Logical. If `TRUE`, automatically outputs the visual sampling line
+  charts. Defaults to `FALSE`.
 
 ## Value
 
 A publication-ready `ggplot` canvas object displaying stability density
 bounds.
+
+## srrstats compliance
+
+.
+
+.
+
+.
 
 ## Examples
 
@@ -48,7 +101,7 @@ bounds.
 mock_val <- list(
   bootstrap_distribution = data.frame(Cut_point_1 = rnorm(30, 10, 1)),
   original_cuts = 10.2,
-  parameters = list(predictor = "Biomarker")
+  parameters = list(predictor = "Biomarker", num_replicates = 30, successful_reps = 30)
 )
 p <- plot_validation(mock_val)
 ```

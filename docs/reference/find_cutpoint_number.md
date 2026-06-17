@@ -139,7 +139,7 @@ plot(x, y, ...)
 
 - show_group_counts:
 
-  Logical. Show categorized patient split breakdowns?
+  Logical. Show categorised patient split breakdowns?
 
 - show_medians:
 
@@ -181,3 +181,72 @@ calculated in compiled C++ via \`Rcpp\` for optimal performance.
 .
 
 .
+
+## Examples
+
+``` r
+if (requireNamespace("survival", quietly = TRUE)) {
+  library(survival)
+
+  # Generate a pristine simulated clinical tracking baseline template
+  set.seed(42)
+  sim_data <- data.frame(
+    time = rexp(40, rate = 0.1),
+    event = sample(c(0, 1), 40, replace = TRUE),
+    biomarker = rnorm(40, mean = 6, sd = 1.2)
+  )
+
+  # Sweep information criteria fit columns up to a 2-cut matrix max
+  num_fit <- find_cutpoint_number(
+    data = sim_data,
+    predictor = "biomarker",
+    outcome_time = "time",
+    outcome_event = "event",
+    max_cuts = 2,
+    method = "systematic",
+    criterion = "BIC",
+    nmin = 5,
+    quiet = TRUE
+  )
+  summary(num_fit)
+}
+#> ℹ Finding optimal cut number: method = systematic
+#> ℹ Profiling IC surface for 1 cut-point(s)...
+#> No valid cut-points found for 1 cut(s).
+#> ℹ Profiling IC surface for 2 cut-point(s)...
+#> No valid cut-points found for 2 cut(s).
+#> ! All tested model cut-points violated localized subgroup size constraints during runtime search iterations.
+#> 
+#> ── Optimal Cut-point Number Analysis (Systematic) ──────────────────────────────
+#> ✔ Best Model: 0 Cut-points (Criterion: BIC)
+#> 
+#> 
+#> ── 1. Model Comparison ──
+#> 
+#>  Marker num_cuts   BIC Delta_BIC BIC_Weight    Evidence
+#>       >        0 120.5         0       100% Substantial
+#>                1    NA        NA        NA%        <NA>
+#>                2    NA        NA        NA%        <NA>
+#> 
+#> ── 3. Cox Proportional-Hazards ──
+#> 
+#>   Group    HR Lower Upper P_Value Signif
+#>  factor 1.621 1.034 2.543   0.035      *
+#> 
+#> ℹ Overall Model: Concordance = 0.679 | Log-rank p = 0.035
+#> 
+#> 
+#> ── 4. Time-Dependent Diagnostics (Schoenfeld) ──
+#> 
+#> ✔ Passed: The proportional hazards assumption holds across the follow-up period (Global p = 0.17).
+#> 
+#> 
+#> ── 5. Analysis Parameters ──
+#> 
+#> * Search Method: Systematic
+#> * Predictor: biomarker
+#> * Criterion: BIC
+#> * Maximum Cuts: 2
+#> * Minimum Group Size (nmin): 5
+#> 
+```

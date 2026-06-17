@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">OptSurvCutR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.9.9</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.10.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,7 +43,17 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.9.9" id="optsurvcutr-v099-2026-06">OptSurvCutR v0.9.9 (2026-06)<a class="anchor" aria-label="anchor" href="#optsurvcutr-v099-2026-06"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.10.0" id="optsurvcutr-v0100-2026-06-17">OptSurvCutR v0.10.0 (2026-06-17)<a class="anchor" aria-label="anchor" href="#optsurvcutr-v0100-2026-06-17"></a></h2>
+<div class="section level3">
+<h3 id="documentation-updates-0-10-0">Documentation Updates<a class="anchor" aria-label="anchor" href="#documentation-updates-0-10-0"></a></h3>
+<ul><li>Updated package documentation and supporting materials for clarity and consistency.</li>
+<li>Refreshed version references and release documentation.</li>
+<li>Performed general project maintenance and housekeeping.</li>
+</ul><p><strong>Note:</strong> This release contains no code changes, feature additions, bug fixes, or API modifications.</p>
+</div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.9.9" id="optsurvcutr-v099-2026-06-12">OptSurvCutR v0.9.9 (2026-06-12)<a class="anchor" aria-label="anchor" href="#optsurvcutr-v099-2026-06-12"></a></h2>
 <div class="section level3">
 <h3 id="major-engine-enhancements-0-9-9">Major Engine Enhancements<a class="anchor" aria-label="anchor" href="#major-engine-enhancements-0-9-9"></a></h3>
 <ul><li>
@@ -61,7 +71,7 @@
 <th>Execution Method</th>
 <th>Default Population Size (<code>pop.size</code>)</th>
 <th>Default Search Lifespan (<code>max.generations</code>)</th>
-<th>Optimization Mechanics</th>
+<th>Optimisation Mechanics</th>
 </tr></thead><tbody><tr><td><strong><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">K = 1</annotation></semantics></math> Cut</strong></td>
 <td><code>systematic</code></td>
 <td><em>N/A (Exhaustive Grid)</em></td>
@@ -101,12 +111,12 @@
 <td><code>genetic</code></td>
 <td>250</td>
 <td>80</td>
-<td>Complex Deep Lattice Cluster Optimization</td>
+<td>Complex Deep Lattice Cluster Optimisation</td>
 </tr><tr><td><strong>Low-Density Data (Discrete)</strong></td>
 <td><code>systematic</code></td>
 <td><em>N/A (Auto-collapsed)</em></td>
 <td><em>N/A (Auto-collapsed)</em></td>
-<td>Rigid Quantile Step Filtering / Cell Floor Defense</td>
+<td>Rigid Quantile Step Filtering / Cell Floor Defence</td>
 </tr><tr><td><strong>Validation / Bootstrap Loop</strong></td>
 <td><em>Context Snapped</em></td>
 <td>10 (Streamlined default)</td>
@@ -116,7 +126,7 @@
 </div>
 </div>
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.9.8" id="optsurvcutr-098-362026">OptSurvCutR 0.9.8 (3/6/2026)<a class="anchor" aria-label="anchor" href="#optsurvcutr-098-362026"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.9.8" id="optsurvcutr-098-2026-06-03">OptSurvCutR 0.9.8 (2026-06-03)<a class="anchor" aria-label="anchor" href="#optsurvcutr-098-2026-06-03"></a></h2>
 <div class="section level3">
 <h3 id="new-core-features--architecture-0-9-8">New Core Features &amp; Architecture<a class="anchor" aria-label="anchor" href="#new-core-features--architecture-0-9-8"></a></h3>
 <ul><li>
@@ -167,18 +177,18 @@
 <ul><li>
 <strong>C-Level Interval Math</strong>: Replaced <code><a href="https://rdrr.io/r/base/cut.html" class="external-link">cut()</a></code> with <code>findInterval(..., left.open = TRUE)</code> within the fallback mathematical engines. This eliminates expensive string manipulations, making systematic grid searches faster while perfectly preserving the mathematical boundaries of the groups.</li>
 <li>
-<strong>Genetic Algorithm Memoization</strong>: Implemented a hash-based evaluation cache (<code>eval_cache</code>) inside the genetic algorithm wrapper. The algorithm now remembers previously evaluated cut-points and bypasses the <code><a href="https://rdrr.io/pkg/survival/man/coxph.html" class="external-link">survival::coxph</a></code> model entirely for redundant guesses, drastically cutting computation time on large datasets with many generations.</li>
+<strong>Genetic Algorithm Memoisation</strong>: Implemented a hash-based evaluation cache (<code>eval_cache</code>) inside the genetic algorithm wrapper. The algorithm now remembers previously evaluated cut-points and bypasses the <code><a href="https://rdrr.io/pkg/survival/man/coxph.html" class="external-link">survival::coxph</a></code> model entirely for redundant guesses, drastically cutting computation time on large datasets with many generations.</li>
 <li>
 <strong>Pre-Allocation for Genetic Search</strong>: Shifted text manipulation and formula generation outside the genetic algorithm loop. The algorithm now uses a pre-allocated <code>data.frame</code> template, eliminating thousands of redundant memory allocations.</li>
 <li>
-<strong>OS-Optimized Bootstrapping</strong>: Upgraded the parallel processing backend in <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code>. On Unix-based systems (Mac/Linux), the package now dynamically switches to <strong>FORK clusters</strong> (shared memory) instead of PSOCK. This drops data-transfer overhead to near-zero and drastically speeds up bootstrap validation.</li>
+<strong>OS-Optimised Bootstrapping</strong>: Upgraded the parallel processing backend in <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code>. On Unix-based systems (Mac/Linux), the package now dynamically switches to <strong>FORK clusters</strong> (shared memory) instead of PSOCK. This drops data-transfer overhead to near-zero and drastically speeds up bootstrap validation.</li>
 <li>
 <strong>Environment Memory-Isolation via Explicit Binding</strong>: Overhauled the internal execution layers to pass explicitly extracted atomic vector streams instead of raw, nested evaluations. This isolates the parent R session environments from leaking into parallel background threads, cutting down cumulative memory inflation during high-core execution.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="advanced-visualisation--reporting-new-features-0-9-8">Advanced Visualisation &amp; Reporting (New Features)<a class="anchor" aria-label="anchor" href="#advanced-visualisation--reporting-new-features-0-9-8"></a></h3>
 <ul><li>
-<strong>Unified S3 Plotting Router</strong>: Overhauled the <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> method (<code><a href="../reference/plot.find_cutpoint.html">plot.find_cutpoint()</a></code>). It now supports full <code>...</code> argument passthrough to <code>survminer</code> functions for deep customization, and includes a <code>return_data = TRUE</code> “escape hatch” to extract the raw, stratified plotting data.</li>
+<strong>Unified S3 Plotting Router</strong>: Overhauled the <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> method (<code><a href="../reference/plot.find_cutpoint.html">plot.find_cutpoint()</a></code>). It now supports full <code>...</code> argument passthrough to <code>survminer</code> functions for deep customisation, and includes a <code>return_data = TRUE</code> “escape hatch” to extract the raw, stratified plotting data.</li>
 <li>
 <strong>Schoenfeld Diagnostic Plots &amp; 2-Tier Alert</strong>: Added <code>type = "diagnostic"</code> to automatically evaluate the proportional hazards assumption via <code><a href="https://rdrr.io/pkg/survival/man/cox.zph.html" class="external-link">survival::cox.zph()</a></code> and plot the residuals. The <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> function now includes a 2-Tier diagnostic alert to warn users if predictive power shifts significantly over time, gracefully handling singular matrix edge cases.</li>
 <li>
@@ -186,7 +196,7 @@
 <li>
 <strong>Interactive Web Widgets</strong>: Introduced <code>optsurv_interactive()</code>, a wrapper function that converts any static OptSurvCutR plot into an interactive HTML widget via <code>plotly</code> (ideal for Vignettes and RMarkdown).</li>
 <li>
-<strong>Clinical Aesthetics</strong>: Implemented <code><a href="../reference/theme_optsurv.html">theme_optsurv()</a></code> and defaulted to colorblind-safe palettes (e.g., “nejm”) to enforce a unified, publication-ready aesthetic across all outputs.</li>
+<strong>Clinical Aesthetics</strong>: Implemented <code><a href="../reference/theme_optsurv.html">theme_optsurv()</a></code> and defaulted to colourblind-safe palettes (e.g., “nejm”) to enforce a unified, publication-ready aesthetic across all outputs.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes--edge-cases-find_cutpoint-0-9-8">Bug Fixes &amp; Edge Cases (<code>find_cutpoint</code>)<a class="anchor" aria-label="anchor" href="#bug-fixes--edge-cases-find_cutpoint-0-9-8"></a></h3>
@@ -230,7 +240,7 @@
 <h2 class="pkg-version" data-toc-text="0.2.1" id="optsurvcutr-021-2026-04-20">OptSurvCutR 0.2.1 (2026-04-20)<a class="anchor" aria-label="anchor" href="#optsurvcutr-021-2026-04-20"></a></h2>
 <div class="section level3">
 <h3 id="cran-compliance--quality-of-life-improvements-0-2-1">CRAN Compliance &amp; Quality of Life Improvements<a class="anchor" aria-label="anchor" href="#cran-compliance--quality-of-life-improvements-0-2-1"></a></h3>
-<p>This patch release addresses CRAN reviewer feedback and polishes the package’s console behavior and visual branding.</p>
+<p>This patch release addresses CRAN reviewer feedback and polishes the package’s console behaviour and visual branding.</p>
 <ul><li>
 <strong>Enhanced Console Control:</strong> Replaced all informational <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat()</a></code> statements with <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code> in the core functions (<code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code>, <code><a href="../reference/find_cutpoint_number.html">find_cutpoint_number()</a></code>, and <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code>). Users can now easily silence progress text by wrapping functions in <code><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages()</a></code>.</li>
 <li>
@@ -246,7 +256,7 @@
 <div class="section level3">
 <h3 id="documentation--standards-0-2-0">DOCUMENTATION &amp; STANDARDS<a class="anchor" aria-label="anchor" href="#documentation--standards-0-2-0"></a></h3>
 <ul><li>Initial CRAN submission.</li>
-<li>Updated the package strucure (minor) to meet the submission requirement.</li>
+<li>Updated the package structure (minor) to meet the submission requirement.</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -297,17 +307,7 @@
 </div>
 </div>
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.1.9.1" id="optsurvcutr-0191-2025-11-20">OptSurvCutR 0.1.9.1 (2025-11-20)<a class="anchor" aria-label="anchor" href="#optsurvcutr-0191-2025-11-20"></a></h2>
-<div class="section level3">
-<h3 id="post-ropensci-initial-submission-0-1-9-1">POST-ROPENSCI INITIAL SUBMISSION<a class="anchor" aria-label="anchor" href="#post-ropensci-initial-submission-0-1-9-1"></a></h3>
-<ul><li>Renamed <code>plot_diagnostics()</code> → <code>plot_schoenfeld()</code> to avoid name clash with another package.</li>
-<li>Stabilised and accepted all snapshot tests for pathological <code>find_cutpoint_number_result</code> S3 methods (now use real criterion <code>"BIC"</code>).</li>
-<li>Cleaned DESCRIPTION: removed unused Suggests (<code>coxphf</code>, <code>patchwork</code>, <code>pROC</code>, <code>tibble</code>, <code>srr</code>) and Remotes (<code>ropensci-review-tools/srr</code>).</li>
-<li>Test suite now passes with zero failures/warnings on R CMD check.</li>
-</ul><hr></div>
-</div>
-    <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.1.9" id="optsurvcutr-019">OptSurvCutR 0.1.9<a class="anchor" aria-label="anchor" href="#optsurvcutr-019"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.1.9" id="optsurvcutr-019-2025-11-20">OptSurvCutR 0.1.9 (2025-11-20)<a class="anchor" aria-label="anchor" href="#optsurvcutr-019-2025-11-20"></a></h2>
 <div class="section level3">
 <h3 id="refactoring--maintenance-0-1-9">REFACTORING &amp; MAINTENANCE<a class="anchor" aria-label="anchor" href="#refactoring--maintenance-0-1-9"></a></h3>
 <ul><li>
@@ -320,20 +320,20 @@
 <div class="section level3">
 <h3 id="bug-fixes-0-1-9">BUG FIXES<a class="anchor" aria-label="anchor" href="#bug-fixes-0-1-9"></a></h3>
 <ul><li>
-<strong>Fixed Parallel Reproducibility:</strong> A bug in <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> that prevented true reproducibility for parallel runs (<code>n_cores &gt; 1</code>) was fixed. The function now checks for and registers the <a href="https://github.com/emilioluissaenzguillen/doRNG" class="external-link">doRNG</a> package when a <code>seed</code> is provided, ensuring results are identical regardless of the number of cores used. The incorrect <code>set.seed(i)</code> call inside the <code>foreach</code> loop was removed.</li>
+<strong>Fixed Parallel Reproducibility:</strong> A bug in <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> that prevented true reproducibility for parallel runs (<code>n_cores &gt; 1</code>) was fixed. The function now checks for and registers the <a href="https://renozao.github.io/doRNG/" class="external-link">doRNG</a> package when a <code>seed</code> is provided, ensuring results are identical regardless of the number of cores used. The incorrect <code>set.seed(i)</code> call inside the <code>foreach</code> loop was removed.</li>
 <li>
 <strong>Improved S3 Method Robustness:</strong> The <code><a href="../reference/find_cutpoint_number.html">summary.find_cutpoint_number_result()</a></code> S3 method was updated to robustly handle <code>NULL</code> values in the <code>object$parameters</code> list (e.g., <code>method = NULL</code>). This prevents potential errors if a result object is created manually or improperly and aligns its behaviour with the <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> method.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="documentation-0-1-9">DOCUMENTATION<a class="anchor" aria-label="anchor" href="#documentation-0-1-9"></a></h3>
 <ul><li>
-<strong>Clarified Log-Rank Test:</strong> The documentation for <code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code> was updated to clarify that when <code>covariates</code> are provided, the <code>"logrank"</code> criterion is automatically generalized to the more appropriate <strong>Cox score test</strong>.</li>
+<strong>Clarified Log-Rank Test:</strong> The documentation for <code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code> was updated to clarify that when <code>covariates</code> are provided, the <code>"logrank"</code> criterion is automatically generalised to the more appropriate <strong>Cox score test</strong>.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="improvements-0-1-9">IMPROVEMENTS<a class="anchor" aria-label="anchor" href="#improvements-0-1-9"></a></h3>
 <ul><li>
 <strong>Test Coverage:</strong> Increased test coverage to <strong>88.5%</strong> with new unit tests for parallel reproducibility, S3 method edge cases, and internal validation helpers.</li>
-<li>Planned: A ROpenSci submission is planned for review.</li>
+<li>Planned: An rOpenSci submission is planned for review.</li>
 <li>Planned: A JOSS submission is planned post-rOpenSci review.</li>
 </ul><hr></div>
 </div>
@@ -419,7 +419,7 @@
 </ul></div>
 <div class="section level3">
 <h3 id="improvements-0-1-7-1">IMPROVEMENTS<a class="anchor" aria-label="anchor" href="#improvements-0-1-7-1"></a></h3>
-<ul><li>Planned: A ROpenSci submission is planned for review.</li>
+<ul><li>Planned: An rOpenSci submission is planned for review.</li>
 <li>Planned: A JOSS submission is planned post-rOpenSci review.</li>
 </ul><hr></div>
 </div>
@@ -427,31 +427,31 @@
 <h2 class="pkg-version" data-toc-text="0.1.6" id="optsurvcutr-016">OptSurvCutR 0.1.6<a class="anchor" aria-label="anchor" href="#optsurvcutr-016"></a></h2>
 <div class="section level3">
 <h3 id="new-features-0-1-6">NEW FEATURES<a class="anchor" aria-label="anchor" href="#new-features-0-1-6"></a></h3>
-<ul><li>Added a vignette demonstrating the use of <code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code> and <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> with TCGA virome data (for example, Alphapapillomavirus as a predictor), guiding users through cut-point optimisation and stability assessment for survival analysis [<a href="https://github.com/paytonyau/OptSurvCutR/commit/aa41ca3cb3ff7fdff4cbf6cf8d5de5e4494d3500" class="external-link uri">https://github.com/paytonyau/OptSurvCutR/commit/aa41ca3cb3ff7fdff4cbf6cf8d5de5e4494d3500</a>].</li>
-<li>Introduced comprehensive unit tests using <code>testthat</code>, covering core functions (<code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code>, <code><a href="../reference/find_cutpoint_number.html">find_cutpoint_number()</a></code>, <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code>) and edge cases like missing data or small sample sizes, with code coverage reporting via <code>covr</code> to ensure reliability (&gt;80% coverage) [<a href="https://github.com/paytonyau/OptSurvCutR/commit/6579072b087b880b448e101d8eef37f8c4fa5550" class="external-link uri">https://github.com/paytonyau/OptSurvCutR/commit/6579072b087b880b448e101d8eef37f8c4fa5550</a>].</li>
+<ul><li>Added a vignette demonstrating the use of <code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code> and <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> with TCGA virome data (for example, Alphapapillomavirus as a predictor), guiding users through cut-point optimisation and stability assessment for survival analysis.</li>
+<li>Introduced comprehensive unit tests using <code>testthat</code>, covering core functions (<code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code>, <code><a href="../reference/find_cutpoint_number.html">find_cutpoint_number()</a></code>, <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code>) and edge cases like missing data or small sample sizes, with code coverage reporting via <code>covr</code> to ensure reliability (&gt;80% coverage).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="improvements-0-1-6">IMPROVEMENTS<a class="anchor" aria-label="anchor" href="#improvements-0-1-6"></a></h3>
-<ul><li>Optimised the genetic algorithm in <code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code> by implementing adaptive <code>pop.size</code> (for example, 50 for <code>num_cuts = 1</code>) and <code>max.generations</code> (for example, 75), reducing runtime by 20–50% for survival datasets while maintaining accuracy for optimal cut-point selection [<a href="https://github.com/paytonyau/OptSurvCutR/commit/e0cec20c2a72e48b39e1833742e8d7d829621f39" class="external-link uri">https://github.com/paytonyau/OptSurvCutR/commit/e0cec20c2a72e48b39e1833742e8d7d829621f39</a>].</li>
-<li>Enhanced error messages in <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> to provide specific feedback on bootstrap validation failures, such as insufficient sample sizes or non-converging <code>coxph</code> models, improving user debugging experience [<a href="https://github.com/paytonyau/OptSurvCutR/commit/92ef362cec36ee9ae976f12a61b65db51cc79d94" class="external-link uri">https://github.com/paytonyau/OptSurvCutR/commit/92ef362cec36ee9ae976f12a61b65db51cc79d94</a>].</li>
-<li>Added a <code>pkgdown</code> GitHub Action to automatically build a package website, improving documentation accessibility, and updated README with badges for build status and code coverage to signal package reliability [<a href="https://github.com/paytonyau/OptSurvCutR/commit/38712b8aa3cb919556bdf0e9cba6ca27fda10a60" class="external-link uri">https://github.com/paytonyau/OptSurvCutR/commit/38712b8aa3cb919556bdf0e9cba6ca27fda10a60</a>].</li>
-<li>Updated <code>DESCRIPTION</code> with corrected URLs, dependency versions, and regenerated Rd files for consistent documentation across all functions [<a href="https://github.com/paytonyau/OptSurvCutR/commit/d85d4a14a1a10fb7f68537ea64ef4007c3be465a" class="external-link uri">https://github.com/paytonyau/OptSurvCutR/commit/d85d4a14a1a10fb7f68537ea64ef4007c3be465a</a>].</li>
+<ul><li>Optimised the genetic algorithm in <code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code> by implementing adaptive <code>pop.size</code> (for example, 50 for <code>num_cuts = 1</code>) and <code>max.generations</code> (for example, 75), reducing runtime by 20–50% for survival datasets while maintaining accuracy for optimal cut-point selection.</li>
+<li>Enhanced error messages in <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> to provide specific feedback on bootstrap validation failures, such as insufficient sample sizes or non-converging <code>coxph</code> models, improving user debugging experience.</li>
+<li>Added a <code>pkgdown</code> GitHub Action to automatically build a package website, improving documentation accessibility, and updated README with badges for build status and code coverage to signal package reliability.</li>
+<li>Updated <code>DESCRIPTION</code> with corrected URLs, dependency versions, and regenerated Rd files for consistent documentation across all functions.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-1-6">BUG FIXES<a class="anchor" aria-label="anchor" href="#bug-fixes-0-1-6"></a></h3>
-<ul><li>Fixed NA handling in <code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code> to robustly process survival datasets with missing predictor values, preventing errors in <code>coxph</code> or <code>survdiff</code> model fitting for real-world data like TCGA virome datasets [<a href="https://github.com/paytonyau/OptSurvCutR/commit/059a288363c9b7b30272301b709378cb58d76d2b" class="external-link uri">https://github.com/paytonyau/OptSurvCutR/commit/059a288363c9b7b30272301b709378cb58d76d2b</a>].</li>
+<ul><li>Fixed NA handling in <code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code> to robustly process survival datasets with missing predictor values, preventing errors in <code>coxph</code> or <code>survdiff</code> model fitting for real-world data like TCGA virome datasets.</li>
 </ul><hr></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.5" id="optsurvcutr-015">OptSurvCutR 0.1.5<a class="anchor" aria-label="anchor" href="#optsurvcutr-015"></a></h2>
 <div class="section level3">
 <h3 id="improvements-0-1-5">IMPROVEMENTS<a class="anchor" aria-label="anchor" href="#improvements-0-1-5"></a></h3>
-<ul><li>Updated core functions (for example, <code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code>, <code><a href="../reference/find_cutpoint_number.html">find_cutpoint_number()</a></code>) with improved numerical stability and accuracy for survival model fitting, particularly for genetic algorithm convergence in high-dimensional predictors [<a href="https://github.com/paytonyau/OptSurvCutR/commit/9338d0479c34069933562cb6b360428aad9dd6fc" class="external-link uri">https://github.com/paytonyau/OptSurvCutR/commit/9338d0479c34069933562cb6b360428aad9dd6fc</a>].</li>
+<ul><li>Updated core functions (for example, <code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code>, <code><a href="../reference/find_cutpoint_number.html">find_cutpoint_number()</a></code>) with improved numerical stability and accuracy for survival model fitting, particularly for genetic algorithm convergence in high-dimensional predictors.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-1-5">BUG FIXES<a class="anchor" aria-label="anchor" href="#bug-fixes-0-1-5"></a></h3>
-<ul><li>Fixed bugs in script handling and input validation, improving reliability for edge cases like small datasets or constant predictors in survival analysis [<a href="https://github.com/paytonyau/OptSurvCutR/commit/1de3e1048dcaa33fa8cbb6eab0fa8d89ec5d134c" class="external-link uri">https://github.com/paytonyau/OptSurvCutR/commit/1de3e1048dcaa33fa8cbb6eab0fa8d89ec5d134c</a>].</li>
-<li>Reverted prior bug fixes to prevent potential regressions, ensuring stable behaviour in <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> during bootstrap validation runs [<a href="https://github.com/paytonyau/OptSurvCutR/commit/d65fa328634a480a27bde6f64f8d615205e12225" class="external-link uri">https://github.com/paytonyau/OptSurvCutR/commit/d65fa328634a480a27bde6f64f8d615205e12225</a>].</li>
+<ul><li>Fixed bugs in script handling and input validation, improving reliability for edge cases like small datasets or constant predictors in survival analysis.</li>
+<li>Reverted prior bug fixes to prevent potential regressions, ensuring stable behaviour in <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> during bootstrap validation runs.</li>
 </ul><hr></div>
 </div>
     <div class="section level2">
@@ -475,7 +475,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>

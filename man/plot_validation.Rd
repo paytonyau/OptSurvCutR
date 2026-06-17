@@ -6,7 +6,7 @@
 \alias{print.validate_cutpoint_result}
 \alias{plot.validate_cutpoint_result}
 \alias{summary.validate_cutpoint_result}
-\title{Plot Cut-point Optimization Stability Surface and Help Catalog Page}
+\title{Plot Cut-point Optimisation Stability Surface and Help Catalog Page}
 \usage{
 plot_validation(
   validation_result,

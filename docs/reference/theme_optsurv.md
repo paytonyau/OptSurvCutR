@@ -18,7 +18,7 @@ theme_optsurv(base_size = 14)
 
 ## Value
 
-A `ggplot2` theme object containing customized layout parameters.
+A `ggplot2` theme object containing customised layout parameters.
 
 ## Examples
 

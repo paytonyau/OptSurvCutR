@@ -1,6 +1,6 @@
 # Plot Landmark Stratification Curves
 
-Computes and visualizes conditional survival probabilities for patients
+Computes and visualises conditional survival probabilities for patients
 who survive up to a specified landmark milestone.
 
 ## Usage
@@ -31,15 +31,22 @@ A `ggplot` template or `survminer` survival curve asset mapping layout.
 ## Examples
 
 ``` r
-mock_df <- data.frame(
-  time   = runif(25, 5, 50),
-  event  = sample(c(0, 1), 25, replace = TRUE),
-  factor = rnorm(25, 10, 2)
-)
-res <- find_cutpoint(
-  mock_df, "factor", "time", "event",
-  num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 3
-)
-p <- plot_landmark_stratification(res, landmark = 10)
+if (requireNamespace("survival", quietly = TRUE)) {
+  library(survival)
+  mock_df <- data.frame(
+    time   = runif(25, 5, 50),
+    event  = sample(c(0, 1), 25, replace = TRUE),
+    factor = rnorm(25, 10, 2)
+  )
+  res <- find_cutpoint(
+    mock_df, "factor", "time", "event",
+    num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 3
+  )
+  p <- plot_landmark_stratification(res, landmark = 10)
+}
 #> ℹ Generating Landmark Survival Curve for survivors remaining at time milestone: 10
+#> Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+#> ℹ Please use `linewidth` instead.
+#> ℹ The deprecated feature was likely used in the ggpubr package.
+#>   Please report the issue at <https://github.com/kassambara/ggpubr/issues>.
 ```

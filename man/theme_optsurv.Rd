@@ -10,7 +10,7 @@ theme_optsurv(base_size = 14)
 \item{base_size}{Base font size, default is 14.}
 }
 \value{
-A \code{ggplot2} theme object containing customized layout parameters.
+A \code{ggplot2} theme object containing customised layout parameters.
 }
 \description{
 A clean, publication-ready \code{ggplot2} theme used as the standard

@@ -9,63 +9,71 @@ GPL-3](https://img.shields.io/badge/License-GPL%203-blue.svg)](https://www.gnu.o
 ![OptSurvCutR logo](reference/figures/logo.png)
 
 `OptSurvCutR` (**Opt**imal **Surv**ival **Cut**-points **R**) provides a
-rigorous, reproducible, rOpenSci-compliant pipeline for discovering the
-optimal number and location of stratification cut-points in
-time-to-event (survival) data. Designed for continuous predictors (e.g.,
-gene expression, microbiome abundance, clinical biomarkers), it moves
-beyond arbitrary median splits to deliver fully **data-driven,
-covariate-adjusted stratification**.
+rigorous, reproducible, and rOpenSci-compliant framework for discovering
+the optimal number and location of patient stratification thresholds in
+time-to-event (survival) data. Designed specifically for continuous
+predictors (such as gene expression measurements, microbiome abundance,
+or clinical biomarkers), this package moves beyond arbitrary median
+splits to deliver fully **data-driven, covariate-adjusted
+stratification**.
 
-## What’s New in Version 0.9.9
+## What’s New in Version 0.10.0
 
 We have significantly overhauled the validation and diagnostic engines
 to ensure your discovered thresholds are mathematically stable,
-rOpenSci-compliant, and publication-ready: \* **Integer Index-Space
-Mapping:** Replaced continuous floating-point search spaces with a
-discrete, bounded integer lattice mapped directly to sorted unique data
-indices. This shifts the engine math from an infinite decimal space to a
-finite spectrum of actual observations, eliminating micro-decimal
-overfitting and stochastic seed drift. \* **The 4-Tier Stability
-Assessment:** Bootstrap validation now automatically grades your
-cut-points into four tiers (Optimal, Distinct, Caution, Unstable) based
-on confidence interval width and overlap metrics. \* **Automated
-Schoenfeld Diagnostics:** The package now flags time-varying effects
-natively during optimization to ensure your thresholds do not violate
-the Proportional Hazards assumption. \* **Enhanced Parameter Controls:**
-Fine-tune the genetic algorithm with `nmin` wedges and soft boundaries
-to rescue unstable thresholds and prevent overfitting. \* **Continuous
-2D Contour Validation Landscapes:** Added native S3 routing support for
-projecting complex multi-dimensional bootstrap distribution horizons
-onto smooth contour peaks.
+rOpenSci-compliant, and ready for publication:
+
+- **Integer Index-Space Mapping:** Replaced continuous floating-point
+  search spaces with a discrete, bounded integer lattice mapped directly
+  to sorted unique data indices. This shifts the engine mathematics from
+  an infinite decimal space to a finite spectrum of actual observations,
+  eliminating micro-decimal overfitting and stochastic seed drift.
+
+- **The Four-Tier Stability Assessment:** Bootstrap validation now
+  automatically grades thresholds into four distinct tiers (Optimal,
+  Distinct, Caution, and Unstable) based on confidence interval width
+  and overlap metrics.
+
+- **Automated Schoenfeld Diagnostics:** The package now evaluates
+  time-varying effects natively during the optimisation phase to ensure
+  your thresholds do not violate the proportional hazards assumption.
+
+- **Enhanced Parameter Controls:** Fine-tune the underlying genetic
+  algorithm using minimum group size (`nmin`) wedges and soft boundaries
+  to rescue unstable thresholds and control for overfitting.
+
+- **Continuous 2D Contour Validation Landscapes:** Added native S3
+  routing support to project complex, multi-dimensional bootstrap
+  distribution horizons onto smooth contour peaks.
 
 ## Why OptSurvCutR?
 
 | Feature | Benefit |
-|----|----|
-| Optimal number of cuts | Uses AIC, AICc, or BIC to mathematically select 0–k cut-points |
-| Covariate adjustment | Prove independent prognostic value by controlling for confounders |
-| 4-Tier Bootstrap validation | 95% confidence intervals and automated stability grading for thresholds |
-| Schoenfeld Diagnostics | 2-Tier warning system to verify proportional hazards assumptions |
-| Flexible search engine | Systematic grid or multithreaded Genetic Algorithm (`rgenoud`) |
-| Publication-ready plots | Kaplan–Meier, distribution curves, forest plots, & 2D topology surfaces |
+|:---|:---|
+| **Optimal number of cuts** | Uses AIC, AICc, or BIC to mathematically select between $`0`$ and $`k`$ cut-points. |
+| **Covariate adjustment** | Demonstrates independent prognostic value by controlling for clinical confounders. |
+| **Four-tier bootstrap validation** | Generates 95% confidence intervals and automated stability grading for thresholds. |
+| **Schoenfeld diagnostics** | Features a two-tier warning system to verify proportional hazards assumptions. |
+| **Flexible search engines** | Supports a deterministic systematic grid or a multithreaded Genetic Algorithm (`rgenoud`). |
+| **Publication-ready plots** | Renders Kaplan–Meier curves, distribution splits, forest plots, and 2D topology surfaces. |
 
 ## Installation
 
 You can install the development version of `OptSurvCutR` directly from
-GitHub. Note that the genetic algorithm (`method = "genetic"`) requires
-the `rgenoud` package, which should be installed separately from CRAN if
-you plan to search for multiple cut-points.
+GitHub. Note that the genetic algorithm optimisation
+(`method = "genetic"`) requires the `rgenoud` package, which should be
+installed separately from CRAN if you plan to search for multiple
+cut-points.
 
 ``` r
-
 # Core dependencies
 install.packages(c("remotes", "survival"))
 
-# Optional but highly recommended for multi-cut genetic optimization
+# Optional but highly recommended for multi-cut genetic optimisation
 install.packages("rgenoud")
 
 # Install the package from GitHub
-remotes::install_github("paytonyau/OptSurvCutR")
+remotes::remotes::install_github("paytonyau/OptSurvCutR")
 ```
 
 ## Example: Quick Workflow with Simulated Cohort Data
@@ -107,14 +115,14 @@ cut_res <- find_cutpoint(
 )
 summary(cut_res)  # Automatically reports Hazard Ratios & Schoenfeld Diagnostics!
 
-# Step 3: Validate stability with bootstrap
+# Step 3: Validate threshold stability with bootstrapping
 val_res <- validate_cutpoint(
   cutpoint_result = cut_res,
   num_replicates = 150, n_cores = 2, seed = 123
 )
 summary(val_res)  # Automatically grades threshold stability (Tiers 1-4)!
 
-# Step 4: Visualise outcomes via atomic native plots
+# Step 4: Visualise outcomes via native S3 plot routes
 plot(cut_res, type = "distribution")   # Continuous Predictor Density Split Map
 plot(cut_res, type = "outcome")        # Premium Custom Kaplan-Meier Survival Curves
 plot(cut_res, type = "forest")         # Hazard Ratio Forest Plot with Cohort Sample Sizes
@@ -124,24 +132,26 @@ plot_validation(val_res, focus_cuts = c(1, 2)) # 2D Contour Elevation Stability 
 
 ## Workflow Summary
 
-`OptSurvCutR` provides a three-step workflow for cut-point analysis:
+`OptSurvCutR` establishes a structured, three-step workflow for
+cut-point analysis:
 
 1.  [`find_cutpoint_number()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md):
-    Selects the statistically optimal number of cut-points using
+    Identifies the statistically optimal number of thresholds using
     information criteria.
 2.  [`find_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint.md):
-    Locates exact cut-point values (systematic or genetic search) and
-    reports Schoenfeld diagnostics.
+    Localises exact cut-point coordinates via systematic or genetic
+    search, and reports Schoenfeld diagnostics.
 3.  [`validate_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/validate_cutpoint.md):
-    Assesses threshold stability via bootstrapping and assigns an
-    automated 4-Tier stability grade.
+    Evaluates threshold stability using bootstrap resampling and assigns
+    an automated four-tier stability grade.
 
 ## Resources
 
 - **Vignettes & Tutorials**: Run `browseVignettes("OptSurvCutR")` within
   your R session to access complete walk-throughs.
-- **Troubleshooting & FAQ**: Review the detailed development notes
-  located directly in the `vignettes/troubleshooting.Rmd` source path.
+- **Troubleshooting & FAQ**: Review detailed optimisation and deployment
+  notes located directly in the `vignettes/troubleshooting.Rmd` source
+  path.
 - **Manuscript**: Yau, Payton T. O. “OptSurvCutR: Validated Cut-point
   Selection for Survival Analysis.” bioRxiv preprint, posted October
   18, 2025. <https://doi.org/10.1101/2025.10.08.681246>.
@@ -166,8 +176,8 @@ Licensed under the GPL-3 License.
 
 ## Contact
 
-Questions, suggestions, or issues? Please open a ticket:
-<https://github.com/paytonyau/OptSurvCutR/issues> \`\`\`
+For questions, feature suggestions, or bug reports, please open an issue
+tracking ticket: <https://github.com/paytonyau/OptSurvCutR/issues>
 
 # Package index
 
@@ -199,10 +209,11 @@ interactive web reporting.
   [`summary(`*`<find_cutpoint_number_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md)
   [`plot(`*`<find_cutpoint_number_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md)
   : Find Optimal Number of Cut-points for Survival Data
-- [`plot(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/plot.validate_cutpoint_result.md)
-  : Plot Bootstrap Threshold Distributions
 - [`plot_validation()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
-  : Plot Cut-point Optimization Stability Surface
+  [`print(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
+  [`plot(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
+  [`summary(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
+  : Plot Cut-point Optimisation Stability Surface and Help Catalog Page
 - [`plot_optimisation_curve()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_optimisation_curve.md)
   : Plot Optimisation Curve or Surface from Search
 - [`plot_cutpoint_residuals()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_cutpoint_residuals.md)
@@ -225,10 +236,11 @@ Methods for summarising analysis objects and extracting raw data.
   [`summary(`*`<find_cutpoint_number_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md)
   [`plot(`*`<find_cutpoint_number_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md)
   : Find Optimal Number of Cut-points for Survival Data
-- [`summary(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/summary.validate_cutpoint_result.md)
-  : Summary of Bootstrap Stability Validation
-- [`print(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/print.validate_cutpoint_result.md)
-  : Print Method for Bootstrap Validation Results
+- [`plot_validation()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
+  [`print(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
+  [`plot(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
+  [`summary(`*`<validate_cutpoint_result>`*`)`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
+  : Plot Cut-point Optimisation Stability Surface and Help Catalog Page
 
 # Articles
 

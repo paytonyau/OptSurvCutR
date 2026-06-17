@@ -18,7 +18,7 @@ defaults to 20\% of maximum follow-up data timelines.}
 A \code{ggplot} template or \code{survminer} survival curve asset mapping layout.
 }
 \description{
-Computes and visualizes conditional survival probabilities for patients
+Computes and visualises conditional survival probabilities for patients
 who survive up to a specified landmark milestone.
 }
 \examples{

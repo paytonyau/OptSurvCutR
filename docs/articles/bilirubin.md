@@ -2,34 +2,38 @@
 
 ## Introduction
 
-In clinical research, continuous biomarkers are often simplified into
-binary groups using arbitrary thresholds like median splits. While
-convenient, this approach obscures meaningful biological structure.
+In clinical research, continuous biomarkers are frequently categorised
+into binary groups using arbitrary thresholds, such as median splits.
+Although convenient, this approach obscures meaningful biological
+variations and non-linear risk profiles.
 
-The **OptSurvCutR** package is built specifically to discover true,
-mathematically optimal thresholds. Its core powerhouse is a **Genetic
-Algorithm**—an evolutionary search engine capable of navigating massive,
-multi-dimensional data to find optimal cut-points simultaneously, a task
-where traditional methods would freeze.
+The **OptSurvCutR** package is designed specifically to discover
+mathematically optimal thresholds. The core mechanism relies on a
+**Genetic Algorithm**—an evolutionary search engine capable of
+navigating complex, multi-dimensional data landscapes to identify
+multiple optimal cut-points simultaneously, a task that often causes
+traditional grid searches to fail due to computational limits.
 
-Furthermore, the package features built-in statistical safety nets,
-including a 2-Tier Schoenfeld diagnostic check and a comprehensive
-4-Tier Validation Stability system. Crucially, the engine allows for
-**covariate adjustment**, ensuring that the discovered biomarker
-thresholds provide independent prognostic value even when controlling
-for established clinical confounders like age or disease staging.
+Furthermore, the package features built-in statistical safeguards,
+including a two-tier Schoenfeld diagnostic check and a comprehensive
+four-tier validation stability system. Crucially, the optimization
+framework supports **covariate adjustment**. This ensures that the
+discovered biomarker thresholds provide independent prognostic value,
+even when controlling for established clinical confounders such as age,
+sex, or disease stage.
 
 In this vignette, we apply this workflow to the classic **Mayo Clinic
-Primary Biliary Cholangitis (PBC)** dataset to evaluate raw **serum
-bilirubin**, controlling for age and edema.
+Primary Biliary Cholangitis (PBC)** dataset to evaluate **serum
+bilirubin** levels while controlling for confounding clinical factors,
+specifically patient age and the presence of edema.
 
 ------------------------------------------------------------------------
 
 ## 1. Setup & Data Preparation
 
-To begin the analysis, we must first load our workspace environment with
-the required data-wrangling libraries, graphics systems, and the
-underlying survival and optimisation packages.
+To begin the analysis, we load the required data manipulation libraries,
+graphics systems, and the underlying survival and optimisation packages
+into the R workspace.
 
 ``` r
 
@@ -42,9 +46,9 @@ library(cli)
 library(OptSurvCutR)
 ```
 
-Next, we pull the historical baseline dataset into memory, strip out
-clinical records containing missing entries across our features of
-interest, and map all active events safely to isolate true endpoints.
+Next, we load the baseline clinical dataset into memory, remove records
+containing missing entries across our features of interest, and map all
+active survival statuses to isolate true endpoints.
 
 ``` r
 
@@ -54,7 +58,7 @@ data(pbc, package = "survival")
 pbc_clean <- na.omit(pbc[, c("time", "status", "bili", "age", "sex", "edema")])
 
 # Define the all-cause mortality survival event (1 or 2 = endpoint, 0 = censored)
-pbc_clean$event <- ifelse(pbc_clean$status %in% c(1, 2), 1, 0)
+pbc_clean$event <- as.integer(pbc_clean$status %in% c(1, 2))
 
 head(pbc_clean)
 #>   time status bili      age sex edema event
@@ -66,18 +70,19 @@ head(pbc_clean)
 #> 6 2503      2  0.8 66.25873   f   0.0     1
 ```
 
-> **💡 Key Insight: Dealing with Skewed Data & Confounders** Raw
-> clinical lab values are often heavily right-skewed. Because
-> `OptSurvCutR` evaluates survival using the Log-rank/Cox rank
-> infrastructure—which looks at the *rank order* of patients rather than
-> absolute numerical distance—the algorithm is mathematically immune to
-> this skew.
+> **💡 Key Insight: Managing Skewed Distributions & Confounders** \> Raw
+> clinical laboratory values are often heavily right-skewed. Because
+> `OptSurvCutR` evaluates survival using rank-based statistics (such as
+> the Log-rank and Cox score tests), it relies on the *rank order* of
+> patients rather than absolute numerical distances. This makes the
+> algorithm mathematically robust against distributional skewness.
 >
-> By passing `covariates = c("age","sex", "edema")`, the optimisation
-> routine transitions from a univariate survival split to an adjusted
-> Cox proportional hazards model framework, ensuring your cut-points
-> reflect true baseline risk alterations independent of baseline age or
-> physical edema presentation.
+> By specifying `covariates = c("age", "sex", "edema")`, the
+> optimisation routine transitions from a univariate survival split to
+> an adjusted Cox proportional hazards framework. This guarantees that
+> the discovered cut-points reflect true changes in baseline risk
+> independent of age, biological sex, or the physical presentation of
+> edema.
 
 ------------------------------------------------------------------------
 
@@ -85,24 +90,24 @@ head(pbc_clean)
 
 ### Step 1: Determine the Optimal Number of Cuts
 
-Before we ask *where* the cut-points are, we need to ask the math *how
-many* cut-points actually exist in our data when adjusting for our
-baseline covariates.
+Before identifying the specific locations of the thresholds, we must
+determine how many cut-points actually exist in our data when adjusting
+for our baseline clinical covariates.
 
-#### Choosing Your Information Criterion
+#### Choosing an Information Criterion
 
-The algorithm evaluates models using an Information Criterion, which
-balances accuracy against complexity:
+The algorithm evaluates candidate models using an Information Criterion,
+which balances descriptive accuracy against model complexity:
 
-| Criterion | What it does | Best Use Case |
+| Criterion | Statistical Mechanism | Best Use Case |
 |:---|:---|:---|
-| **AIC** | Light penalty for complexity. | Exploratory research; allows more cuts. |
-| **AICc** | Corrects AIC for small sample sizes. | Small clinical datasets (N \< 200). |
-| **BIC** | Heavy penalty for complexity. | Confirmatory research; prefers simpler, highly robust models. |
+| **AIC** | Imposes a light penalty for complexity. | Exploratory research; permits a higher number of cuts. |
+| **AICc** | Applies a second-order correction to AIC for small sample sizes. | Small clinical datasets ($`N < 200`$). |
+| **BIC** | Imposes a strict penalty based on the sample size logarithm. | Confirmatory research; favours simpler, highly robust models. |
 
-We deploy the multi-model search check to calculate fitness scores
+We deploy the multi-model search routine to calculate fitness scores
 across various grouping parameters, enforcing safety boundaries so that
-cohorts don’t become unsustainably small.
+the resulting risk cohorts do not become unsustainably small.
 
 ``` r
 
@@ -110,27 +115,27 @@ num_res <- find_cutpoint_number(
   # ==========================================
   # 1. CORE DATA & COVARIATE INPUTS
   # ==========================================
-  data = pbc_clean,           # The patient dataset
-  predictor = "bili",         # The continuous biomarker
-  outcome_time = "time",      # Survival time column
-  outcome_event = "event",    # Survival event column
-  covariates = c("age","sex","edema"), # Confounders to control for
+  data = pbc_clean, # The patient dataset
+  predictor = "bili", # The continuous biomarker
+  outcome_time = "time", # Survival time column
+  outcome_event = "event", # Survival event column
+  covariates = c("age", "sex", "edema"), # Confounders to control for
 
   # ==========================================
   # 2. SEARCH ENGINE SETTINGS
   # ==========================================
-  method = "genetic",         # The evolutionary search engine
-  criterion = "AIC",          # Evaluates adjusted model fit
-  max_cuts = 5,               # Test models ranging from 0 to 5 cuts
-  nmin = 0.15,                # SAFETY LIMIT: Minimum 15% of patients per group
-   
+  method = "genetic", # The evolutionary search engine
+  criterion = "AIC", # Evaluates adjusted model fit
+  max_cuts = 5, # Test models ranging from 0 to 5 cuts
+  nmin = 0.15, # SAFETY LIMIT: Minimum 15% of patients per group
+
   # ==========================================
   # 3. ADVANCED GENETIC TUNING
   # ==========================================
-  max.generations = NULL,     # LIFESPAN: How many evolutionary cycles to run
-  pop.size = NULL,            # SEARCH PARTY: Number of random guesses per generation
-  boundary.enforcement = 2,   # EDGE CONTROL: 2 = Soft boundary configuration
-  seed = 123                  # REPRODUCIBILITY
+  max.generations = NULL, # LIFESPAN: Number of evolutionary cycles to run
+  pop.size = NULL, # SEARCH PARTY: Number of random guesses per generation
+  boundary.enforcement = 2, # EDGE CONTROL: 2 = Soft boundary configuration
+  seed = 123 # REPRODUCIBILITY
 )
 #> ℹ nmin 0.15 is a proportion. Min. group size set to 62.
 #> ℹ Finding optimal cut number: method = genetic
@@ -144,8 +149,8 @@ num_res <- find_cutpoint_number(
 #> ! Model with 5 cut-point(s) collapsed: Subgroups violated the minimum 'nmin' constraint of 62 subjects.
 ```
 
-Here, we use [`summary()`](https://rdrr.io/r/base/summary.html) for
-detailed information.
+We execute the [`summary()`](https://rdrr.io/r/base/summary.html) method
+to review detailed model fit parameters.
 
 ``` r
 
@@ -169,13 +174,13 @@ summary(num_res)
 #>     G3 102     59 2286 (1725 - 3222)
 #>     G4  98     78   980 (859 - 1235)
 #> ── 3. Cox Proportional-Hazards ──
-#>  Group     HR Lower  Upper P_Value Signif
-#>     G2  2.169 1.236  3.809   0.007     **
-#>     G3  4.934 3.020  8.062   0.000    ***
-#>     G4 12.178 7.503 19.766   0.000    ***
-#>    age  1.025 1.011  1.039   0.001    ***
-#>   sexf  0.940 0.612  1.444   0.778       
-#>  edema  4.965 3.099  7.955   0.000    ***
+#>    Group     HR Lower  Upper P_Value Signif
+#>  groupG2  2.169 1.236  3.809   0.007     **
+#>  groupG3  4.934 3.020  8.062   0.000    ***
+#>  groupG4 12.178 7.503 19.766   0.000    ***
+#>      age  1.025 1.011  1.039   0.001    ***
+#>     sexf  0.940 0.612  1.444   0.778       
+#>    edema  4.965 3.099  7.955   0.000    ***
 #> ℹ Overall Model: Concordance = 0.802 | Log-rank p = 0
 #> 
 #> ── 4. Time-Dependent Diagnostics (Schoenfeld) ──
@@ -184,26 +189,28 @@ summary(num_res)
 #> 
 #> ── 5. Analysis Parameters ──
 #> 
-#> • Search Method: Genetic
-#> • Predictor: bili
-#> • Criterion: AIC
-#> • Maximum Cuts Evaluated: 5
-#> • Minimum Group Size (nmin): 62
-#> • Covariates: age, sex, edema
+#> * Search Method: Genetic
+#> * Predictor: bili
+#> * Criterion: AIC
+#> * Maximum Cuts: 5
+#> * Minimum Group Size (nmin): 62
+#> * Covariates: age, sex, edema
 ```
 
 To easily track the inflection points where adding more thresholds
-yields diminishing mathematical returns, we plot the complete
-multi-model fitness curve.
+yields diminishing mathematical returns, we plot the multi-model fitness
+curve.
 
 ``` r
 
 plot(num_res) +
-  geom_smooth(method = "loess", 
-              se = FALSE, 
-              colour = "darkgrey", 
-              linetype = "dashed", 
-              alpha = 0.5)
+  geom_smooth(
+    method = "loess",
+    se = FALSE,
+    colour = "darkgrey",
+    linetype = "dashed",
+    alpha = 0.5
+  )
 #> `geom_smooth()` using formula = 'y ~ x'
 #> Warning in simpleLoess(y, x, w, span, degree = degree, parametric = parametric,
 #> : span too small.  fewer data values than degrees of freedom.
@@ -219,21 +226,22 @@ plot(num_res) +
 
 ![](bilirubin_files/figure-html/loess-1.png)
 
-**Interpretation:** The model minimising the information landscape sits
-clearly at **2 cut-points** (which divides the patient cohort into 3
-distinct risk groups). This confirms that even after stripping away the
-confounding baseline effects of age and sex, a multi-tier group model is
-statistically superior to a traditional median binary split.
+**Interpretation:** The model that minimises the information landscape
+layout is identified at **2 cut-points** (which divides the patient
+cohort into 3 distinct risk groups). This confirms that even after
+controlling for the confounding baseline effects of age and sex, a
+multi-tier risk classification model is statistically superior to a
+traditional binary median split.
 
 ### Step 2: Pinpointing the Exact Cut-point Values
 
-This step is the heart of `OptSurvCutR`. We ask the search engine to
-physically locate the optimal dividing lines while holding our adjusted
-covariates constant.
+This step forms the algorithmic core of `OptSurvCutR`. We direct the
+search engine to locate the optimal dividing lines while holding our
+adjusted clinical covariates constant.
 
-We initiate the core optimisation search loop, directing the engine to
-settle on an integer space topology that maximises group risk divergence
-under active covariate adjustment.
+We initiate the core optimisation loop, guiding the engine across the
+index coordinate topology to find the thresholds that maximise group
+risk divergence under active covariate adjustment.
 
 ``` r
 
@@ -245,33 +253,33 @@ cut_res <- find_cutpoint(
   predictor = "bili",
   outcome_time = "time",
   outcome_event = "event",
-  covariates = c("age","sex","edema"), # Adjusted during location discovery
+  covariates = c("age", "sex", "edema"), # Adjusted during location discovery
 
   # ==========================================
   # 2. SEARCH ENGINE SETTINGS
   # ==========================================
-  method = "genetic", 
-  criterion = "logrank", 
-  num_cuts = 3,       # Setting 3 cuts for clinical tier separation
-  nmin = 0.15,         # SAFETY LIMIT: Minimum patients per risk cohort
-  n_perm = 20,        # Streamlined permutation cycle
+  method = "genetic",
+  criterion = "logrank",
+  num_cuts = 3, # Setting 3 cuts for clinical tier separation
+  nmin = 0.15, # SAFETY LIMIT: Minimum patients per risk cohort
+  n_perm = 20, # Streamlined permutation cycle
 
   # ==========================================
   # 3. ADVANCED GENETIC TUNING
   # ==========================================
-  max.generations = NULL,   
-  pop.size = NULL,          
-  boundary.enforcement = 2, 
-  seed = 123,               
-  n_cores = 1               
+  max.generations = NULL,
+  pop.size = NULL,
+  boundary.enforcement = 2,
+  seed = 123,
+  n_cores = 1
 )
 #> ℹ nmin 0.15 is a proportion. Min. group size set to 62.
 #> ℹ Starting regularized genetic search for 3 cut(s)...
 #> ℹ Running 20 permutations to calculate adjusted p-value...
 ```
 
-Now, we call the optimisation summary report to extract hazard
-thresholds, coefficients, and preliminary model diagnostics.
+Now, we request the optimisation summary report to extract the hazard
+thresholds, model coefficients, and preliminary diagnostics.
 
 ``` r
 
@@ -312,20 +320,20 @@ summary(cut_res)
 #> • Permutations: 20
 ```
 
-#### 🔍 Automated Diagnostic Check: The 2-Tier Schoenfeld Diagnostic
+#### 🔍 Automated Diagnostic Check: The Two-Tier Schoenfeld Diagnostic
 
-When evaluating [`summary()`](https://rdrr.io/r/base/summary.html), the
-package automatically processes a Schoenfeld residuals validation check
-against your adjusted model matrix, verifying if the Proportional
-Hazards assumption holds:
+When evaluating the [`summary()`](https://rdrr.io/r/base/summary.html)
+output, the package automatically calculates a Schoenfeld residuals
+validation check against the adjusted model matrix to verify whether the
+Proportional Hazards assumption holds:
 
-| Diagnostic Status | What it Means (Schoenfeld Test) | Clinical Implication |
+| Diagnostic Status | Statistical Property (Schoenfeld Test) | Clinical Implication |
 |:---|:---|:---|
-| **Tier 1 (Proportional)** | The proportional hazards assumption holds ($`p > 0.05`$). | Your cut-points remain equally deadly/protective on Day 1 as they do on Day 1,000. Reporting a standard adjusted Hazard Ratio is valid. |
-| **Tier 2 (Time-Varying)** | The hazard ratio changes significantly over time ($`p < 0.05`$). | Your cut-point is still biologically valid, but its predictive power shifts over time. You may need to report time-dependent Hazard Ratios. |
+| **Tier 1 (Proportional)** | The proportional hazards assumption holds ($`p > 0.05`$). | Your cut-points remain equally predictive on Day 1 as they do on Day 1,000. Reporting a standard adjusted Hazard Ratio is valid. |
+| **Tier 2 (Time-Varying)** | The hazard ratio changes significantly over time ($`p < 0.05`$). | Your cut-point remains biologically valid, but its relative predictive power shifts over time. Consider reporting time-dependent Hazard Ratios. |
 
-To visualise where these calculated cut-points slice across the patient
-density profile, we map our continuous marker distribution.
+To visualise where these calculated cut-points cross the clinical
+cohort, we generate a plot mapping the continuous marker distribution.
 
 ``` r
 
@@ -338,14 +346,15 @@ plot(cut_res, type = "distribution") +
 
 ------------------------------------------------------------------------
 
-### Step 3: Validate the Threshold Stability
+### Step 3: Validate Threshold Stability
 
-We use Bootstrap Resampling to ensure our covariate-adjusted thresholds
-are real and completely independent of sample noise.
+We use Bootstrap Resampling to ensure that our covariate-adjusted
+thresholds reflect stable biology and are completely independent of
+sample-specific noise.
 
 We run repetitive bootstrap sampling loops, forcing the optimisation
 engine to re-verify the marker thresholds across randomised slices of
-our cohort.
+our patient cohort.
 
 ``` r
 
@@ -353,27 +362,27 @@ val_res <- validate_cutpoint(
   # ==========================================
   # 1. VALIDATION INPUTS
   # ==========================================
-  cutpoint_result = cut_res, 
-  num_replicates = 30,       # 500+ is the standard for final publication
-  n_cores = 1, 
+  cutpoint_result = cut_res,
+  num_replicates = 30, # 500+ is the standard for final publication
+  n_cores = 1,
 
   # ==========================================
   # 2. ADVANCED SETTINGS (Must match Step 2)
   # ==========================================
-  max.generations = NULL, 
-  pop.size = NULL, 
-  boundary.enforcement = 2, 
-  seed = 123 
+  max.generations = NULL,
+  pop.size = NULL,
+  boundary.enforcement = 2,
+  seed = 123
 )
 #> ℹ Using random seed 123 for reproducibility.
 #> ℹ Bootstrap `nmin` not set. Using 55 (90% of original) to improve stability.
 #> ℹ Validating 3 cut(s) from 'genetic' search using 'logrank' over regularized coordinate lattice.
 #> ℹ Running 30 replicates sequentially (n_cores = 1).
-#> Bootstrapping ■■■                                7% | ETA: 14sBootstrapping ■■■■                              10% | ETA: 14sBootstrapping ■■■■■                             13% | ETA: 16sBootstrapping ■■■■■■                            17% | ETA: 17sBootstrapping ■■■■■■■                           20% | ETA: 17sBootstrapping ■■■■■■■■                          23% | ETA: 16sBootstrapping ■■■■■■■■■                         27% | ETA: 16sBootstrapping ■■■■■■■■■■                        30% | ETA: 16sBootstrapping ■■■■■■■■■■■                       33% | ETA: 16sBootstrapping ■■■■■■■■■■■■                      37% | ETA: 15sBootstrapping ■■■■■■■■■■■■■                     40% | ETA: 15sBootstrapping ■■■■■■■■■■■■■■                    43% | ETA: 14sBootstrapping ■■■■■■■■■■■■■■■                   47% | ETA: 14sBootstrapping ■■■■■■■■■■■■■■■■                  50% | ETA: 13sBootstrapping ■■■■■■■■■■■■■■■■■                 53% | ETA: 11sBootstrapping ■■■■■■■■■■■■■■■■■■                57% | ETA: 11sBootstrapping ■■■■■■■■■■■■■■■■■■■               60% | ETA: 10sBootstrapping ■■■■■■■■■■■■■■■■■■■■              63% | ETA:  9sBootstrapping ■■■■■■■■■■■■■■■■■■■■■             67% | ETA:  8sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■            70% | ETA:  7sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■           73% | ETA:  7sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■          77% | ETA:  6sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■         80% | ETA:  5sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■        83% | ETA:  4sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■       87% | ETA:  3sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      90% | ETA:  2sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■     93% | ETA:  2sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    97% | ETA:  1s                                                               ✔ 30 replicates completed.
+#> Bootstrapping ■■■■                              10% | ETA: 11sBootstrapping ■■■■■                             13% | ETA: 12sBootstrapping ■■■■■■                            17% | ETA: 13sBootstrapping ■■■■■■■                           20% | ETA: 13sBootstrapping ■■■■■■■■                          23% | ETA: 13sBootstrapping ■■■■■■■■■                         27% | ETA: 13sBootstrapping ■■■■■■■■■■                        30% | ETA: 12sBootstrapping ■■■■■■■■■■■                       33% | ETA: 12sBootstrapping ■■■■■■■■■■■■                      37% | ETA: 11sBootstrapping ■■■■■■■■■■■■■                     40% | ETA: 11sBootstrapping ■■■■■■■■■■■■■■                    43% | ETA: 10sBootstrapping ■■■■■■■■■■■■■■■                   47% | ETA: 10sBootstrapping ■■■■■■■■■■■■■■■■                  50% | ETA:  9sBootstrapping ■■■■■■■■■■■■■■■■■                 53% | ETA:  8sBootstrapping ■■■■■■■■■■■■■■■■■■                57% | ETA:  8sBootstrapping ■■■■■■■■■■■■■■■■■■■               60% | ETA:  7sBootstrapping ■■■■■■■■■■■■■■■■■■■■              63% | ETA:  7sBootstrapping ■■■■■■■■■■■■■■■■■■■■■             67% | ETA:  6sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■            70% | ETA:  5sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■           73% | ETA:  5sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■          77% | ETA:  4sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■         80% | ETA:  4sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■        83% | ETA:  3sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■       87% | ETA:  2sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      90% | ETA:  2sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■     93% | ETA:  1sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    97% | ETA:  1s                                                               ✔ 30 replicates completed.
 ```
 
 We look at the aggregated validation metrics to review the underlying
-variance metrics across our calculated thresholds.
+variance parameters across our calculated thresholds.
 
 ``` r
 
@@ -411,27 +420,27 @@ summary(val_res)
 #> 
 #> Stability Assessment:
 #> ---------------------
-#> Maximum CI Width (Relative to 10th-90th Percentile Range): 71.1%
+#> Maximum CI Width (Relative to 10th-90th Percentile Range): 664.6%
 #> ✔ Model Status: DISTINCT (Tier 2) - SEPARATION OVERRIDE
-#> The relative mathematical variance is high (71.1%), but 95% Confidence
+#> The relative mathematical variance is high (664.6%), but 95% Confidence
 #> Intervals do not overlap.
 ```
 
-#### 🔍 Automated Performance Grading: The 4-Tier Stability Assessment
+#### 🔍 Automated Performance Grading: The Four-Tier Stability Assessment
 
 Following bootstrap calculations, `OptSurvCutR` evaluates both your
-**Precision** (Confidence Interval width relative to overall data range)
-and **Validity** (absence of interval overlap), grading model health
-into four distinct tiers:
+**Precision** (Confidence Interval width relative to the overall data
+range) and **Validity** (absence of interval overlap), grading model
+health into four distinct performance tiers:
 
-1.  **Tier 1 (OPTIMAL):** Narrow intervals (CI Width \< 30%) paired with
-    complete cohort separation.
+1.  **Tier 1 (OPTIMAL):** Narrow intervals (CI Width $`< 30\%`$) paired
+    with complete cohort separation.
 2.  **Tier 2 (DISTINCT):** Zero overlap between confidence zones
-    regardless of width. Thresholds may float slightly, but risk
-    boundaries remain clear.
-3.  **Tier 3 (CAUTION):** Moderate parameter variance (CI Width 30%–60%)
-    accompanied by overlapping intervals.
-4.  **Tier 4 (UNSTABLE):** High variance (CI Width \> 60%) with
+    regardless of absolute width. Thresholds may float slightly, but
+    risk boundaries remain clear.
+3.  **Tier 3 (CAUTION):** Moderate parameter variance (CI Width
+    $`30\%–60\%`$) accompanied by overlapping intervals.
+4.  **Tier 4 (UNSTABLE):** High variance (CI Width $`> 60\%`$) with
     overlapping intervals, signaling severe data over-fitting.
 
 For precise documentation, we compile our numerical confidence intervals
@@ -451,7 +460,7 @@ knitr::kable(val_res$confidence_intervals, digits = 3, caption = "Covariate-Adju
 Covariate-Adjusted Stability Intervals for Bilirubin Risk Thresholds
 {.table}
 
-To see if our thresholds remain tightly anchored or scatter across the
+To determine if our thresholds remain tightly anchored or scatter across
 iterations, we inspect the bootstrap density landscape.
 
 ``` r
@@ -468,8 +477,8 @@ plot(val_res) +
 
 ### 3.1 Group Composition Table
 
-We can check the physical distributions and average baseline parameters
-across our newly established medical risk tiers.
+We can check the actual sample distributions and average baseline
+parameters across our newly established medical risk tiers.
 
 ``` r
 
@@ -502,8 +511,8 @@ Composition and Covariate Profiles of Discovered Bilirubin Risk Groups
 
 ### 3.2 Adjusted Hazard Ratio Forest Plot (`type = "forest"`)
 
-We can easily plot a custom forest chart to display our adjusted hazard
-models relative to the low-risk baseline tier.
+We can plot a custom forest chart to display our adjusted hazard models
+relative to the low-risk baseline tier.
 
 ``` r
 
@@ -528,13 +537,13 @@ plot(cut_res, type = "diagnostic")
 
 ![](bilirubin_files/figure-html/plot-diagnostic-1.png)
 
-### 3.4 2D Cut-point Stability Surface (plot_validation())
+### 3.4 2D Cut-point Stability Surface (`plot_validation()`)
 
 Rather than relying on blocky grids,
 [`plot_validation()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
-allows us to project high-dimensional bootstrap convergence horizons
-onto a smooth 2D continuous contour map, highlighting exactly where our
-optimal threshold combinations cluster.
+projects high-dimensional bootstrap convergence horizons onto a smooth
+2D continuous contour map, highlighting exactly where our optimal
+threshold combinations cluster.
 
 ``` r
 
@@ -549,7 +558,7 @@ plot_validation(val_res,
 ### 3.5 Adjusted Kaplan-Meier Survival Curves (`type = "outcome"`)
 
 We evaluate the clear divergence in survival over time by mapping the
-adjusted step functions for our groups.
+adjusted step functions for our risk groups.
 
 ``` r
 
@@ -560,20 +569,27 @@ plot(cut_res,
   ylab = "Overall Survival Probability",
   legend.title = "Bilirubin Tier"
 )
+#> Warning: Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
+#> ℹ Please use `linewidth` instead.
+#> ℹ The deprecated feature was likely used in the ggpubr package.
+#>   Please report the issue at <https://github.com/kassambara/ggpubr/issues>.
+#> This warning is displayed once per session.
+#> Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+#> generated.
 ```
 
 ![](bilirubin_files/figure-html/plot-km-1.png)
 
 ### 3.6 Exporting Your Stratified Data
 
-By passing `return_data = TRUE`, you can seamlessly extract your
-original clinical dataset paired with the newly calculated `group` and
-original covariate column assignments.
+By passing `return_data = TRUE`, you can extract your original clinical
+dataset paired with the newly calculated `group` factor and original
+covariate assignments.
 
 ``` r
 
 stratified_patients <- plot(cut_res, return_data = TRUE)
-head(stratified_patients[, c("time", "event", "factor", "age", "sex","edema", "group")])
+head(stratified_patients[, c("time", "event", "factor", "age", "sex", "edema", "group")])
 #>   time event factor      age sex edema group
 #> 1  400     1   14.5 58.76523   f   1.0     4
 #> 2 4500     0    1.1 56.44627   f   0.0     2
@@ -604,7 +620,7 @@ reproducibility.
 ``` r
 
 sessionInfo()
-#> R version 4.6.0 (2026-04-24 ucrt)
+#> R version 4.5.3 (2026-03-11 ucrt)
 #> Platform: x86_64-w64-mingw32/x64
 #> Running under: Windows 11 x64 (build 26200)
 #> 
@@ -625,28 +641,29 @@ sessionInfo()
 #> [1] stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] OptSurvCutR_0.9.9 cli_3.6.6         knitr_1.51        patchwork_1.3.2  
-#> [5] ggplot2_4.0.3     dplyr_1.2.1       survival_3.8-6   
+#> [1] OptSurvCutR_0.9.9 cli_3.6.5         knitr_1.51        patchwork_1.3.2  
+#> [5] ggplot2_4.0.1     dplyr_1.2.1       survival_3.8-6   
 #> 
 #> loaded via a namespace (and not attached):
-#>  [1] gtable_0.3.6       xfun_0.58          bslib_0.11.0       htmlwidgets_1.6.4 
-#>  [5] rstatix_0.7.3      lattice_0.22-9     vctrs_0.7.3        tools_4.6.0       
-#>  [9] generics_0.1.4     parallel_4.6.0     tibble_3.3.1       pkgconfig_2.0.3   
-#> [13] Matrix_1.7-5       RColorBrewer_1.1-3 S7_0.2.2           desc_1.4.3        
-#> [17] lifecycle_1.0.5    compiler_4.6.0     farver_2.1.2       textshaping_1.0.5 
-#> [21] codetools_0.2-20   carData_3.0-6      htmltools_0.5.9    sass_0.4.10       
-#> [25] yaml_2.3.12        Formula_1.2-5      pillar_1.11.1      pkgdown_2.2.0.9000
-#> [29] car_3.1-5          ggpubr_0.6.3       jquerylib_0.1.4    tidyr_1.3.2       
-#> [33] MASS_7.3-65        cachem_1.1.0       survminer_0.5.2    iterators_1.0.14  
-#> [37] rgenoud_5.9-0.11   abind_1.4-8        foreach_1.5.2      nlme_3.1-169      
-#> [41] tidyselect_1.2.1   digest_0.6.39      purrr_1.2.2        labeling_0.4.3    
-#> [45] splines_4.6.0      fastmap_1.2.0      grid_4.6.0         magrittr_2.0.5    
-#> [49] broom_1.0.13       withr_3.0.2        scales_1.4.0       backports_1.5.1   
-#> [53] rmarkdown_2.31     otel_0.2.0         gridExtra_2.3      ggsignif_0.6.4    
-#> [57] ragg_1.5.2         evaluate_1.0.5     doParallel_1.0.17  viridisLite_0.4.3 
-#> [61] mgcv_1.9-4         rlang_1.2.0        Rcpp_1.1.1-1.1     isoband_0.3.0     
-#> [65] glue_1.8.1         rstudioapi_0.18.0  jsonlite_2.0.0     R6_2.6.1          
-#> [69] systemfonts_1.3.2  fs_2.1.0
+#>  [1] gtable_0.3.6       xfun_0.54          bslib_0.11.0       htmlwidgets_1.6.4 
+#>  [5] rstatix_0.7.3      lattice_0.22-9     vctrs_0.7.3        tools_4.5.3       
+#>  [9] generics_0.1.4     parallel_4.5.3     tibble_3.3.1       pkgconfig_2.0.3   
+#> [13] Matrix_1.7-4       data.table_1.17.8  RColorBrewer_1.1-3 S7_0.2.1          
+#> [17] desc_1.4.3         lifecycle_1.0.5    compiler_4.5.3     farver_2.1.2      
+#> [21] textshaping_1.0.4  codetools_0.2-20   carData_3.0-5      htmltools_0.5.8.1 
+#> [25] sass_0.4.10        yaml_2.3.10        Formula_1.2-5      pillar_1.11.1     
+#> [29] pkgdown_2.2.0      car_3.1-3          ggpubr_0.6.2       jquerylib_0.1.4   
+#> [33] tidyr_1.3.1        MASS_7.3-65        cachem_1.1.0       survminer_0.5.1   
+#> [37] iterators_1.0.14   rgenoud_5.9-0.11   abind_1.4-8        foreach_1.5.2     
+#> [41] km.ci_0.5-6        nlme_3.1-168       tidyselect_1.2.1   digest_0.6.39     
+#> [45] purrr_1.2.0        labeling_0.4.3     splines_4.5.3      fastmap_1.2.0     
+#> [49] grid_4.5.3         magrittr_2.0.5     broom_1.0.10       withr_3.0.2       
+#> [53] scales_1.4.0       backports_1.5.1    rmarkdown_2.31     otel_0.2.0        
+#> [57] gridExtra_2.3      ggsignif_0.6.4     zoo_1.8-14         ragg_1.5.0        
+#> [61] evaluate_1.0.5     KMsurv_0.1-6       doParallel_1.0.17  viridisLite_0.4.2 
+#> [65] mgcv_1.9-4         survMisc_0.5.6     rlang_1.1.7        Rcpp_1.1.1-1.1    
+#> [69] isoband_0.2.7      xtable_1.8-4       glue_1.8.1         rstudioapi_0.19.0 
+#> [73] jsonlite_2.0.0     R6_2.6.1           systemfonts_1.3.1  fs_2.1.0
 ```
 
 \`\`\`

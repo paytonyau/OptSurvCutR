@@ -163,7 +163,7 @@ rank order statistics arising in its consideration. *Cancer
 Chemotherapy Reports*, 50(3).
 
 Mebane Jr, W. R., & Sekhon, J. S. (2011). Genetic
-Optimization Using Derivatives: The rgenoud Package for R.
+Optimisation Using Derivatives: The rgenoud Package for R.
 *Journal of Statistical Software*, 42, 1–26.
 \doi{10.18637/jss.v042.i11}
 }

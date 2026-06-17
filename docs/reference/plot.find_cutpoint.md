@@ -56,16 +56,19 @@ A `ggplot` canvas object, a multi-panel `patchwork` collection, or a
 ## Examples
 
 ``` r
-# Build clean local simulation objects with an explicit survival risk split
-set.seed(123)
-mock_df <- data.frame(
-  time   = c(runif(15, 50, 100), runif(15, 5, 25)),
-  event  = rep(1, 30),
-  factor = c(rnorm(15, 5, 0.5), rnorm(15, 15, 0.5))
-)
-res <- find_cutpoint(
-  mock_df, "factor", "time", "event",
-  num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 3
-)
-p <- plot(res, type = "distribution")
+if (requireNamespace("survival", quietly = TRUE)) {
+  library(survival)
+  # Build clean local simulation objects with an explicit survival risk split
+  set.seed(123)
+  mock_df <- data.frame(
+    time   = c(runif(15, 50, 100), runif(15, 5, 25)),
+    event  = rep(1, 30),
+    factor = c(rnorm(15, 5, 0.5), rnorm(15, 15, 0.5))
+  )
+  res <- find_cutpoint(
+    mock_df, "factor", "time", "event",
+    num_cuts = 1, method = "systematic", quiet = TRUE, nmin = 3
+  )
+  p <- plot(res, type = "distribution")
+}
 ```

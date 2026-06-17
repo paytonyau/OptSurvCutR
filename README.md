@@ -10,10 +10,15 @@
 
 ## What's New in Version 0.10.0
 We have significantly overhauled the validation and diagnostic engines to ensure your discovered thresholds are mathematically stable, rOpenSci-compliant, and ready for publication:
+
 * **Integer Index-Space Mapping:** Replaced continuous floating-point search spaces with a discrete, bounded integer lattice mapped directly to sorted unique data indices. This shifts the engine mathematics from an infinite decimal space to a finite spectrum of actual observations, eliminating micro-decimal overfitting and stochastic seed drift.
+
 * **The Four-Tier Stability Assessment:** Bootstrap validation now automatically grades thresholds into four distinct tiers (Optimal, Distinct, Caution, and Unstable) based on confidence interval width and overlap metrics.
+
 * **Automated Schoenfeld Diagnostics:** The package now evaluates time-varying effects natively during the optimisation phase to ensure your thresholds do not violate the proportional hazards assumption.
+
 * **Enhanced Parameter Controls:** Fine-tune the underlying genetic algorithm using minimum group size (`nmin`) wedges and soft boundaries to rescue unstable thresholds and control for overfitting.
+
 * **Continuous 2D Contour Validation Landscapes:** Added native S3 routing support to project complex, multi-dimensional bootstrap distribution horizons onto smooth contour peaks.
 
 ## Why OptSurvCutR?

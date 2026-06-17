@@ -15,7 +15,7 @@ plot_optimisation_curve(cutpoint_result, ...)
 A valid \code{ggplot} object detailing evaluation statistics vs coordinates.
 }
 \description{
-Plots the metric landscape evaluated across coordinates. Maps a 1D optimization line
+Plots the metric landscape evaluated across coordinates. Maps a 1D optimisation line
 for 1-cut systematic setups, or a 2D topographic grid profile for 2-cut layouts.
 }
 \section{srrstats compliance}{
