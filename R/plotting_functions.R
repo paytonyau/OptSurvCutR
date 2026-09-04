@@ -49,7 +49,7 @@ theme_optsurv <- function(base_size = 14) {
 #'
 #' @param x A \code{find_cutpoint} result object.
 #' @param type Plot framework type: \code{"outcome"}, \code{"distribution"}, \code{"forest"},
-#'         \code{"surface"}, \code{"trajectory"}, \code{"diagnostic"}, or \code{"landmark"}.
+#'         \code{"surface"}, \code{"diagnostic"}, or \code{"landmark"}.
 #' @param return_data Logical. If \code{TRUE}, exits the router early and returns the
 #'        assigned underlying data frame template.
 #' @param landmark Numeric. The operational milestone timestamp used if \code{type = "landmark"}.
@@ -83,8 +83,7 @@ theme_optsurv <- function(base_size = 14) {
 plot.find_cutpoint <- function(
   x, type = c(
     "outcome", "distribution", "forest",
-    "surface", "trajectory",
-    "diagnostic", "landmark"
+    "surface", "diagnostic", "landmark"
   ),
   return_data = FALSE, landmark = NULL, ...
 ) {
@@ -114,7 +113,6 @@ plot.find_cutpoint <- function(
     "distribution" = .plot_density_cuts(x, df, ...),
     "forest"       = .plot_hr_forest(x, df, ...),
     "surface"      = plot_optimisation_curve(x, ...),
-    "trajectory"   = .plot_genetic_trajectory(x, ...),
     "diagnostic"   = plot_cutpoint_residuals(x, ...),
     "landmark"     = plot_landmark_stratification(x, landmark = landmark, ...)
   )
@@ -134,50 +132,39 @@ plot.find_cutpoint <- function(
 #' .
 #' @srrstats {RE6.2} Visualises the continuous fitted values and optimisation landscape of the model.
 #'
-#' @importFrom ggplot2 ggplot aes geom_line geom_vline geom_hline labs geom_tile scale_fill_viridis_c scale_color_manual element_blank
+#' @importFrom ggplot2 ggplot aes geom_line geom_vline geom_hline labs geom_tile scale_fill_viridis_c scale_color_manual element_blank geom_text scale_x_continuous scale_y_continuous
 #' @importFrom rlang .data
 #' @importFrom cli cli_abort
 #' @export
-#' @examples
-#' if (requireNamespace("survival", quietly = TRUE)) {
-#'   library(survival)
-#'   # Build clean simulation objects using a 2-cut systematic search
-#'   # to populate the 2D grid matrix log array
-#'   set.seed(123)
-#'   mock_df <- data.frame(
-#'     time   = c(runif(10, 50, 100), runif(10, 20, 60), runif(10, 5, 25)),
-#'     event  = rep(1, 30),
-#'     factor = c(rnorm(10, 2, 0.2), rnorm(10, 7, 0.2), rnorm(10, 15, 0.2))
-#'   )
-#'   res <- find_cutpoint(
-#'     mock_df, "factor", "time", "event",
-#'     num_cuts = 2, method = "systematic", quiet = TRUE, nmin = 3
-#'   )
-#'   p <- plot_optimisation_curve(res)
-#' }
 plot_optimisation_curve <- function(cutpoint_result, ...) {
   if (!inherits(cutpoint_result, "find_cutpoint")) {
     cli::cli_abort("Input must be an object from the {.fn find_cutpoint} function.")
   }
-
+  
   params <- cutpoint_result$parameters
+  
   if (params$method != "systematic") {
-    cli::cli_abort("Surface mapping (`type = 'surface'`) is only available for `method = 'systematic'`.")
+    cli::cli_abort(c(
+      "Surface mapping (`type = 'surface'`) is only available for models built using `method = 'systematic'`.",
+      "i" = "The genetic algorithm uses stochastic jumps and does not generate an evaluation grid array.",
+      "*" = "To view an optimization surface, re-run {.fn find_cutpoint} with `method = 'systematic'`."
+    ))
   }
+  
   if (is.null(cutpoint_result$all_stats) || !is.data.frame(cutpoint_result$all_stats)) {
     cli::cli_abort("The results object must contain a valid grid log array in `all_stats`.")
   }
-
+  
   plot_data <- cutpoint_result$all_stats
   criterion <- params$criterion
-
+  
   y_label <- switch(criterion,
-    "logrank" = "Log-Rank Statistic",
-    "hazard_ratio" = "Hazard Ratio",
-    "p_value" = "P-value",
-    criterion
+                    "logrank"      = "Log-Rank Statistic",
+                    "hazard_ratio" = "Hazard Ratio",
+                    "p_value"      = "P-value",
+                    criterion
   )
-
+  
   if (params$num_cuts == 1) {
     optimal_cut <- cutpoint_result$optimal_cuts[1]
     p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data$cut1, y = .data$stat)) +
@@ -188,7 +175,7 @@ plot_optimisation_curve <- function(cutpoint_result, ...) {
         x = "Cut-point Threshold Location", y = y_label
       ) +
       theme_optsurv()
-
+    
     if (!is.na(optimal_cut)) {
       p <- p + ggplot2::geom_vline(
         xintercept = optimal_cut, linetype = "dashed",
@@ -199,18 +186,44 @@ plot_optimisation_curve <- function(cutpoint_result, ...) {
       p <- p + ggplot2::geom_hline(yintercept = 1, linetype = "dotted")
     }
     return(p)
+    
   } else if (params$num_cuts == 2) {
+    # ????????? SYNCHRONIZED MATRIX COLUMN TARGETS (`c1` and `c2`) ???????????????????????????????????????????????????
     p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data$c1, y = .data$c2, fill = .data$stat)) +
-      ggplot2::geom_tile() +
+      ggplot2::geom_tile(color = "white", linewidth = 1.0) +
+      
       ggplot2::scale_fill_viridis_c(name = y_label, option = "viridis") +
       ggplot2::labs(
         title = paste("Systematic Objective Surface:", y_label),
         subtitle = paste("Optimal Matrix Peaks:", paste(round(cutpoint_result$optimal_cuts, 3), collapse = ", ")),
-        x = "Cut-point 1 Coordinate", y = "Cut-point 2 Coordinate"
+        x = "Cut-point 1 Coordinate (Lymph Node Count)", 
+        y = "Cut-point 2 Coordinate (Lymph Node Count)"
       ) +
       theme_optsurv() +
-      ggplot2::theme(panel.grid.major = ggplot2::element_blank())
+      ggplot2::theme(
+        panel.grid.major = ggplot2::element_blank(),
+        panel.grid.minor = ggplot2::element_blank()
+      )
+    
+    # Overlay clear textual values directly onto the 6 decision matrix blocks
+    if (nrow(plot_data) <= 15) {
+      p <- p + ggplot2::geom_text(
+        ggplot2::aes(
+          label = round(.data$stat, 2),
+          color = .data$stat > (max(.data$stat) * 0.7) 
+        ),
+        fontface = "bold", size = 4.5, show.legend = FALSE
+      ) +
+        ggplot2::scale_color_manual(values = c("TRUE" = "black", "FALSE" = "white"))
+    }
+    
+    # Enforce clear integer breaks across axes for discrete variables
+    p <- p + 
+      ggplot2::scale_x_continuous(breaks = function(x) unique(floor(pretty(x)))) +
+      ggplot2::scale_y_continuous(breaks = function(y) unique(floor(pretty(y))))
+    
     return(p)
+    
   } else {
     cli::cli_abort("Surface plotting is restricted to 1 or 2 cuts under systematic grid evaluations.")
   }
@@ -529,31 +542,38 @@ plot_validation <- function(validation_result,
   if (!requireNamespace("survminer", quietly = TRUE)) {
     cli::cli_abort("Package {.pkg survminer} is required to render outcome tracking charts.")
   }
-
+  
   target_formula <- stats::as.formula("survival::Surv(time, event) ~ group")
+  
+  # ????????? THE v0.11.0 SCOPING IMMUNIZATION PATCH ??????? ????????????????????????????????????????????????????????????
+  # Bind the formula environment strictly to the current execution frame.
+  # This forces downstream evaluation engines (like survminer::ggsurvplot)
+  # to resolve the symbol 'df' locally, fixing the landmark-identical plot bug.
+  environment(target_formula) <- environment() 
+  
   fit_km <- survival::survfit(target_formula, data = df)
   fit_km$call$formula <- target_formula
-
+  
   # Count the actual number of categorical risk strata present in the model fit
   num_strata <- length(names(fit_km$strata))
-
+  
   # Generate a publication-ready color spectrum that scales dynamically to match num_strata
   dynamic_palette <- if (num_strata <= 4) {
     c("#0072B2", "#D55E00", "#009E73", "#CC79A7")[1:num_strata]
   } else {
     grDevices::colorRampPalette(c("#0072B2", "#009E73", "#D55E00", "#CC79A7"))(num_strata)
   }
-
+  
   p <- survminer::ggsurvplot(fit_km,
-    data = df, title = title, xlab = xlab, ylab = ylab,
-    palette = dynamic_palette,
-    pval = TRUE, ggtheme = theme_optsurv(), ...
+                             data = df, title = title, xlab = xlab, ylab = ylab,
+                             palette = dynamic_palette,
+                             pval = TRUE, ggtheme = theme_optsurv(), ...
   )
-
+  
   if (!is.null(p$plot)) p$plot <- p$plot + theme_optsurv()
   if (!is.null(p$table)) p$table <- p$table + theme_optsurv()
   if (!is.null(p$ncensor.plot)) p$ncensor.plot <- p$ncensor.plot + theme_optsurv()
-
+  
   return(p)
 }
 
@@ -803,22 +823,4 @@ plot_validation <- function(validation_result,
     ggplot2::theme(legend.position = "bottom")
 
   return(combined_layout)
-}
-
-#' Internal helper: Placeholder for Genetic Trajectory Plots
-#'
-#' @description
-#' Intercepts calls for evolutionary trajectory tracking plots and informs the user
-#' regarding engine-specific plotting availability constraints.
-#'
-#' @inheritParams find_cutpoint
-#' @param ... Unused arguments passed down safely.
-#'
-#' @return `invisible(NULL)` cleanly.
-#'
-#' @importFrom cli cli_inform
-#' @noRd
-.plot_genetic_trajectory <- function(x, ...) {
-  cli::cli_inform("Trajectory tracking plots (`type = 'trajectory'`) are reserved for downstream optimisation tracking structures in evolutionary models.")
-  return(invisible(NULL))
 }

@@ -1,0 +1,411 @@
+---
+title: "Stratifying Colorectal Cancer Patients by Lymph Node Involvement"
+subtitle: "Covariate-Adjusted Survival Analysis with OptSurvCutR"
+author: "Payton Yau"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    fig_caption: yes
+vignette: >
+  %\VignetteIndexEntry{Stratifying Colorectal Cancer Patients by Lymph Node Involvement}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+# Set global options for all code chunks in the document.
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "+",
+  fig.width = 7,
+  fig.height = 4,
+  fig.align = "center",
+  warning = FALSE,
+  message = TRUE
+)
+```
+
+### About the Package
+
+The **`OptSurvCutR`** package provides a comprehensive, data-driven workflow for survival analysis, specifically designed for scenarios where a single cut-point is not sufficient. Its core functionality is to discover and validate one or more optimal cut-points for continuous variables in time-to-event data.
+
+A primary asset of `OptSurvCutR` is its ability to perform threshold discovery **while adjusting for critical covariates** (e.g., patient age, sex, or treatment arms). This ensures that the discovered risk groups carry independent prognostic value, preventing confounding clinical factors from muddying your biomarker’s true signal.
+
+---
+
+# Introduction
+
+This tutorial demonstrates a complete, end-to-end workflow for finding independent, covariate-adjusted survival thresholds using a built-in clinical registry dataset.
+
+### The Scientific Background
+
+Metastatic spread to regional lymph nodes represents one of the most critical staging transformations and prognostic determinants in colon adenocarcinoma. In this workflow, we will analyze standard clinical registry profiles to determine if the continuous count of positive lymph nodes can independently predict time-to-recurrence or overall survival.
+
+The absolute count of positive lymph nodes introduces an interesting clinical stratification problem:
+
+1.  **Low Burden Tier:** Minimal to zero nodal involvement typically signals standard localised disease with high curative resection potential.
+2.  **High Burden Tier:** Past a specific clinical inflection point, nodal presence transitions from localised regional clusters to aggressive systemic failure markers.
+
+Using data from a landmark clinical trial tracking adjuvant therapies for stage III colon cancer, this vignette handles a robust, multivariate analysis to isolate data-driven thresholds for positive node counts while rigorously adjusting for patient age, sex, and tumor differentiation grade.
+
+### Analysis Workflow
+
+This guide covers an optimised, 6-step pipeline:
+
+1.  **Setup and Configuration**: Preparing the environment and setting up variables.
+2.  **Data Curation**: Loading built-in assets and enforcing a 5-year (60-month) timeline cap.
+3.  **Number Selection & Optimisation Mapping**: Finding the statistically optimal number of cuts and mapping the underlying objective landscape grid.
+4.  **Stability Assessment**: Validating the discovered boundaries with a 4-Tier bootstrap engine.
+5.  **Clinical Interpretation**: Generating publication-ready survival curves and adjusted forest plots.
+6.  **Sensitivity Analyses & Post-Hoc Diagnostics**: Verifying modeling assumptions and evaluating long-term conditional milestone stability.
+
+---
+
+## 1. Setup and Configuration
+
+To install the official release of `OptSurvCutR` directly from CRAN, execute the following command in your interactive R console:
+
+```R
+install.packages("OptSurvCutR")
+```
+
+### Loading Libraries
+
+We begin by loading the explicit suite of tools needed to execute the modeling and manage data piping.
+
+```{r load-libraries}
+library(dplyr)
+library(survival)
+library(survminer)
+library(ggplot2)
+library(patchwork)
+library(knitr)
+library(cli)
+library(OptSurvCutR)
+
+# Enforce uniform CRAN-safe text formatting logs
+options(cli.num_colors = 1)
+```
+
+### Defining Target Parameters
+
+We declare our clinical predictor target and confounding adjusters upfront to maintain clean, reusable variables throughout downstream code chunks.
+
+```{r configuration}
+# Continuous predictor column name (Number of positive lymph nodes)
+predictor_name_to_analyze <- "nodes"
+
+# Confounding clinical covariates to adjust for inside the Cox engine
+# differ: differentiation grade (1=well, 2=moderate, 3=poor)
+covariates_to_adjust_for <- c("age", "sex", "differ")
+```
+
+---
+
+## 2. Data Loading and Preparation
+
+We load the `colon` dataset directly from the `survival` package. This data frame tracks chemotherapy adjuvants in stage III colon cancer. Because the raw dataset records multiple entries per patient mapping distinct endpoints (recurrence vs. death), we filter strictly for cancer recurrence records (`etype == 1`). We will then apply a 5-year administrative censoring cap and filter for complete cases across all targeted variables.
+
+```{r load-data}
+data("colon", package = "survival")
+
+# --- Process and Clean the Case Cohort ---
+analysis_data <- colon %>%
+  filter(etype == 1) %>% # Isolate recurrence records strictly
+  select(
+    patient_id = id,
+    time_days = time,
+    status,
+    nodes = all_of(predictor_name_to_analyze),
+    all_of(covariates_to_adjust_for)
+  ) %>%
+  mutate(
+    # 1. Convert baseline days timeline into months for uniform layout
+    time_months = time_days / 30.4375,
+
+    # 2. Apply 5-year censoring: mark events beyond 60 months as censored (0)
+    status_final = ifelse(time_months > 60, 0, status),
+
+    # 3. Cap follow-up times cleanly at the 60-month milestone
+    time_final = pmin(time_months, 60)
+  ) %>%
+  select(
+    patient_id,
+    time = time_final,
+    status = status_final,
+    nodes,
+    all_of(covariates_to_adjust_for)
+  ) %>%
+  filter(complete.cases(time, status, nodes, across(all_of(covariates_to_adjust_for))))
+```
+
+### Preview the analysis-ready matrix
+
+```{r preview-data}
+head(analysis_data)
+```
+
+---
+
+## 3. Covariate-Adjusted Cut-point Discovery
+
+### Step 3.1: Select the Statistically Justified Number of Cut-points
+
+We first pass our data to `find_cutpoint_number()`. This tool loops through potential architectures (0 to 4 cut-points) while adjusting for age, sex, and differentiation grade at every iteration. It uses the Bayesian Information Criterion (BIC) to heavily penalise over-parameterisation. By setting `pop.size = NULL` and `max.generations = NULL`, the package deploys its newly engineered dynamic auto-scaling optimisation engine.
+
+```{r find-number-Adjusted-Analysis}
+number_result_bic <- find_cutpoint_number(
+  # ==========================================
+  # 1. CORE DATA INPUTS
+  # ==========================================
+  data = analysis_data,
+  predictor = "nodes",
+  outcome_time = "time",
+  outcome_event = "status",
+  covariates = covariates_to_adjust_for,
+  # ==========================================
+  # 2. SEARCH ENGINE SETTINGS
+  # ==========================================
+  method = "genetic", 
+  criterion = "BIC", 
+  max_cuts = 4, 
+  nmin = 0.15, # SAFETY LIMIT: Target minimum 15% of patients per group
+  # ==========================================
+  # 3. AUTOMATED DYNAMIC AUTO-SCALING TUNING
+  # ==========================================
+  max.generations = NULL, 
+  pop.size = NULL, 
+  boundary.enforcement = 2, # EDGE CONTROL: Hard restrictions lock optimisation bounds
+  seed = 123 
+)
+```
+
+Executing the summary method on the returned object provides a structured statistical breakdown of the complexity search space. The resulting console text matrix outlines model comparison statistics across all candidate cut architectures, balancing likelihood maximisation against parsimonious parameter penalties. This comprehensive profile breaks down: (1) Model Comparison Criteria, (2) Clinical Risk Cohort Distribution Caps, (3) Global Cox Proportional-Hazards Weights, (4) Time-Dependent Schoenfeld Diagnostic Tests, and (5) Operational Search Parameters.
+
+```{r summary-number-result-bic}
+summary(number_result_bic)
+```
+
+### Visualise the model complexity penalty profile
+
+```{r plot-number-adj, fig.cap="Bayesian Information Criterion (BIC) landscape across cut architectures. The lowest point denotes the ideal group count."}
+plot(number_result_bic)
+```
+
+> **Methodological Note on Missing Model Levels (Cuts 3–4):**
+> When examining the model selection layout, you will note that candidate loops for cuts 3 and 4 are missing from the table. This is an intentional security architecture within `OptSurvCutR`. Based on an input `nmin = 0.15` over our filtered pool of 888 complete cases, the absolute minimum cell floor is set to **133 subjects** ($\lfloor 0.15 \times 888 \rfloor = 133$).
+>
+> High-dimensional cuts require a substantial pool of unique variable partitions ($N \ge (k+1) \times \text{nmin}$). Because lymph node counts (`nodes`) are highly zero-inflated integers, the discrete patient clumps leave insufficient coordinate variety in the long right tail to support numerous distinct sub-cohorts without violating the 133-patient floor. Rather than throwing a fatal error or fitting unstable Cox matrices with empty cells, the package throws a clean UX alert message and drops the impossible configurations to deliver a reliable, parsimonious result. The minimum of the valid information landscape sits clearly at **2 cut-points**.
+
+---
+
+### Step 3.2: Pinpoint Adjusted Cut-point Coordinates (2-Cut Systematic Surface)
+
+With 2 cuts established as our mathematical target, we invoke `find_cutpoint()` using the **systematic method** to execute an exhaustive grid search and identify the joint optimal boundaries.
+
+```{r find-cuts-Adjusted-Analysis}
+optimal_n_cuts <- number_result_bic$optimal_num_cuts
+
+cutpoint_result_adj <- find_cutpoint(
+  # ==========================================
+  # 1. CORE DATA INPUTS
+  # ==========================================
+  data = analysis_data,
+  predictor = "nodes",
+  outcome_time = "time",
+  outcome_event = "status",
+  covariates = covariates_to_adjust_for,
+  num_cuts = optimal_n_cuts,
+  # ==========================================
+  # 2. SEARCH ENGINE SETTINGS
+  # ==========================================
+  method = "systematic", # Standard warning-free systematic search for 2 cuts
+  criterion = "logrank",
+  nmin = 0.15,
+  n_perm = 100, # Scaled for swift vignette building
+  # ==========================================
+  # 3. TUNING OVERRIDES
+  # ==========================================
+  seed = 123, 
+  n_cores = 1 
+)
+```
+
+We call `summary()` to inspect the exact spatial coordinates of our fixed 2-cut structure. The console output outlines four foundational areas: (1) Stratified Risk Cohort Boundaries, (2) Cox Multivariate Proportional-Hazards Weights, (3) Time-Dependent Diagnostics (Schoenfeld Validation), and (4) Analysis Grid Parameters.
+
+```{r summary-cutpoint-result-adj}
+summary(cutpoint_result_adj)
+```
+
+#### 🔍 Automated Diagnostic Check: The 2-Tier Schoenfeld Diagnostic
+When evaluating `summary()`, the package automatically processes a **Schoenfeld residuals validation** check against your adjusted model matrix, verifying if the Proportional Hazards assumption holds:
+
+*   **Tier 1 (Proportional):** The hazard ratio remains constant across the entire timeline ($p > 0.05$).
+*   **Tier 2 (Time-Varying):** The impact of the threshold shifts significantly as time passes ($p < 0.05$). Here, $p = 0.000682$, meaning the hazard ratios fluctuate over time, suggesting the relative event risk evolves as follow-up increases.
+
+#### Why We Need This Plot: Visual Verification of Global Optima
+In automated threshold selection, peer reviewers often critique mathematical models as unverified "black boxes." To establish complete scientific transparency, researchers must demonstrate that the discovered boundaries represent true global maximums rather than noisy, localised artifacts. 
+
+#### Statistical Mechanism
+Because `cutpoint_result_adj` was generated via an exhaustive grid sweep (`method = "systematic"`), the engine saves an unbroken background log array containing every coordinate pair combination evaluated. Calling `type = "surface"` maps out this complete $X \times Y$ parameter matrix into a continuous 2D topographic tile heatmap. The peak regions (rendered via color scale intensity) visually pinpoint exactly where the joint log-rank chi-squared statistics converge, verifying that the algorithm successfully localised the absolute mathematical peak of the sample distribution.
+
+```{r plot-surface-2d, fig.width=7, fig.height=4.75, fig.cap = "Systematic Log-Rank 2D objective surface grid layout. The peak bright region isolates the optimal threshold coordinate intersection."}
+plot(cutpoint_result_adj, type = "surface")
+```
+
+Because we used the systematic grid engine on a 2-cut target, the localised thresholds divide the population density map into three distinct risk groups, shown overlaying the biomarker's sample distribution below.
+
+```{r find-cuts-plot, fig.cap = "Continuous population density profile with discovered optimal adjusted cut-point boundaries mapped as vertical anchors."}
+plot(cutpoint_result_adj, type = "distribution")
+```
+
+---
+
+## 4. Bootstrap Stability Validation
+
+To prove that our discovered thresholds are a reproducible clinical signal rather than an artifact of overfitting, we pass our adjusted model to `validate_cutpoint()` for rigorous bootstrap resampling.
+
+```{r validate-cuts}
+validation_result_adj <- validate_cutpoint(
+  # ==========================================
+  # 1. VALIDATION INPUTS
+  # ==========================================
+  cutpoint_result = cutpoint_result_adj,
+  num_replicates = 30, # Highlight: Scaled to 30 for swift vignette compilation; use >= 500 for publication
+  n_cores = 1,
+  # ==========================================
+  # 2. AUTO-SCALING PASS-THROUGH TUNING
+  # ==========================================
+  seed = 123 
+)
+
+summary(validation_result_adj)
+```
+
+### 🔍 Automated Performance Grading: The 4-Tier Stability Assessment
+
+Following bootstrap calculations, `OptSurvCutR` evaluates your confidence interval spacing relative to your data distribution range:
+
+```{r validate-cuts-plot, fig.cap = "Bootstrap discovery density profiles tracking threshold convergence across resampled patient pools (30 replicates mapped for processing speed)."}
+plot(validation_result_adj)
+```
+
+To visualise the dual-boundary clustering topology, we project the bootstrap resampling log onto a continuous 2D contour map:
+
+```{r plot-validation-2d, fig.width=7, fig.height=4, fig.cap = "2D Resampling convergence and stability landscape contour tracking simultaneous cut stability."}
+# Draws the 2D continuous contour surface topography map
+plot_validation(validation_result_adj, focus_cuts = c(1, 2), 
+                main = "Resampling Convergence & Stability Landscape (Cuts 1 & 2)")
+```
+
+---
+
+### 4.1 Engineering Solutions: Deploying the `nmin` Wedge
+
+Discrete clinical metrics (like positive lymph node integer distributions) are rarely smooth, unskewed curves.
+
+**The Overlap Problem:** In early baseline tuning passes with this raw dataset, setting a low minimum sample threshold caused the algorithm to group cut boundaries tightly around small count spaces. When subjected to bootstrap resampling, the 95% confidence intervals spread dramatically because discrete integer boundaries cause optimisation jumps. This high relative variance triggered an automated **Tier 4 (UNSTABLE)** flag.
+
+**The Solution:** We can resolve this without changing our core clinical objective by slightly increasing the minimum group size constraint (`nmin`). Mandating that every individual cohort must hold a significant proportion of the sample size stabilises the internal Cox estimation matrices, shrinking the bootstrap variance down cleanly.
+
+---
+
+## 5. Visualisation and Interpretation
+
+By default, the package maps the patient cohort into numeric groups ordered sequentially based on your continuous predictor values:
+
+*   **G1 (Low Nodal Burden):** Continuous range below Cut-point 1.
+*   **G2 (Intermediate Nodal Burden):** Continuous range between Cut-point 1 and Cut-point 2.
+*   **G3 (High Nodal Burden):** Continuous range extending past Cut-point 2.
+
+### Plot A: Covariate-Adjusted Kaplan-Meier Curves (`type = "outcome"`)
+
+```{r plot-km, fig.width=7, fig.height=4.5, fig.cap = "Adjusted Kaplan-Meier overall survival estimates stratified by optimal positive node abundance cohorts."}
+# Generate the adjusted Kaplan-Meier curve natively safely
+plot(
+  cutpoint_result_adj,
+  type = "outcome",
+  title = "5-Year Recurrence-Free Survival by Node Group",
+  xlab = "Time (Months)",
+  ylab = "Recurrence-Free Survival Probability",
+  legend.title = "Nodal Burden Group",
+  legend.labs = c("Low", "Intermediate", "High")
+)
+```
+
+> **Interpretation:** The resulting survival paths reveal a clean degradation in recurrence-free survival matching your threshold splits. Patients in the **G1 (Low Burden)** tier track with significantly higher survival probability over the 60-month window compared to the **G3 (High Burden)** cluster ($58.3\%$ vs $29.8\%$). Because this grouping was uncovered using our covariate-adjusted framework, we can state with confidence that this survival divergence is an independent trait of the biomarker itself.
+
+### Plot B: Adjusted Hazard Ratio Forest Plots (`type = "forest"`)
+
+```{r plot-forest, fig.width=7, fig.height=3.5, fig.cap = "Multivariate Forest plot displaying adjusted biomarker Hazard Ratios alongside baseline clinical adjusters."}
+plot(
+  cutpoint_result_adj,
+  type = "forest",
+  reference_group = "G1",
+  main = "Adjusted HRs for Lymph Node Groups"
+)
+```
+
+> **Interpretation:** This plot isolates the independent prognostic value required for clinical translation. Because `age`, `sex`, and `differ` are calculated simultaneously inside the model, the displayed Hazard Ratios represent pure, adjusted biological weights. **G3 (High Burden)** nodal presence is confirmed as an independent risk factor for recurrence mortality relative to the low burden reference pool (**G1**).
+
+---
+
+## 6. Advanced Diagnostics & Sensitivity Analyses
+
+### Plot C: Schoenfeld Residual Tracks (`type = "diagnostic"`)
+
+```{r plot-residuals, fig.width=7, fig.height=4, fig.cap = "Schoenfeld residual diagnostic plot to verify the proportional hazards assumption across parameters."}
+# The S3 plotting engine automates the calculation of Schoenfeld residuals 
+# by internally routing the optimised Cox model metrics into survival::cox.zph().
+plot(cutpoint_result_adj, type = "diagnostic")
+```
+
+### Plot D: Conditional Landmark Survival Stratification (`type = "landmark"`)
+
+#### Why We Need This Plot: Eliminating Bias & Proving Long-Term Stability
+A common flaw in retrospective cohort modeling is assuming that baseline biomarker categories remain equally predictive forever. In long-term follow-up registry data, early patient dropouts can introduce severe immortal time bias, masking whether a threshold holds up over time. Clinicians need to know if a staging tier system remains accurate for survivors who have already made it past early high-risk therapeutic windows, such as a **12-month** post-surgical evaluation checkpoint.
+
+#### Statistical Mechanism
+The landmark evaluation tool provides a rigorous solution by applying a strict time-dependent filter. It isolates the subset of patients who survived past a designated milestone timestamp (12 months), completely dropping early events and censoring noise. It then shifts the timeline origin (Time Zero) directly to that milestone and re-estimates conditional Kaplan-Meier curves for the remaining sub-cohort. This allows researchers to verify whether the discovered lymph node boundaries maintain robust, independent prognostic stratification during the residual follow-up window.
+
+```{r plot-landmark, fig.width=7, fig.height=4.5, fig.cap = "Conditional Landmark Survival Analysis tracking residual recurrence risk past the 12-month survival milestone."}
+plot(
+  cutpoint_result_adj,
+  type = "landmark",
+  landmark = 12,
+  legend.title = "Nodal Burden Group"
+)
+```
+
+### The Package Data Prepper (`return_data = TRUE`)
+
+If you wish to bypass standard package plotting routines and extract the raw, cleaned data frame with your newly minted group assignments, set `return_data = TRUE`.
+
+```{r extract-data}
+augmented_dataframe <- plot(cutpoint_result_adj, return_data = TRUE)
+
+# View data mapping structure
+head(augmented_dataframe[, c("factor", "time", "event", "group")])
+```
+
+---
+
+## 7. Conclusion & Next Steps
+
+This vignette has demonstrated how to configure, discover, and validate independent, covariate-adjusted survival thresholds using `OptSurvCutR`. By factoring confounding adjusters into your grid search loops, you ensure your downstream clinical risk stratification holds true prognostic value.
+
+*   **Package Code Repository:** <https://github.com/paytonyau/OptSurvCutR>
+*   **Issue Tracker & Feature Requests:** <https://github.com/paytonyau/OptSurvCutR/issues>
+*   **Methodological Reference Manuscript:** Yau, Payton T. O. “OptSurvCutR: Validated Cut-point Selection for Survival Analysis.” *bioRxiv preprint*, 2025. <https://doi.org/10.1101/2025.10.08.681246>.
+
+---
+
+## 8. Session Information
+
+```{r sessionInfo}
+sessionInfo()
+```

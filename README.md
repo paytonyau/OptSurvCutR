@@ -8,8 +8,8 @@
 
 `OptSurvCutR` (**Opt**imal **Surv**ival **Cut**-points **R**) provides a rigorous, reproducible, and rOpenSci-compliant framework for discovering the optimal number and location of patient stratification thresholds in time-to-event (survival) data. Designed specifically for continuous predictors (such as gene expression measurements, microbiome abundance, or clinical biomarkers), this package moves beyond arbitrary median splits to deliver fully **data-driven, covariate-adjusted stratification**.
 
-## What's New in Version 0.10.0
-We have significantly overhauled the validation and diagnostic engines to ensure your discovered thresholds are mathematically stable, rOpenSci-compliant, and ready for publication:
+## What's New in Version 0.10
+We have significantly overhauled the validation and diagnostic engines to ensure your discovered thresholds are mathematically stable, and reproducible across complex survival cohorts:
 
 * **Integer Index-Space Mapping:** Replaced continuous floating-point search spaces with a discrete, bounded integer lattice mapped directly to sorted unique data indices. This shifts the engine mathematics from an infinite decimal space to a finite spectrum of actual observations, eliminating micro-decimal overfitting and stochastic seed drift.
 
@@ -33,17 +33,19 @@ We have significantly overhauled the validation and diagnostic engines to ensure
 | **Publication-ready plots** | Renders Kaplan–Meier curves, distribution splits, forest plots, and 2D topology surfaces. |
 
 ## Installation
-You can install the development version of `OptSurvCutR` directly from GitHub. Note that the genetic algorithm optimisation (`method = "genetic"`) requires the `rgenoud` package, which should be installed separately from CRAN if you plan to search for multiple cut-points.
+Install the released version of `OptSurvCutR` from CRAN:
 
 ```r
-# Core dependencies
-install.packages(c("remotes", "survival"))
+install.packages("OptSurvCutR")
+```
 
-# Optional but highly recommended for multi-cut genetic optimisation
-install.packages("rgenoud")
+Alternatively, install the development version from GitHub:
 
-# Install the package from GitHub
-remotes::remotes::install_github("paytonyau/OptSurvCutR")
+```r
+if (!requireNamespace("remotes", quietly = TRUE)) {
+  install.packages("remotes")
+}
+remotes::install_github("paytonyau/OptSurvCutR")
 ```
 
 ## Example: Quick Workflow with Simulated Cohort Data
@@ -106,6 +108,10 @@ plot_validation(val_res, focus_cuts = c(1, 2)) # 2D Contour Elevation Stability 
 2. `find_cutpoint()`: Localises exact cut-point coordinates via systematic or genetic search, and reports Schoenfeld diagnostics.
 3. `validate_cutpoint()`: Evaluates threshold stability using bootstrap resampling and assigns an automated four-tier stability grade.
 
+## Contributing
+
+Contributions, bug reports, and pull requests are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details on code standards, local test workflows, and issue reporting.
+
 ## Resources
 - **Vignettes & Tutorials**: Run `browseVignettes("OptSurvCutR")` within your R session to access complete walk-throughs.
 - **Troubleshooting & FAQ**: Review detailed optimisation and deployment notes located directly in the `vignettes/troubleshooting.Rmd` source path.
@@ -130,3 +136,4 @@ Licensed under the GPL-3 License.
 ## Contact
 For questions, feature suggestions, or bug reports, please open an issue tracking ticket:
 https://github.com/paytonyau/OptSurvCutR/issues
+

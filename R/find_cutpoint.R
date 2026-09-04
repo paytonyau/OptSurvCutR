@@ -13,8 +13,14 @@
 #'
 #' @section srrstats compliance:
 #' .
-#' @srrstats {G1.1} Implements genetic + systematic search for optimal
-#'   multi-cutpoint survival groupings.
+#' @srrstats {G1.1} Grounded in information-theoretic model selection (AIC/BIC)
+#'   and multivariable survival optimization (Cox/log-rank) via exhaustive grid
+#'   search (k <= 2) and genetic algorithms via `rgenoud` (k > 2). Whereas tools
+#'   like `survminer` and `cutpointr` focus strictly on univariate single splits
+#'   (k = 1), OptSurvCutR optimizes multiple thresholds simultaneously under active
+#'   covariate adjustment with bootstrap stability validation. Accelerated using
+#'   base `Rcpp` (`src/matrix_factory.cpp`) for discrete index binning without external
+#'   linear algebra libraries.
 #' @srrstats {G1.0} References provided for Cox, log-rank, genetic optimisation.
 #' @srrstats {G1.3} Systematic grid search (1–2 cuts) and `rgenoud` global
 #'   optimisation documented.

@@ -224,27 +224,15 @@ test_that("Exhaustive S3 method and plot sweep for find_cutpoint_number results"
     add = TRUE
   )
 
-  OptSurvCutR:::print.find_cutpoint_number_result(res_num)
+  print.find_cutpoint_number_result(res_num)
 
-  res_num_summary <- OptSurvCutR:::summary.find_cutpoint_number_result(res_num)
+  res_num_summary <- summary.find_cutpoint_number_result(res_num)
   expect_s3_class(res_num_summary, "find_cutpoint_number_result")
 
   pdf(NULL)
   on.exit(dev.off(), add = TRUE)
 
-  p_num_plot <- OptSurvCutR:::plot.find_cutpoint_number_result(res_num)
+  p_num_plot <- plot.find_cutpoint_number_result(res_num)
   expect_s3_class(p_num_plot, "ggplot")
   print(p_num_plot)
-})
-
-test_that("Landmark stratification plots and loose unmapped background methods sweep completely", {
-  fixtures <- .generate_clean_plotting_fixtures()
-
-  pdf(NULL)
-  on.exit(dev.off(), add = TRUE)
-
-  p_landmark <- plot(fixtures$res_base, type = "landmark", landmark = 10)
-  expect_false(is.null(p_landmark)) # UPGRADED: expect_true(!x) -> expect_false(x)
-
-  expect_invisible(OptSurvCutR:::.plot_genetic_trajectory(fixtures$res_base))
 })

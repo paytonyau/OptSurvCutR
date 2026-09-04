@@ -6,8 +6,7 @@
 \usage{
 \method{plot}{find_cutpoint}(
   x,
-  type = c("outcome", "distribution", "forest", "surface", "trajectory", "diagnostic",
-    "landmark"),
+  type = c("outcome", "distribution", "forest", "surface", "diagnostic", "landmark"),
   return_data = FALSE,
   landmark = NULL,
   ...
@@ -17,7 +16,7 @@
 \item{x}{A \code{find_cutpoint} result object.}
 
 \item{type}{Plot framework type: \code{"outcome"}, \code{"distribution"}, \code{"forest"},
-\code{"surface"}, \code{"trajectory"}, \code{"diagnostic"}, or \code{"landmark"}.}
+\code{"surface"}, \code{"diagnostic"}, or \code{"landmark"}.}
 
 \item{return_data}{Logical. If \code{TRUE}, exits the router early and returns the
 assigned underlying data frame template.}

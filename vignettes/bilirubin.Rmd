@@ -17,7 +17,7 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   echo = TRUE,
-  comment = "#>",
+  comment = "+",
   fig.width = 8,
   fig.height = 4.5,
   fig.align = "center",
@@ -31,7 +31,7 @@ options(cli.num_colors = 1)
 
 ```{=html}
 <style>
-/* Explicitly restrict blockquote styling to document text bodies to shield gridtext */
+/* Restrict blockquote styling to document text bodies to shield gridtext */
   .main-container blockquote, .body-content blockquote, article blockquote {
     padding: 15px 20px;
     margin: 0 0 20px;
@@ -54,7 +54,7 @@ In clinical research, continuous biomarkers are frequently categorised into bina
 
 The **OptSurvCutR** package is designed specifically to discover mathematically optimal thresholds. The core mechanism relies on a **Genetic Algorithm**—an evolutionary search engine capable of navigating complex, multi-dimensional data landscapes to identify multiple optimal cut-points simultaneously, a task that often causes traditional grid searches to fail due to computational limits.
 
-Furthermore, the package features built-in statistical safeguards, including a two-tier Schoenfeld diagnostic check and a comprehensive four-tier validation stability system. Crucially, the optimization framework supports **covariate adjustment**. This ensures that the discovered biomarker thresholds provide independent prognostic value, even when controlling for established clinical confounders such as age, sex, or disease stage.
+Furthermore, the package features built-in statistical safeguards, including a two-tier Schoenfeld diagnostic check and a comprehensive four-tier validation stability system. Crucially, the optimisation framework supports **covariate adjustment**. This ensures that the discovered biomarker thresholds provide independent prognostic value, even when controlling for established clinical confounders such as age, sex, or disease stage.
 
 In this vignette, we apply this workflow to the classic **Mayo Clinic Primary Biliary Cholangitis (PBC)** dataset to evaluate **serum bilirubin** levels while controlling for confounding clinical factors, specifically patient age and the presence of edema.
 
@@ -79,16 +79,24 @@ Next, we load the baseline clinical dataset into memory, remove records containi
 ```{r load-data}
 data(pbc, package = "survival")
 
-# Extract complete cases for our predictor, outcome, and clinical covariates
+# Extract complete cases for predictor, outcome, and clinical covariates
 pbc_clean <- na.omit(pbc[, c("time", "status", "bili", "age", "sex", "edema")])
 
-# Define the all-cause mortality survival event (1 or 2 = endpoint, 0 = censored)
+# Define composite endpoint: Transplant-Free Survival (TFS)
+# status: 0 = censored, 1 = liver transplant, 2 = deceased
+# Patients with status 1 or 2 are coded as 1 (event); status 0 is coded as 0 (censored)
 pbc_clean$event <- as.integer(pbc_clean$status %in% c(1, 2))
 
 head(pbc_clean)
 ```
 
-> **💡 Key Insight: Managing Skewed Distributions & Confounders** \> Raw clinical laboratory values are often heavily right-skewed. Because `OptSurvCutR` evaluates survival using rank-based statistics (such as the Log-rank and Cox score tests), it relies on the *rank order* of patients rather than absolute numerical distances. This makes the algorithm mathematically robust against distributional skewness.
+> **💡 Key Insight: Multi-State Endpoints & Informative Censoring**
+> In the raw `survival::pbc` dataset, patient status is recorded with three discrete outcomes: `0` (alive/censored), `1` (received liver transplant), and `2` (deceased). `OptSurvCutR` models standard single-event survival data and requires a binary event indicator (`0` vs `1`).
+>
+> In end-stage liver disease, transplantation is allocated preferentially to the highest-risk patients. Treating transplant recipients as right-censored would introduce substantial **informative censoring bias**, artificially deflating observed hazard rates in higher bilirubin tiers. We therefore define a composite **Transplant-Free Survival (TFS)** endpoint where both death and transplantation are treated as events (`1`), while patients surviving event-free with their native liver remain censored (`0`).
+
+> **💡 Key Insight: Managing Skewed Distributions & Confounders**
+> Raw clinical laboratory values are often heavily right-skewed. Because `OptSurvCutR` evaluates survival using rank-based statistics (such as the Log-rank and Cox score tests), it relies on the *rank order* of patients rather than absolute numerical distances. This makes the algorithm mathematically robust against distributional skewness.
 >
 > By specifying `covariates = c("age", "sex", "edema")`, the optimisation routine transitions from a univariate survival split to an adjusted Cox proportional hazards framework. This guarantees that the discovered cut-points reflect true changes in baseline risk independent of age, biological sex, or the physical presentation of edema.
 
@@ -117,27 +125,27 @@ num_res <- find_cutpoint_number(
   # ==========================================
   # 1. CORE DATA & COVARIATE INPUTS
   # ==========================================
-  data = pbc_clean, # The patient dataset
-  predictor = "bili", # The continuous biomarker
-  outcome_time = "time", # Survival time column
-  outcome_event = "event", # Survival event column
-  covariates = c("age", "sex", "edema"), # Confounders to control for
+  data = pbc_clean,                       # The patient dataset
+  predictor = "bili",                     # The continuous biomarker
+  outcome_time = "time",                  # Survival time column
+  outcome_event = "event",                # Binary TFS event column
+  covariates = c("age", "sex", "edema"),  # Confounders to control for
 
   # ==========================================
   # 2. SEARCH ENGINE SETTINGS
   # ==========================================
-  method = "genetic", # The evolutionary search engine
-  criterion = "AIC", # Evaluates adjusted model fit
-  max_cuts = 5, # Test models ranging from 0 to 5 cuts
-  nmin = 0.15, # SAFETY LIMIT: Minimum 15% of patients per group
+  method = "genetic",                     # The evolutionary search engine
+  criterion = "AIC",                      # Evaluates adjusted model fit
+  max_cuts = 5,                           # Test models ranging from 0 to 5 cuts
+  nmin = 0.15,                            # SAFETY LIMIT: Minimum 15% of patients per group
 
   # ==========================================
   # 3. ADVANCED GENETIC TUNING
   # ==========================================
-  max.generations = NULL, # LIFESPAN: Number of evolutionary cycles to run
-  pop.size = NULL, # SEARCH PARTY: Number of random guesses per generation
-  boundary.enforcement = 2, # EDGE CONTROL: 2 = Soft boundary configuration
-  seed = 123 # REPRODUCIBILITY
+  max.generations = NULL,                 # LIFESPAN: Number of evolutionary cycles to run
+  pop.size = NULL,                        # SEARCH PARTY: Number of random guesses per generation
+  boundary.enforcement = 2,               # EDGE CONTROL: 2 = Soft boundary configuration
+  seed = 123                              # REPRODUCIBILITY
 )
 ```
 
@@ -184,9 +192,9 @@ cut_res <- find_cutpoint(
   # ==========================================
   method = "genetic",
   criterion = "logrank",
-  num_cuts = 3, # Setting 3 cuts for clinical tier separation
-  nmin = 0.15, # SAFETY LIMIT: Minimum patients per risk cohort
-  n_perm = 20, # Streamlined permutation cycle
+  num_cuts = 3,                          # Setting 3 cuts for clinical tier separation
+  nmin = 0.15,                           # SAFETY LIMIT: Minimum patients per risk cohort
+  n_perm = 20,                           # Streamlined permutation cycle
 
   # ==========================================
   # 3. ADVANCED GENETIC TUNING
@@ -211,7 +219,7 @@ When evaluating the `summary()` output, the package automatically calculates a S
 
 | Diagnostic Status | Statistical Property (Schoenfeld Test) | Clinical Implication |
 |:---|:---|:---|
-| **Tier 1 (Proportional)** | The proportional hazards assumption holds ($p > 0.05$). | Your cut-points remain equally predictive on Day 1 as they do on Day 1,000. Reporting a standard adjusted Hazard Ratio is valid. |
+| **Tier 1 (Proportional)** | The proportional hazards assumption holds ($p > 0.05$). | Your cut-points remain equally predictive across follow-up. Reporting a standard adjusted Hazard Ratio is valid. |
 | **Tier 2 (Time-Varying)** | The hazard ratio changes significantly over time ($p < 0.05$). | Your cut-point remains biologically valid, but its relative predictive power shifts over time. Consider reporting time-dependent Hazard Ratios. |
 
 To visualise where these calculated cut-points cross the clinical cohort, we generate a plot mapping the continuous marker distribution.
@@ -257,7 +265,7 @@ summary(val_res)
 
 ### 🔍 Automated Performance Grading: The Four-Tier Stability Assessment
 
-Following bootstrap calculations, `OptSurvCutR` evaluates both your **Precision** (Confidence Interval width relative to the overall data range) and **Validity** (absence of interval overlap), grading model health into four distinct performance tiers:
+Following bootstrap calculations, `OptSurvCutR` evaluates both **Precision** (Confidence Interval width relative to the overall data range) and **Validity** (absence of interval overlap), grading model health into four distinct performance tiers:
 
 1.  **Tier 1 (OPTIMAL):** Narrow intervals (CI Width $< 30\%$) paired with complete cohort separation.
 2.  **Tier 2 (DISTINCT):** Zero overlap between confidence zones regardless of absolute width. Thresholds may float slightly, but risk boundaries remain clear.
@@ -295,7 +303,7 @@ composition_table <- final_dataset %>%
       round(min(factor), 3), " – ", round(max(factor), 3)
     ),
     N = n(),
-    Deaths = sum(event),
+    TFS_Events = sum(event),
     Mean_Age = round(mean(age), 1),
     Edema_Rate = round(mean(edema), 2)
   )
@@ -310,7 +318,7 @@ We can plot a custom forest chart to display our adjusted hazard models relative
 ```{r plot-forest, fig.width=7, fig.height=3.5}
 plot(cut_res,
   type = "forest",
-  main = "Adjusted Mortality Hazard Ratios Relative to Group 1"
+  main = "Adjusted TFS Hazard Ratios Relative to Group 1"
 )
 ```
 
@@ -340,9 +348,9 @@ We evaluate the clear divergence in survival over time by mapping the adjusted s
 ```{r plot-km}
 plot(cut_res,
   type = "outcome",
-  title = "PBC Survival by Bilirubin Tier (Covariate Adjusted)",
+  title = "PBC Transplant-Free Survival by Bilirubin Tier (Covariate Adjusted)",
   xlab = "Follow-up Time (Days)",
-  ylab = "Overall Survival Probability",
+  ylab = "Transplant-Free Survival Probability",
   legend.title = "Bilirubin Tier"
 )
 ```
@@ -371,5 +379,3 @@ Finally, we print our system specifications, environmental packages, and runtime
 ```{r session_info}
 sessionInfo()
 ```
-
-\`\`\`

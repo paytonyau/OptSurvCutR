@@ -1,7 +1,7 @@
 Package: OptSurvCutR
 Type: Package
 Title: Optimal Survival Cut-Point Discovery for Time-to-Event Analysis with 'OptSurvCutR'
-Version: 0.10.0
+Version: 0.10.1
 Authors@R: 
     person(given = "Payton",
            family = "Yau",
@@ -55,4 +55,4 @@ Depends:
     R (>= 3.5)
 Language: en-GB
 Config/Needs/website: logo.png
-Config/roxygen2/version: 8.0.0
+Config/roxygen2/version: 8.1.0

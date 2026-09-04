@@ -17,84 +17,103 @@ export(plot_optimisation_curve)
 export(plot_validation)
 export(theme_optsurv)
 export(validate_cutpoint)
-importFrom(Rcpp,evalCpp)
-importFrom(Rcpp,sourceCpp)
-importFrom(cli,cli_abort)
-importFrom(cli,cli_alert_info)
-importFrom(cli,cli_alert_success)
-importFrom(cli,cli_alert_warning)
-importFrom(cli,cli_bullets)
-importFrom(cli,cli_h1)
-importFrom(cli,cli_h2)
-importFrom(cli,cli_inform)
-importFrom(cli,cli_progress_bar)
-importFrom(cli,cli_progress_update)
-importFrom(cli,cli_text)
-importFrom(cli,cli_warn)
+importFrom(Rcpp,
+  evalCpp,
+  sourceCpp
+)
+importFrom(cli,
+  cli_abort,
+  cli_alert_info,
+  cli_alert_success,
+  cli_alert_warning,
+  cli_bullets,
+  cli_h1,
+  cli_h2,
+  cli_inform,
+  cli_progress_bar,
+  cli_progress_update,
+  cli_text,
+  cli_warn
+)
 importFrom(doParallel,registerDoParallel)
-importFrom(foreach,"%do%")
-importFrom(foreach,"%dopar%")
-importFrom(foreach,foreach)
-importFrom(foreach,registerDoSEQ)
-importFrom(ggplot2,.data)
-importFrom(ggplot2,aes)
-importFrom(ggplot2,annotate)
-importFrom(ggplot2,element_blank)
-importFrom(ggplot2,element_line)
-importFrom(ggplot2,element_rect)
-importFrom(ggplot2,element_text)
-importFrom(ggplot2,facet_wrap)
-importFrom(ggplot2,geom_blank)
-importFrom(ggplot2,geom_col)
-importFrom(ggplot2,geom_density)
-importFrom(ggplot2,geom_density_2d)
-importFrom(ggplot2,geom_density_2d_filled)
-importFrom(ggplot2,geom_errorbar)
-importFrom(ggplot2,geom_hline)
-importFrom(ggplot2,geom_line)
-importFrom(ggplot2,geom_point)
-importFrom(ggplot2,geom_smooth)
-importFrom(ggplot2,geom_text)
-importFrom(ggplot2,geom_tile)
-importFrom(ggplot2,geom_vline)
-importFrom(ggplot2,ggplot)
-importFrom(ggplot2,labs)
-importFrom(ggplot2,margin)
-importFrom(ggplot2,rel)
-importFrom(ggplot2,scale_color_manual)
-importFrom(ggplot2,scale_fill_manual)
-importFrom(ggplot2,scale_fill_viridis_c)
-importFrom(ggplot2,scale_fill_viridis_d)
-importFrom(ggplot2,scale_x_continuous)
-importFrom(ggplot2,theme)
-importFrom(ggplot2,theme_minimal)
-importFrom(ggplot2,xlim)
+importFrom(foreach,
+  "%do%",
+  "%dopar%",
+  foreach,
+  registerDoSEQ
+)
+importFrom(ggplot2,
+  .data,
+  aes,
+  annotate,
+  element_blank,
+  element_line,
+  element_rect,
+  element_text,
+  facet_wrap,
+  geom_blank,
+  geom_col,
+  geom_density,
+  geom_density_2d,
+  geom_density_2d_filled,
+  geom_errorbar,
+  geom_hline,
+  geom_line,
+  geom_point,
+  geom_smooth,
+  geom_text,
+  geom_tile,
+  geom_vline,
+  ggplot,
+  labs,
+  margin,
+  rel,
+  scale_color_manual,
+  scale_fill_manual,
+  scale_fill_viridis_c,
+  scale_fill_viridis_d,
+  scale_x_continuous,
+  scale_y_continuous,
+  theme,
+  theme_minimal,
+  xlim
+)
 importFrom(grDevices,colorRampPalette)
-importFrom(parallel,detectCores)
-importFrom(parallel,makeCluster)
-importFrom(parallel,stopCluster)
-importFrom(patchwork,plot_layout)
-importFrom(patchwork,wrap_plots)
+importFrom(parallel,
+  detectCores,
+  makeCluster,
+  stopCluster
+)
+importFrom(patchwork,
+  plot_layout,
+  wrap_plots
+)
 importFrom(rlang,.data)
-importFrom(stats,IQR)
-importFrom(stats,aggregate)
-importFrom(stats,as.formula)
-importFrom(stats,complete.cases)
-importFrom(stats,median)
-importFrom(stats,na.omit)
-importFrom(stats,na.pass)
-importFrom(stats,pchisq)
-importFrom(stats,quantile)
-importFrom(stats,relevel)
-importFrom(stats,sd)
-importFrom(stats,symnum)
-importFrom(stats,time)
-importFrom(survival,Surv)
-importFrom(survival,cox.zph)
-importFrom(survival,coxph)
-importFrom(survival,survdiff)
-importFrom(survival,survfit)
-importFrom(tidyr,everything)
-importFrom(tidyr,pivot_longer)
+importFrom(stats,
+  IQR,
+  aggregate,
+  as.formula,
+  complete.cases,
+  median,
+  na.omit,
+  na.pass,
+  pchisq,
+  quantile,
+  relevel,
+  sd,
+  symnum,
+  time
+)
+importFrom(survival,
+  Surv,
+  cox.zph,
+  coxph,
+  survdiff,
+  survfit
+)
+importFrom(tidyr,
+  everything,
+  pivot_longer
+)
 importFrom(tools,toTitleCase)
 useDynLib(OptSurvCutR, .registration = TRUE)

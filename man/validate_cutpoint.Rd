@@ -44,7 +44,7 @@ survival (time-to-event) analysis.
 }
 
 \examples{
-\dontrun{
+\donttest{
 if (requireNamespace("survival", quietly = TRUE)) {
   library(survival)
 

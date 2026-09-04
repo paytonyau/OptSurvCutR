@@ -111,7 +111,7 @@ test_that("Run sequential overrides to log parallel blocks safely", {
 
   # 1. PATH A: Systematic Search Permutations with Active Covariates
   p_val_sys <- suppressMessages(suppressWarnings(
-    OptSurvCutR:::.run_permutations(
+    .run_permutations(
       time_vec = mock_data$time[1:25],
       censor_vec = mock_data$event[1:25],
       predictor_vec = mock_data$predictor[1:25],
@@ -124,7 +124,7 @@ test_that("Run sequential overrides to log parallel blocks safely", {
 
   # 2. PATH B: Genetic Search Permutations with Balanced Evolutionary Space
   p_val_gen <- suppressWarnings(
-    OptSurvCutR:::.run_permutations(
+    .run_permutations(
       time_vec = mock_data$time[1:30],
       censor_vec = mock_data$event[1:30],
       predictor_vec = mock_data$predictor[1:30],

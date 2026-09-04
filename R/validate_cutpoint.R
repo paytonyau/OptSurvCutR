@@ -57,7 +57,7 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' \donttest{
 #' if (requireNamespace("survival", quietly = TRUE)) {
 #'   library(survival)
 #'

@@ -228,13 +228,13 @@ test_that("S3 methods for find_cutpoint provide exhaustive branch coverage via e
 
   print(res)
 
-  sum_obj1 <- OptSurvCutR:::summary.find_cutpoint(res, show_model = TRUE, show_group_counts = TRUE)
+  sum_obj1 <- summary.find_cutpoint(res, show_model = TRUE, show_group_counts = TRUE)
   print(sum_obj1)
 
-  sum_obj2 <- OptSurvCutR:::summary.find_cutpoint(res, show_medians = TRUE, show_ph_test = TRUE)
+  sum_obj2 <- summary.find_cutpoint(res, show_medians = TRUE, show_ph_test = TRUE)
   print(sum_obj2)
 
-  sum_obj3 <- OptSurvCutR:::summary.find_cutpoint(res, show_params = FALSE)
+  sum_obj3 <- summary.find_cutpoint(res, show_params = FALSE)
   print(sum_obj3)
 
   sink(type = "message")

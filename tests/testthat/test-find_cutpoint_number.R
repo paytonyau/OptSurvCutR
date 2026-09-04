@@ -78,7 +78,7 @@ test_that("S3 methods and layout switches degrade or route gracefully", {
   ))
 
   # A. Summary Method: Test specific table configuration switches
-  sum_alt <- OptSurvCutR:::summary.find_cutpoint_number_result(
+  sum_alt <- summary.find_cutpoint_number_result(
     res_bench,
     show_comparison_table = FALSE, show_best_model_details = TRUE,
     show_group_counts = FALSE, show_medians = FALSE
@@ -156,7 +156,7 @@ test_that("S3 rendering paths adjust for non-proportional hazards and vector dim
     )
   })
 
-  expect_gt(length(capture.output(OptSurvCutR:::summary.find_cutpoint_number_result(res_ph_fail, show_ph_test = TRUE))), 0)
+  expect_gt(length(capture.output(summary.find_cutpoint_number_result(res_ph_fail, show_ph_test = TRUE))), 0)
   expect_s3_class(plot(res_ph_fail), "ggplot")
 
   # Cover early exit plot code
@@ -179,7 +179,7 @@ test_that("S3 rendering paths adjust for non-proportional hazards and vector dim
 
   suppressWarnings({
     summary_output <- capture.output(
-      OptSurvCutR:::summary.find_cutpoint_number_result(res_drop, show_best_model_details = TRUE)
+      summary.find_cutpoint_number_result(res_drop, show_best_model_details = TRUE)
     )
   })
   expect_gt(length(summary_output), 0)
