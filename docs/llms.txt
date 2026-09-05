@@ -17,11 +17,11 @@ or clinical biomarkers), this package moves beyond arbitrary median
 splits to deliver fully **data-driven, covariate-adjusted
 stratification**.
 
-## What’s New in Version 0.10.0
+## What’s New in Version 0.10
 
 We have significantly overhauled the validation and diagnostic engines
-to ensure your discovered thresholds are mathematically stable,
-rOpenSci-compliant, and ready for publication:
+to ensure your discovered thresholds are mathematically stable, and
+reproducible across complex survival cohorts:
 
 - **Integer Index-Space Mapping:** Replaced continuous floating-point
   search spaces with a discrete, bounded integer lattice mapped directly
@@ -59,21 +59,21 @@ rOpenSci-compliant, and ready for publication:
 
 ## Installation
 
-You can install the development version of `OptSurvCutR` directly from
-GitHub. Note that the genetic algorithm optimisation
-(`method = "genetic"`) requires the `rgenoud` package, which should be
-installed separately from CRAN if you plan to search for multiple
-cut-points.
+Install the released version of `OptSurvCutR` from CRAN:
 
 ``` r
-# Core dependencies
-install.packages(c("remotes", "survival"))
 
-# Optional but highly recommended for multi-cut genetic optimisation
-install.packages("rgenoud")
+install.packages("OptSurvCutR")
+```
 
-# Install the package from GitHub
-remotes::remotes::install_github("paytonyau/OptSurvCutR")
+Alternatively, install the development version from GitHub:
+
+``` r
+
+if (!requireNamespace("remotes", quietly = TRUE)) {
+  install.packages("remotes")
+}
+remotes::install_github("paytonyau/OptSurvCutR")
 ```
 
 ## Example: Quick Workflow with Simulated Cohort Data
@@ -144,6 +144,13 @@ cut-point analysis:
 3.  [`validate_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/validate_cutpoint.md):
     Evaluates threshold stability using bootstrap resampling and assigns
     an automated four-tier stability grade.
+
+## Contributing
+
+Contributions, bug reports, and pull requests are welcome! Please read
+our [Contributing
+Guide](https://paytonyau.github.io/OptSurvCutR/CONTRIBUTING.md) for
+details on code standards, local test workflows, and issue reporting.
 
 ## Resources
 
@@ -248,3 +255,5 @@ Methods for summarising analysis objects and extracting raw data.
 
 - [Analysing Clinical Survival Data with
   OptSurvCutR](https://paytonyau.github.io/OptSurvCutR/articles/bilirubin.md):
+- [Stratifying Colorectal Cancer Patients by Lymph Node
+  Involvement](https://paytonyau.github.io/OptSurvCutR/articles/crc.md):

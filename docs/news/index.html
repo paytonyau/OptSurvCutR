@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">OptSurvCutR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.10.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.10.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,7 +43,39 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.10.0" id="optsurvcutr-v0100-2026-06-17">OptSurvCutR v0.10.0 (2026-06-17)<a class="anchor" aria-label="anchor" href="#optsurvcutr-v0100-2026-06-17"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.10.1" id="optsurvcutr-v0101-2026-04-09">OptSurvCutR v0.10.1 (2026-04-09)<a class="anchor" aria-label="anchor" href="#optsurvcutr-v0101-2026-04-09"></a></h2>
+<div class="section level3">
+<h3 id="documentation--standards-compliance-0-10-1">Documentation &amp; Standards Compliance<a class="anchor" aria-label="anchor" href="#documentation--standards-compliance-0-10-1"></a></h3>
+<ul><li>
+<strong>Standards Compliance:</strong> Expanded <code>@srrstats {G1.1}</code> documentation to detail methodological foundations (BIC model selection and multivariable Cox optimization) and delineate scope from univariate single-split tools.</li>
+<li>
+<strong>C++ Backend Alignment:</strong> Updated technical documentation to reflect pure <code>Rcpp</code> implementation in <code>src/matrix_factory.cpp</code> without external linear algebra dependencies.</li>
+<li>
+<strong>Licensing &amp; Governance:</strong> Added raw GNU GPL-3 text (<code>LICENSE.md</code>), linked <code>CONTRIBUTING.md</code> in <code>README.md</code>, and calibrated README claims around software reproducibility.</li>
+<li>
+<strong>Vignettes &amp; Examples:</strong> Refreshed package metadata, vignettes, and validation examples to align directly with the current public API.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="api-changes--code-quality-0-10-1">API Changes &amp; Code Quality<a class="anchor" aria-label="anchor" href="#api-changes--code-quality-0-10-1"></a></h3>
+<ul><li>
+<strong>Plotting API Cleanup:</strong> Removed the obsolete trajectory plot route from the S3 plotting engine.</li>
+<li>
+<strong>Namespace Isolation:</strong> Refactored the test suite across <code>tests/testthat/</code> to eliminate all 40 unexported <code>OptSurvCutR:::</code> namespace calls.</li>
+<li>
+<strong>Branch Test Coverage:</strong> Added targeted unit tests exercising parameter validations, edge conditions, and branching paths in <code><a href="../reference/find_cutpoint_number.html">find_cutpoint_number()</a></code>, <code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code>, and <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code>.</li>
+<li>
+<strong>CRAN Verification:</strong> Achieved full compliance under <code>R CMD check --as-cran</code> with 0 errors, 0 warnings, and 0 notes.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="dependencies--bug-fixes-0-10-1">Dependencies &amp; Bug Fixes<a class="anchor" aria-label="anchor" href="#dependencies--bug-fixes-0-10-1"></a></h3>
+<ul><li>
+<strong>Dependency Harmonization:</strong> Classified <code>rgenoud</code> under <code>Suggests</code> with defensive runtime namespace checks and updated user documentation.</li>
+<li>
+<strong>Installation Fix:</strong> Corrected duplicated syntax in GitHub installation instructions (<code>remotes::remotes::</code> to <code>remotes::</code>).</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.10.0" id="optsurvcutr-v0100-2026-06-17">OptSurvCutR v0.10.0 (2026-06-17)<a class="anchor" aria-label="anchor" href="#optsurvcutr-v0100-2026-06-17"></a></h2><p class="text-muted">CRAN release: 2026-06-30</p>
 <div class="section level3">
 <h3 id="documentation-updates-0-10-0">Documentation Updates<a class="anchor" aria-label="anchor" href="#documentation-updates-0-10-0"></a></h3>
 <ul><li>Updated package documentation and supporting materials for clarity and consistency.</li>
@@ -320,7 +352,7 @@
 <div class="section level3">
 <h3 id="bug-fixes-0-1-9">BUG FIXES<a class="anchor" aria-label="anchor" href="#bug-fixes-0-1-9"></a></h3>
 <ul><li>
-<strong>Fixed Parallel Reproducibility:</strong> A bug in <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> that prevented true reproducibility for parallel runs (<code>n_cores &gt; 1</code>) was fixed. The function now checks for and registers the <a href="https://renozao.github.io/doRNG/" class="external-link">doRNG</a> package when a <code>seed</code> is provided, ensuring results are identical regardless of the number of cores used. The incorrect <code>set.seed(i)</code> call inside the <code>foreach</code> loop was removed.</li>
+<strong>Fixed Parallel Reproducibility:</strong> A bug in <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> that prevented true reproducibility for parallel runs (<code>n_cores &gt; 1</code>) was fixed. The function now checks for and registers the <a href="https://github.com/emilioluissaenzguillen/doRNG" class="external-link">doRNG</a> package when a <code>seed</code> is provided, ensuring results are identical regardless of the number of cores used. The incorrect <code>set.seed(i)</code> call inside the <code>foreach</code> loop was removed.</li>
 <li>
 <strong>Improved S3 Method Robustness:</strong> The <code><a href="../reference/find_cutpoint_number.html">summary.find_cutpoint_number_result()</a></code> S3 method was updated to robustly handle <code>NULL</code> values in the <code>object$parameters</code> list (e.g., <code>method = NULL</code>). This prevents potential errors if a result object is created manually or improperly and aligns its behaviour with the <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> method.</li>
 </ul></div>
@@ -475,7 +507,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

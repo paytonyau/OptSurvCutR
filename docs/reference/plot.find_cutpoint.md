@@ -11,8 +11,7 @@ stratification assets.
 # S3 method for class 'find_cutpoint'
 plot(
   x,
-  type = c("outcome", "distribution", "forest", "surface", "trajectory", "diagnostic",
-    "landmark"),
+  type = c("outcome", "distribution", "forest", "surface", "diagnostic", "landmark"),
   return_data = FALSE,
   landmark = NULL,
   ...
@@ -28,7 +27,7 @@ plot(
 - type:
 
   Plot framework type: `"outcome"`, `"distribution"`, `"forest"`,
-  `"surface"`, `"trajectory"`, `"diagnostic"`, or `"landmark"`.
+  `"surface"`, `"diagnostic"`, or `"landmark"`.
 
 - return_data:
 

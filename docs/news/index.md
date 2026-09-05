@@ -1,6 +1,49 @@
 # Changelog
 
+## OptSurvCutR v0.10.1 (2026-04-09)
+
+### Documentation & Standards Compliance
+
+- **Standards Compliance:** Expanded `@srrstats {G1.1}` documentation to
+  detail methodological foundations (BIC model selection and
+  multivariable Cox optimization) and delineate scope from univariate
+  single-split tools.
+- **C++ Backend Alignment:** Updated technical documentation to reflect
+  pure `Rcpp` implementation in `src/matrix_factory.cpp` without
+  external linear algebra dependencies.
+- **Licensing & Governance:** Added raw GNU GPL-3 text (`LICENSE.md`),
+  linked `CONTRIBUTING.md` in `README.md`, and calibrated README claims
+  around software reproducibility.
+- **Vignettes & Examples:** Refreshed package metadata, vignettes, and
+  validation examples to align directly with the current public API.
+
+### API Changes & Code Quality
+
+- **Plotting API Cleanup:** Removed the obsolete trajectory plot route
+  from the S3 plotting engine.
+- **Namespace Isolation:** Refactored the test suite across
+  `tests/testthat/` to eliminate all 40 unexported `OptSurvCutR:::`
+  namespace calls.
+- **Branch Test Coverage:** Added targeted unit tests exercising
+  parameter validations, edge conditions, and branching paths in
+  [`find_cutpoint_number()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md),
+  [`find_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint.md),
+  and
+  [`validate_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/validate_cutpoint.md).
+- **CRAN Verification:** Achieved full compliance under
+  `R CMD check --as-cran` with 0 errors, 0 warnings, and 0 notes.
+
+### Dependencies & Bug Fixes
+
+- **Dependency Harmonization:** Classified `rgenoud` under `Suggests`
+  with defensive runtime namespace checks and updated user
+  documentation.
+- **Installation Fix:** Corrected duplicated syntax in GitHub
+  installation instructions (`remotes::remotes::` to `remotes::`).
+
 ## OptSurvCutR v0.10.0 (2026-06-17)
+
+CRAN release: 2026-06-30
 
 ### Documentation Updates
 
@@ -435,10 +478,10 @@ abstract](https://rconsortium.github.io/Risk_website/Abstracts.html#payton-yau)
   [`validate_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/validate_cutpoint.md)
   that prevented true reproducibility for parallel runs (`n_cores > 1`)
   was fixed. The function now checks for and registers the
-  [doRNG](https://renozao.github.io/doRNG/) package when a `seed` is
-  provided, ensuring results are identical regardless of the number of
-  cores used. The incorrect `set.seed(i)` call inside the `foreach` loop
-  was removed.
+  [doRNG](https://github.com/emilioluissaenzguillen/doRNG) package when
+  a `seed` is provided, ensuring results are identical regardless of the
+  number of cores used. The incorrect `set.seed(i)` call inside the
+  `foreach` loop was removed.
 - **Improved S3 Method Robustness:** The
   [`summary.find_cutpoint_number_result()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md)
   S3 method was updated to robustly handle `NULL` values in the

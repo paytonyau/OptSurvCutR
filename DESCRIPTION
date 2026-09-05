@@ -3,11 +3,15 @@ Type: Package
 Title: Optimal Survival Cut-Point Discovery for Time-to-Event Analysis with 'OptSurvCutR'
 Version: 0.10.1
 Authors@R: 
-    person(given = "Payton",
-           family = "Yau",
-           role = c("aut", "cre", "cph"),
-           email = "tungon@gmail.com",
-           comment = c(ORCID = "0000-0002-3283-0370"))
+    c(person(given = "Payton",
+             family = "Yau",
+             role = c("aut", "cre", "cph"),
+             email = "tungon@gmail.com",
+             comment = c(ORCID = "0000-0002-3283-0370")),
+      person(given = "Suhirthakumar",
+             family = "Puvanendran",
+             role = "aut",
+             email = "kumar.puvan@uwl.ac.uk"))
 Description: Provides a robust workflow for optimal cut-point analysis in
     time-to-event ('survival') data. Functions determine the optimal number
     of cut-points via find_cutpoint_number(), find their precise locations

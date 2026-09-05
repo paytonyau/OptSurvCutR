@@ -7,7 +7,7 @@
 plot_optimisation_curve(cutpoint_result, ...)
 }
 \arguments{
-\item{cutpoint_result}{A \code{find_cutpoint} object.}
+\item{cutpoint_result}{A \code{find_cutpoint} object generated with \code{method = "systematic"}.}
 
 \item{...}{Unused dots.}
 }
@@ -23,3 +23,23 @@ for 1-cut systematic setups, or a 2D topographic grid profile for 2-cut layouts.
 .
 }
 
+\examples{
+library(survival)
+data(pbc, package = "survival")
+pbc_sub <- na.omit(pbc[1:60, c("time", "status", "bili")])
+pbc_sub$event <- as.integer(pbc_sub$status \%in\% c(1, 2))
+
+# Execute a minimal 1-cut systematic search to generate the grid landscape
+res <- find_cutpoint(
+  data          = pbc_sub,
+  predictor     = "bili",
+  outcome_time  = "time",
+  outcome_event = "event",
+  num_cuts      = 1,
+  method        = "systematic"
+)
+
+# Plot the 1D metric optimisation curve
+plot_optimisation_curve(res)
+
+}

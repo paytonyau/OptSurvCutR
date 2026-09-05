@@ -124,7 +124,7 @@ plot.find_cutpoint <- function(
 #' Plots the metric landscape evaluated across coordinates. Maps a 1D optimisation line
 #' for 1-cut systematic setups, or a 2D topographic grid profile for 2-cut layouts.
 #'
-#' @param cutpoint_result A \code{find_cutpoint} object.
+#' @param cutpoint_result A \code{find_cutpoint} object generated with \code{method = "systematic"}.
 #' @param ... Unused dots.
 #' @return A valid \code{ggplot} object detailing evaluation statistics vs coordinates.
 #'
@@ -132,98 +132,139 @@ plot.find_cutpoint <- function(
 #' .
 #' @srrstats {RE6.2} Visualises the continuous fitted values and optimisation landscape of the model.
 #'
-#' @importFrom ggplot2 ggplot aes geom_line geom_vline geom_hline labs geom_tile scale_fill_viridis_c scale_color_manual element_blank geom_text scale_x_continuous scale_y_continuous
-#' @importFrom rlang .data
+#' @examples
+#' library(survival)
+#' data(pbc, package = "survival")
+#' pbc_sub <- na.omit(pbc[1:60, c("time", "status", "bili")])
+#' pbc_sub$event <- as.integer(pbc_sub$status %in% c(1, 2))
+#'
+#' # Execute a minimal 1-cut systematic search to generate the grid landscape
+#' res <- find_cutpoint(
+#'   data          = pbc_sub,
+#'   predictor     = "bili",
+#'   outcome_time  = "time",
+#'   outcome_event = "event",
+#'   num_cuts      = 1,
+#'   method        = "systematic"
+#' )
+#'
+#' # Plot the 1D metric optimisation curve
+#' plot_optimisation_curve(res)
+#'
+#' @importFrom ggplot2 ggplot aes geom_line geom_vline geom_hline labs geom_tile
+#'   scale_fill_viridis_c scale_color_manual element_blank geom_text
+#'   scale_x_continuous scale_y_continuous theme
+#' @importFrom rlang .data sym
 #' @importFrom cli cli_abort
 #' @export
 plot_optimisation_curve <- function(cutpoint_result, ...) {
   if (!inherits(cutpoint_result, "find_cutpoint")) {
     cli::cli_abort("Input must be an object from the {.fn find_cutpoint} function.")
   }
-  
+
   params <- cutpoint_result$parameters
-  
+
   if (params$method != "systematic") {
     cli::cli_abort(c(
       "Surface mapping (`type = 'surface'`) is only available for models built using `method = 'systematic'`.",
-      "i" = "The genetic algorithm uses stochastic jumps and does not generate an evaluation grid array.",
+      "i" = "The genetic algorithm uses stochastic jumps and does not generate an exhaustive evaluation grid array.",
       "*" = "To view an optimization surface, re-run {.fn find_cutpoint} with `method = 'systematic'`."
     ))
   }
-  
-  if (is.null(cutpoint_result$all_stats) || !is.data.frame(cutpoint_result$all_stats)) {
-    cli::cli_abort("The results object must contain a valid grid log array in `all_stats`.")
+
+  if (is.null(cutpoint_result$all_stats) || !is.data.frame(cutpoint_result$all_stats) || nrow(cutpoint_result$all_stats) == 0) {
+    cli::cli_abort("The results object must contain a valid, non-empty grid log array in `all_stats`.")
   }
-  
+
   plot_data <- cutpoint_result$all_stats
   criterion <- params$criterion
-  
+
   y_label <- switch(criterion,
                     "logrank"      = "Log-Rank Statistic",
                     "hazard_ratio" = "Hazard Ratio",
                     "p_value"      = "P-value",
-                    criterion
+                    if (!is.null(criterion)) criterion else "Statistic"
   )
-  
+
+  pred_label <- if (!is.null(params$predictor)) paste0(" (", params$predictor, ")") else ""
+
   if (params$num_cuts == 1) {
+    # Resolve 1-cut coordinate column defensively ('cut1' or 'c1')
+    coord_col <- intersect(c("cut1", "c1"), names(plot_data))[1]
+    if (is.na(coord_col)) {
+      cli::cli_abort("Could not find coordinate column (`cut1` or `c1`) in `all_stats`.")
+    }
+
     optimal_cut <- cutpoint_result$optimal_cuts[1]
-    p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data$cut1, y = .data$stat)) +
+
+    p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data[[coord_col]], y = .data$stat)) +
       ggplot2::geom_line(color = "#0072B2", linewidth = 1.2) +
       ggplot2::labs(
-        title = paste(y_label, "vs. Cut-point Coordinate"),
+        title    = paste(y_label, "vs. Cut-point Coordinate"),
         subtitle = paste("Optimal cut-point discovered at:", round(optimal_cut, 3)),
-        x = "Cut-point Threshold Location", y = y_label
+        x        = paste0("Cut-point Threshold Location", pred_label),
+        y        = y_label
       ) +
       theme_optsurv()
-    
+
     if (!is.na(optimal_cut)) {
       p <- p + ggplot2::geom_vline(
         xintercept = optimal_cut, linetype = "dashed",
         color = "#D55E00", linewidth = 1.2
       )
     }
-    if (criterion == "hazard_ratio") {
+    if (identical(criterion, "hazard_ratio")) {
       p <- p + ggplot2::geom_hline(yintercept = 1, linetype = "dotted")
     }
+
     return(p)
-    
+
   } else if (params$num_cuts == 2) {
-    # ????????? SYNCHRONIZED MATRIX COLUMN TARGETS (`c1` and `c2`) ???????????????????????????????????????????????????
+    if (!all(c("c1", "c2", "stat") %in% names(plot_data))) {
+      cli::cli_abort("2-cut surface data requires columns `c1`, `c2`, and `stat` in `all_stats`.")
+    }
+
     p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = .data$c1, y = .data$c2, fill = .data$stat)) +
       ggplot2::geom_tile(color = "white", linewidth = 1.0) +
-      
       ggplot2::scale_fill_viridis_c(name = y_label, option = "viridis") +
       ggplot2::labs(
-        title = paste("Systematic Objective Surface:", y_label),
+        title    = paste("Systematic Objective Surface:", y_label),
         subtitle = paste("Optimal Matrix Peaks:", paste(round(cutpoint_result$optimal_cuts, 3), collapse = ", ")),
-        x = "Cut-point 1 Coordinate (Lymph Node Count)", 
-        y = "Cut-point 2 Coordinate (Lymph Node Count)"
+        x        = paste0("Cut-point 1 Coordinate", pred_label),
+        y        = paste0("Cut-point 2 Coordinate", pred_label)
       ) +
       theme_optsurv() +
       ggplot2::theme(
         panel.grid.major = ggplot2::element_blank(),
         panel.grid.minor = ggplot2::element_blank()
       )
-    
-    # Overlay clear textual values directly onto the 6 decision matrix blocks
+
+    # Overlay numeric values on coarse grids (<= 15 cells)
     if (nrow(plot_data) <= 15) {
+      max_stat <- max(plot_data$stat, na.rm = TRUE)
       p <- p + ggplot2::geom_text(
         ggplot2::aes(
           label = round(.data$stat, 2),
-          color = .data$stat > (max(.data$stat) * 0.7) 
+          color = .data$stat > (max_stat * 0.7)
         ),
         fontface = "bold", size = 4.5, show.legend = FALSE
       ) +
         ggplot2::scale_color_manual(values = c("TRUE" = "black", "FALSE" = "white"))
     }
-    
-    # Enforce clear integer breaks across axes for discrete variables
-    p <- p + 
-      ggplot2::scale_x_continuous(breaks = function(x) unique(floor(pretty(x)))) +
-      ggplot2::scale_y_continuous(breaks = function(y) unique(floor(pretty(y))))
-    
+
+    # Dynamically enforce integer ticks ONLY if coordinates are strictly integers
+    is_discrete_c1 <- all(abs(plot_data$c1 - round(plot_data$c1)) < .Machine$double.eps^0.5, na.rm = TRUE)
+    is_discrete_c2 <- all(abs(plot_data$c2 - round(plot_data$c2)) < .Machine$double.eps^0.5, na.rm = TRUE)
+
+    if (is_discrete_c1) {
+      p <- p + ggplot2::scale_x_continuous(breaks = function(x) unique(floor(pretty(x))))
+    }
+    if (is_discrete_c2) {
+      p <- p + ggplot2::scale_y_continuous(breaks = function(y) unique(floor(pretty(y))))
+    }
+
     return(p)
-    
+
   } else {
     cli::cli_abort("Surface plotting is restricted to 1 or 2 cuts under systematic grid evaluations.")
   }
@@ -542,38 +583,38 @@ plot_validation <- function(validation_result,
   if (!requireNamespace("survminer", quietly = TRUE)) {
     cli::cli_abort("Package {.pkg survminer} is required to render outcome tracking charts.")
   }
-  
+
   target_formula <- stats::as.formula("survival::Surv(time, event) ~ group")
-  
+
   # ????????? THE v0.11.0 SCOPING IMMUNIZATION PATCH ??????? ????????????????????????????????????????????????????????????
   # Bind the formula environment strictly to the current execution frame.
   # This forces downstream evaluation engines (like survminer::ggsurvplot)
   # to resolve the symbol 'df' locally, fixing the landmark-identical plot bug.
-  environment(target_formula) <- environment() 
-  
+  environment(target_formula) <- environment()
+
   fit_km <- survival::survfit(target_formula, data = df)
   fit_km$call$formula <- target_formula
-  
+
   # Count the actual number of categorical risk strata present in the model fit
   num_strata <- length(names(fit_km$strata))
-  
+
   # Generate a publication-ready color spectrum that scales dynamically to match num_strata
   dynamic_palette <- if (num_strata <= 4) {
     c("#0072B2", "#D55E00", "#009E73", "#CC79A7")[1:num_strata]
   } else {
     grDevices::colorRampPalette(c("#0072B2", "#009E73", "#D55E00", "#CC79A7"))(num_strata)
   }
-  
+
   p <- survminer::ggsurvplot(fit_km,
                              data = df, title = title, xlab = xlab, ylab = ylab,
                              palette = dynamic_palette,
                              pval = TRUE, ggtheme = theme_optsurv(), ...
   )
-  
+
   if (!is.null(p$plot)) p$plot <- p$plot + theme_optsurv()
   if (!is.null(p$table)) p$table <- p$table + theme_optsurv()
   if (!is.null(p$ncensor.plot)) p$ncensor.plot <- p$ncensor.plot + theme_optsurv()
-  
+
   return(p)
 }
 

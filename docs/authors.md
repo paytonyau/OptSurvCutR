@@ -12,7 +12,7 @@ Source:
 
 Yau P (2026). “OptSurvCutR: Validated Cut-point Selection for Survival
 Analysis.” *bioRxiv*.
-[doi:10.1101/2025.10.08.681246](https://doi.org/10.1101/2025.10.08.681246),
+[doi:10.1101/2025.10.08.681246](https://doi.org/10.1101/2025.10.08.681246).
 Preprint posted February 8, 2026,
 <https://www.biorxiv.org/content/10.1101/2025.10.08.681246v2>.
 

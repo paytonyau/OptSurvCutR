@@ -11,7 +11,7 @@ survival (time-to-event) analysis."><meta property="og:image" content="https://p
 
     <a class="navbar-brand me-2" href="../index.html">OptSurvCutR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.10.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.10.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -110,7 +110,7 @@ original cuts, 95% CIs, bootstrap distribution, and parameters.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"survival"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span>  <span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/therneau/survival" class="external-link">survival</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
@@ -143,7 +143,66 @@ original cuts, 95% CIs, bootstrap distribution, and parameters.</p>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">val_res</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">val_res</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Running regulared systematic search for 1 cut-point(s)...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Systematic grid optimation complete.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Using random seed 123 for reproducibility.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Bootstrap `nmin` not set. Using 9 (90% of original) to improve stability.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Validating 1 cut(s) from 'systematic' search using 'logrank' over regularised coordinate lattice.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Running 25 replicates sequentially (n_cores = 1).</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> 25 replicates completed.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Cut-point Stability Analysis (Bootstrap)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ----------------------------------------</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Original Optimal Cut-point(s): 3.666 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Successful Replicates: 25 / 25 ( 100 %)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Failed Replicates: 0 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 95% Confidence Intervals</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ------------------------</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       Lower Upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Cut 1 3.118 5.252</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Bootstrap Summary Statistics</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ---------------------------</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      Cut  Mean    SD Median    Q1    Q3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25% Cut1 3.991 0.657  3.671 3.585 4.522</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Hint: Use `summary()` or `plot()` to visualise stability.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Cut-point Stability Analysis (Bootstrap)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ----------------------------------------</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Original Optimal Cut-point(s): 3.666 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Bootstrap Distribution Summary</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -----------------------------</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      Cut  Mean    SD Median    Q1    Q3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 25% Cut1 3.991 0.657  3.671 3.585 4.522</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 95% Confidence Intervals</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ------------------------</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       Lower Upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Cut 1 3.118 5.252</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Validation Parameters</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ---------------------</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Replicates Requested: 25 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Successful Replicates: 25 / 25 ( 100 %)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Failed Replicates: 0 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Cores Used: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Seed: 123 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Minimum Group Size (nmin): 9 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Method: systematic </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Criterion: logrank </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Covariates: None </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Stability Assessment:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ---------------------</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Maximum CI Width (Relative to 10th-90th Percentile Range): <span style="font-weight: bold;">120.7%</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> Model Status: UNSTABLE (Tier 4)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> The primary source of instability is <span style="font-weight: bold;">Cut 1</span>.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> Recommendation: Reduce `num_cuts` or increase `nmin`.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-plt img"><img src="validate_cutpoint-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -155,7 +214,7 @@ original cuts, 95% CIs, bootstrap distribution, and parameters.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>

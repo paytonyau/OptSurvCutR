@@ -88,7 +88,10 @@ importFrom(patchwork,
   plot_layout,
   wrap_plots
 )
-importFrom(rlang,.data)
+importFrom(rlang,
+  .data,
+  sym
+)
 importFrom(stats,
   IQR,
   aggregate,

@@ -14,7 +14,7 @@ plot_optimisation_curve(cutpoint_result, ...)
 
 - cutpoint_result:
 
-  A `find_cutpoint` object.
+  A `find_cutpoint` object generated with `method = "systematic"`.
 
 - ...:
 
@@ -31,20 +31,26 @@ A valid `ggplot` object detailing evaluation statistics vs coordinates.
 ## Examples
 
 ``` r
-if (requireNamespace("survival", quietly = TRUE)) {
-  library(survival)
-  # Build clean simulation objects using a 2-cut systematic search
-  # to populate the 2D grid matrix log array
-  set.seed(123)
-  mock_df <- data.frame(
-    time   = c(runif(10, 50, 100), runif(10, 20, 60), runif(10, 5, 25)),
-    event  = rep(1, 30),
-    factor = c(rnorm(10, 2, 0.2), rnorm(10, 7, 0.2), rnorm(10, 15, 0.2))
-  )
-  res <- find_cutpoint(
-    mock_df, "factor", "time", "event",
-    num_cuts = 2, method = "systematic", quiet = TRUE, nmin = 3
-  )
-  p <- plot_optimisation_curve(res)
-}
+library(survival)
+data(pbc, package = "survival")
+pbc_sub <- na.omit(pbc[1:60, c("time", "status", "bili")])
+pbc_sub$event <- as.integer(pbc_sub$status %in% c(1, 2))
+
+# Execute a minimal 1-cut systematic search to generate the grid landscape
+res <- find_cutpoint(
+  data          = pbc_sub,
+  predictor     = "bili",
+  outcome_time  = "time",
+  outcome_event = "event",
+  num_cuts      = 1,
+  method        = "systematic"
+)
+#> ℹ Running regulared systematic search for 1 cut-point(s)...
+#> ✔ Systematic grid optimation complete.
+
+# Plot the 1D metric optimisation curve
+plot_optimisation_curve(res)
+#> Warning: Removed 41 rows containing missing values or values outside the scale range
+#> (`geom_line()`).
+
 ```

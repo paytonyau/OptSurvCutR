@@ -215,7 +215,7 @@ if (requireNamespace("survival", quietly = TRUE)) {
 #> No valid cut-points found for 1 cut(s).
 #> ℹ Profiling IC surface for 2 cut-point(s)...
 #> No valid cut-points found for 2 cut(s).
-#> ! All tested model cut-points violated localized subgroup size constraints during runtime search iterations.
+#> ! All tested model cut-points violated localised subgroup size constraints during runtime search iterations.
 #> 
 #> ── Optimal Cut-point Number Analysis (Systematic) ──────────────────────────────
 #> ✔ Best Model: 0 Cut-points (Criterion: BIC)

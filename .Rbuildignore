@@ -14,3 +14,4 @@
 ^cran-comments\.md$
 ^\.positai$
 ^\.claude$
+^LICENSE\.md$

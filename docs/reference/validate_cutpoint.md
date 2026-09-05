@@ -61,7 +61,7 @@ CIs, bootstrap distribution, and parameters.
 ## Examples
 
 ``` r
-if (FALSE) { # \dontrun{
+# \donttest{
 if (requireNamespace("survival", quietly = TRUE)) {
   library(survival)
 
@@ -94,5 +94,64 @@ if (requireNamespace("survival", quietly = TRUE)) {
   summary(val_res)
   plot(val_res)
 }
-} # }
+#> ℹ Running regulared systematic search for 1 cut-point(s)...
+#> ✔ Systematic grid optimation complete.
+#> ℹ Using random seed 123 for reproducibility.
+#> ℹ Bootstrap `nmin` not set. Using 9 (90% of original) to improve stability.
+#> ℹ Validating 1 cut(s) from 'systematic' search using 'logrank' over regularised coordinate lattice.
+#> ℹ Running 25 replicates sequentially (n_cores = 1).
+#> ✔ 25 replicates completed.
+#> Cut-point Stability Analysis (Bootstrap)
+#> ----------------------------------------
+#> Original Optimal Cut-point(s): 3.666 
+#> Successful Replicates: 25 / 25 ( 100 %)
+#> Failed Replicates: 0 
+#> 
+#> 95% Confidence Intervals
+#> ------------------------
+#>       Lower Upper
+#> Cut 1 3.118 5.252
+#> 
+#> Bootstrap Summary Statistics
+#> ---------------------------
+#>      Cut  Mean    SD Median    Q1    Q3
+#> 25% Cut1 3.991 0.657  3.671 3.585 4.522
+#> 
+#> Hint: Use `summary()` or `plot()` to visualise stability.
+#> Cut-point Stability Analysis (Bootstrap)
+#> ----------------------------------------
+#> Original Optimal Cut-point(s): 3.666 
+#> 
+#> Bootstrap Distribution Summary
+#> -----------------------------
+#>      Cut  Mean    SD Median    Q1    Q3
+#> 25% Cut1 3.991 0.657  3.671 3.585 4.522
+#> 
+#> 95% Confidence Intervals
+#> ------------------------
+#>       Lower Upper
+#> Cut 1 3.118 5.252
+#> 
+#> Validation Parameters
+#> ---------------------
+#> Replicates Requested: 25 
+#> Successful Replicates: 25 / 25 ( 100 %)
+#> Failed Replicates: 0 
+#> Cores Used: 1 
+#> Seed: 123 
+#> Minimum Group Size (nmin): 9 
+#> Method: systematic 
+#> Criterion: logrank 
+#> Covariates: None 
+#> 
+#> 
+#> Stability Assessment:
+#> ---------------------
+#> Maximum CI Width (Relative to 10th-90th Percentile Range): 120.7%
+#> ✖ Model Status: UNSTABLE (Tier 4)
+#> ! The primary source of instability is Cut 1.
+#> ✖ Recommendation: Reduce `num_cuts` or increase `nmin`.
+#> 
+
+# }
 ```

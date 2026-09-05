@@ -1,4 +1,9 @@
-# Instruct GitHub to treat all C++ files as documentation/vendor overrides
-src/*.cpp linguist-documentation=true
-src/*.h   linguist-documentation=true
-src/*.hpp linguist-documentation=true
+# Ensure C++ source files are actively counted in language statistics
+src/*.cpp linguist-detectable=true linguist-language=C++
+src/*.h   linguist-detectable=true linguist-language=C++
+src/*.hpp linguist-detectable=true linguist-language=C++
+
+# Exclude pkgdown website files and CSS from language statistics
+docs/** linguist-documentation
+*.css linguist-vendored
+*.min.css linguist-vendored
