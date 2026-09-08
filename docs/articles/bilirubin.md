@@ -202,7 +202,7 @@ cut_res <- find_cutpoint(
   nmin = 0.15,
   n_perm = 20,          # low for build speed; use >= 1000 when reporting
   max.generations = NULL, pop.size = NULL,
-  boundary.enforcement = 2, seed = 123, n_cores = 2
+  boundary.enforcement = 2, seed = 123, n_cores = 1
 )
 + ℹ nmin 0.15 is a proportion. Min. group size set to 62.
 + ℹ Starting regularised genetic search for 3 cut(s)...
@@ -284,15 +284,15 @@ lands.
 val_res <- validate_cutpoint(
   cutpoint_result = cut_res,
   num_replicates = 30,      # reduced for build speed; use >= 500 when reporting
-  n_cores = 2,
+  n_cores = 1,      # single core: vignette builds cannot use parallel workers
   max.generations = NULL, pop.size = NULL,
   boundary.enforcement = 2, seed = 123
 )
 + ℹ Using random seed 123 for reproducibility.
 + ℹ Bootstrap `nmin` not set. Using 55 (90% of original) to improve stability.
 + ℹ Validating 3 cut(s) from 'genetic' search using 'logrank' over regularised coordinate lattice.
-+ ℹ Running 30 replicates on 2 cores...
-+ ✔ 30 replicates completed.
++ ℹ Running 30 replicates sequentially (n_cores = 1).
++ Bootstrapping ■■■■                              10% | ETA: 11sBootstrapping ■■■■■                             13% | ETA: 12sBootstrapping ■■■■■■                            17% | ETA: 13sBootstrapping ■■■■■■■                           20% | ETA: 13sBootstrapping ■■■■■■■■                          23% | ETA: 12sBootstrapping ■■■■■■■■■                         27% | ETA: 12sBootstrapping ■■■■■■■■■■                        30% | ETA: 12sBootstrapping ■■■■■■■■■■■                       33% | ETA: 11sBootstrapping ■■■■■■■■■■■■                      37% | ETA: 11sBootstrapping ■■■■■■■■■■■■■                     40% | ETA: 10sBootstrapping ■■■■■■■■■■■■■■                    43% | ETA: 10sBootstrapping ■■■■■■■■■■■■■■■                   47% | ETA:  9sBootstrapping ■■■■■■■■■■■■■■■■                  50% | ETA:  9sBootstrapping ■■■■■■■■■■■■■■■■■                 53% | ETA:  8sBootstrapping ■■■■■■■■■■■■■■■■■■                57% | ETA:  7sBootstrapping ■■■■■■■■■■■■■■■■■■■               60% | ETA:  7sBootstrapping ■■■■■■■■■■■■■■■■■■■■              63% | ETA:  6sBootstrapping ■■■■■■■■■■■■■■■■■■■■■             67% | ETA:  6sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■            70% | ETA:  5sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■           73% | ETA:  5sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■          77% | ETA:  4sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■         80% | ETA:  3sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■        83% | ETA:  3sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■       87% | ETA:  2sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      90% | ETA:  2sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■     93% | ETA:  1sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    97% | ETA:  1s                                                               ✔ 30 replicates completed.
 
 summary(val_res)
 + Cut-point Stability Analysis (Bootstrap)
@@ -301,24 +301,24 @@ summary(val_res)
 + 
 + Bootstrap Distribution Summary
 + -----------------------------
-+       Cut  Mean    SD Median   Q1    Q3
-+ 25%  Cut1 0.951 0.307  0.900 0.70 1.200
-+ 25%1 Cut2 2.295 0.324  2.300 2.20 2.300
-+ 25%2 Cut3 5.703 1.120  6.021 4.95 6.487
++       Cut  Mean    SD Median    Q1    Q3
++ 25%  Cut1 0.947 0.290  0.830 0.700 1.275
++ 25%1 Cut2 2.290 0.341  2.300 2.142 2.339
++ 25%2 Cut3 5.892 1.094  6.353 5.700 6.447
 + 
 + 95% Confidence Intervals
 + ------------------------
 +       Lower Upper
-+ Cut 1 0.600 1.582
-+ Cut 2 1.845 3.082
-+ Cut 3 3.247 7.054
++ Cut 1 0.600 1.423
++ Cut 2 1.723 3.125
++ Cut 3 3.372 7.426
 + 
 + Validation Parameters
 + ---------------------
 + Replicates Requested: 30 
 + Successful Replicates: 30 / 30 ( 100 %)
 + Failed Replicates: 0 
-+ Cores Used: 2 
++ Cores Used: 1 
 + Seed: 123 
 + Minimum Group Size (nmin): 55 
 + Method: genetic 
@@ -328,9 +328,9 @@ summary(val_res)
 + 
 + Stability Assessment:
 + ---------------------
-+ Maximum CI Width (Relative to 10th-90th Percentile Range): 51.2%
++ Maximum CI Width (Relative to 10th-90th Percentile Range): 54.6%
 + ✔ Model Status: DISTINCT (Tier 2)
-+ The relative mathematical variance is moderate (51.2%), but 95% Confidence
++ The relative mathematical variance is moderate (54.6%), but 95% Confidence
 + Intervals do not overlap.
 ```
 
@@ -557,19 +557,18 @@ sessionInfo()
 +  [5] rstatix_1.1.0      lattice_0.22-9     vctrs_0.7.3        tools_4.6.1       
 +  [9] generics_0.1.4     parallel_4.6.1     tibble_3.3.1       pkgconfig_2.0.3   
 + [13] Matrix_1.7-6       RColorBrewer_1.1-3 S7_0.2.2           desc_1.4.3        
-+ [17] rngtools_1.5.2     lifecycle_1.0.5    compiler_4.6.1     farver_2.1.2      
-+ [21] textshaping_1.0.5  codetools_0.2-20   carData_3.0-6      htmltools_0.5.9   
-+ [25] sass_0.4.10        yaml_2.3.12        Formula_1.2-6      pillar_1.11.1     
-+ [29] pkgdown_2.2.1      car_3.1-5          ggpubr_1.0.0       jquerylib_0.1.4   
-+ [33] tidyr_1.3.2        MASS_7.3-66        cachem_1.1.0       survminer_0.5.2   
-+ [37] doRNG_1.8.6.3      iterators_1.0.14   rgenoud_5.9-0.11   abind_1.4-8       
-+ [41] foreach_1.5.2      nlme_3.1-170       tidyselect_1.2.1   digest_0.6.39     
-+ [45] purrr_1.2.2        labeling_0.4.3     splines_4.6.1      fastmap_1.2.0     
-+ [49] grid_4.6.1         cli_3.6.6          magrittr_2.0.5     patchwork_1.3.2   
-+ [53] broom_1.0.13       withr_3.0.3        scales_1.4.0       backports_1.5.1   
-+ [57] rmarkdown_2.31     otel_0.2.0         gridExtra_2.3.1    ggsignif_0.6.4    
-+ [61] ragg_1.5.2         evaluate_1.0.5     doParallel_1.0.17  viridisLite_0.4.3 
-+ [65] mgcv_1.9-4         rlang_1.3.0        isoband_0.3.0      Rcpp_1.1.2        
-+ [69] glue_1.8.1         rstudioapi_0.19.0  jsonlite_2.0.0     R6_2.6.1          
-+ [73] systemfonts_1.3.2  fs_2.1.0
++ [17] lifecycle_1.0.5    compiler_4.6.1     farver_2.1.2       textshaping_1.0.5 
++ [21] codetools_0.2-20   carData_3.0-6      htmltools_0.5.9    sass_0.4.10       
++ [25] yaml_2.3.12        Formula_1.2-6      pillar_1.11.1      pkgdown_2.2.1     
++ [29] car_3.1-5          ggpubr_1.0.0       jquerylib_0.1.4    tidyr_1.3.2       
++ [33] MASS_7.3-66        cachem_1.1.0       survminer_0.5.2    iterators_1.0.14  
++ [37] rgenoud_5.9-0.11   abind_1.4-8        foreach_1.5.2      nlme_3.1-170      
++ [41] tidyselect_1.2.1   digest_0.6.39      purrr_1.2.2        labeling_0.4.3    
++ [45] splines_4.6.1      fastmap_1.2.0      grid_4.6.1         cli_3.6.6         
++ [49] magrittr_2.0.5     patchwork_1.3.2    broom_1.0.13       withr_3.0.3       
++ [53] scales_1.4.0       backports_1.5.1    rmarkdown_2.31     otel_0.2.0        
++ [57] gridExtra_2.3.1    ggsignif_0.6.4     ragg_1.5.2         evaluate_1.0.5    
++ [61] doParallel_1.0.17  viridisLite_0.4.3  mgcv_1.9-4         rlang_1.3.0       
++ [65] Rcpp_1.1.2         isoband_0.3.0      glue_1.8.1         rstudioapi_0.19.0 
++ [69] jsonlite_2.0.0     R6_2.6.1           systemfonts_1.3.2  fs_2.1.0
 ```

@@ -172,7 +172,7 @@ cutpoint_result <- find_cutpoint(
   method = "systematic", criterion = "logrank",
   nmin = NMIN,
   n_perm = 100,          # low for build speed; use >= 1000 when reporting
-  seed = 123, n_cores = 2
+  seed = 123, n_cores = 1
 )
 
 summary(cutpoint_result)
@@ -221,7 +221,7 @@ within a smooth density.
 validation_result <- validate_cutpoint(
   cutpoint_result = cutpoint_result,
   num_replicates = 30,      # reduced for build speed; use >= 500 when reporting
-  n_cores = 2, seed = 123
+  n_cores = 1, seed = 123   # single core: vignette builds cannot use parallel workers
 )
 
 summary(validation_result)
@@ -263,21 +263,7 @@ least 500 replicates for any reported analysis.
 
 For the two-cut model the intervals are 1–3 and 3–6. They meet at 3, so
 adjacent groups are not cleanly separated. The lower boundary is
-reasonably precise at 28.6%; the upper one is not.
-
-Reducing to a single cut-point removes the overlap but not the width:
-
-```{r one-cut, eval=FALSE}
-cut1 <- find_cutpoint(
-  data = analysis_data, predictor = "nodes",
-  outcome_time = "time", outcome_event = "status",
-  covariates = covariates_to_adjust_for,
-  num_cuts = 1, method = "systematic", criterion = "logrank",
-  nmin = NMIN, n_perm = 1000, seed = 123, n_cores = 2
-)
-
-validate_cutpoint(cut1, num_replicates = 500, n_cores = 2, seed = 123)
-```
+reasonably precise at 28.6%; the upper one is not. 
 
 The threshold is **4 positive nodes** with a bootstrap interval of 2–6.
 The median across resamples is 4 and the interquartile range 3–4, so the

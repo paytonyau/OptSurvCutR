@@ -169,7 +169,7 @@ cut_res <- find_cutpoint(
   nmin = 0.15,
   n_perm = 20,          # low for build speed; use >= 1000 when reporting
   max.generations = NULL, pop.size = NULL,
-  boundary.enforcement = 2, seed = 123, n_cores = 2
+  boundary.enforcement = 2, seed = 123, n_cores = 1
 )
 
 summary(cut_res)
@@ -210,7 +210,7 @@ where each boundary lands.
 val_res <- validate_cutpoint(
   cutpoint_result = cut_res,
   num_replicates = 30,      # reduced for build speed; use >= 500 when reporting
-  n_cores = 2,
+  n_cores = 1,      # single core: vignette builds cannot use parallel workers
   max.generations = NULL, pop.size = NULL,
   boundary.enforcement = 2, seed = 123
 )
