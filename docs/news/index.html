@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">OptSurvCutR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.10.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.11.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -24,7 +24,8 @@
 <li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/bilirubin.html">Bilirubin Workflow</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/bilirubin.html">Bilirubin: finding and validating a threshold</a></li>
+    <li><a class="dropdown-item" href="../articles/crc.html">Lymph node burden: thresholds in a discrete predictor</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://doi.org/10.1101/2025.10.08.681246" target="_blank">Manuscript</a></li>
@@ -42,6 +43,40 @@
       <small>Source: <a href="https://github.com/paytonyau/OptSurvCutR/blob/HEAD/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.11.0" id="optsurvcutr-v0110-2026-09-08">OptSurvCutR v0.11.0 (2026-09-08)<a class="anchor" aria-label="anchor" href="#optsurvcutr-v0110-2026-09-08"></a></h2>
+<p>The validation summary now carries the predictor into the result, so relative confidence interval widths are computed against the predictor’s 10th–90th percentile spread rather than a self-referential bootstrap proxy. Stability tiers are assigned consistently and exposed through a machine-readable <code>stability</code> list. Both case study vignettes and the package documentation have been updated to reflect the revised reporting.</p>
+<div class="section level3">
+<h3 id="bug-fixes-important-0-11-0">Bug Fixes (Important)<a class="anchor" aria-label="anchor" href="#bug-fixes-important-0-11-0"></a></h3>
+<ul><li><p><strong>Stability Metric Denominator:</strong> <code><a href="../reference/plot_validation.html">summary.validate_cutpoint_result()</a></code> computed the relative confidence interval width against the bootstrap distribution of the first cut-point rather than the 10th–90th percentile range of the predictor. The cause was that <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> did not carry the <code>userdata</code> element into its returned object, so the predictor values were unavailable to the summary method and an internal fallback was silently used instead. Reported relative widths were consequently inflated by roughly an order of magnitude, and <strong>Stability Tier 1 was unreachable for any input</strong>. Stability tiers reported by version 0.10.1 and earlier should be recomputed.</p></li>
+<li><p><strong>Removal of Silent Fallbacks:</strong> The two fallback denominators (<code>bootstrap_distribution[, 1]</code> and <code>max(abs(medians))</code>) have been removed. Where the predictor values are unavailable, or where the 10th and 90th percentiles of a highly discrete predictor coincide, the relative width is now reported as undefined with a diagnostic message rather than substituted with an unrelated quantity.</p></li>
+<li><p><strong>Single Cut-point Classification:</strong> Models with one cut-point have no adjacent interval, so interval separation is undefined and <code>has_distinct_separation</code> could never evaluate to <code>TRUE</code>. Such models could therefore only be assigned Tier 1 or Tier 4. Single-threshold models are now graded on relative width alone (&lt; 30% Tier 1, 30–60% Tier 2, &gt; 60% Tier 4) and can no longer be assigned Tier 3, which requires overlap.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="api-changes-0-11-0">API Changes<a class="anchor" aria-label="anchor" href="#api-changes-0-11-0"></a></h3>
+<ul><li><p><strong>Machine-readable Stability Output:</strong> <code><a href="../reference/plot_validation.html">summary.validate_cutpoint_result()</a></code> now attaches a <code>stability</code> list to the returned object, containing <code>tier</code>, <code>tier_label</code>, <code>percent</code>, <code>max_relative_width</code>, <code>relative_widths</code> (per cut-point), <code>data_spread</code>, <code>separated</code> and <code>worst_cut</code>. Tier assignment and interval widths can now be accessed programmatically instead of parsed from console output, which supports batch screening of multiple predictors.</p></li>
+<li><p><strong>Predictor Values Retained:</strong> <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> now returns the analysis data in the <code>userdata</code> element, consistent with <code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code>.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-0-11-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-11-0"></a></h3>
+<ul><li><p><strong>Tier Classification Documentation:</strong> Clarified that the four tiers summarise two independent diagnostics — interval separation and relative width — and do not constitute an ordinal scale; whether Tier 2 or Tier 3 is preferable depends on whether separation or boundary precision matters for the intended application. Documented that the 30% and 60% boundaries are pragmatic conventions adopted for interpretability rather than calibrated thresholds.</p></li>
+<li><p><strong>Diagnostic Messaging:</strong> Where stability cannot be calculated, the message now identifies the required input (<code>userdata$factor</code>) and the conditions under which the metric is undefined.</p></li>
+<li><p><strong>Console Messages:</strong> Corrected spelling in three user-facing messages in the systematic search engine, and generalised a hard-coded message to report the number of candidate positions and cut-points actually being searched.</p></li>
+<li><p><strong>Standards Compliance:</strong> Expanded <code>@srrstats {G1.1}</code> to document the methodological origin of the approach (maximally selected rank statistics, information-theoretic model selection, multivariable Cox optimisation, and bootstrap resampling), and to clarify that the multi-threshold problem lies outside the stated scope of <code>maxstat</code>, <code>survminer</code> and <code>cutpointr</code> rather than representing a deficiency in those packages. Narrowed <code>@srrstats {G1.5}</code> to describe the comparison actually provided.</p></li>
+<li><p><strong>Vignettes:</strong> Both case study vignettes were re-run against the corrected metric and the reported stability tiers updated accordingly. Guidance on replicate counts, permutation counts and the interpretation of overlapping confidence intervals has been expanded, and clinical background added for both cohorts.</p></li>
+<li><p><strong>README:</strong> Replaced the simulated example, in which the information criterion selected zero cut-points, with the Mayo Clinic PBC analysis reported in the manuscript. Revised language describing what the bootstrap assessment establishes, and reserved claims of rOpenSci compliance until review has concluded.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="testing-0-11-0">Testing<a class="anchor" aria-label="anchor" href="#testing-0-11-0"></a></h3>
+<ul><li><p><strong>Regression Coverage:</strong> Added <code>tests/testthat/test-stability-metric.R</code>, verifying that <code>userdata</code> survives into the validation object, that the relative width is computed against the predictor’s percentile range and not the bootstrap distribution, that single-cut models are never assigned Tier 3, that undefined cases return no tier rather than an incorrect one, and that <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> returns the documented <code>stability</code> fields.</p></li>
+<li><p><strong>Reachability Test:</strong> Added an explicit test that Tier 1 is attainable for a well-separated threshold in a large sample. The defect above was characterised by an entire classification category being unreachable, which value-comparison tests alone would not have detected.</p></li>
+<li><p><strong>Workflow Integration Tests:</strong> Added <code>tests/testthat/test-workflow-integration.R</code>, which runs the three core functions in sequence and asserts that state is preserved across them: the number of thresholds located matches the number selected, one confidence interval and one relative width is reported per threshold, the predictor is identical at every stage, and covariates used during the search are reused during validation. Both defects fixed in this release were handoff failures between functions rather than faults within them, which unit tests cannot detect.</p></li>
+</ul></div>
+<div class="section level3">
+<h3 id="dependencies-0-11-0">Dependencies<a class="anchor" aria-label="anchor" href="#dependencies-0-11-0"></a></h3>
+<ul><li>No changes to package dependencies in this release.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.10.1" id="optsurvcutr-v0101-2026-04-09">OptSurvCutR v0.10.1 (2026-04-09)<a class="anchor" aria-label="anchor" href="#optsurvcutr-v0101-2026-04-09"></a></h2>
 <div class="section level3">
@@ -503,7 +538,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Payton Yau.</p>
+  <p>Developed by Payton Yau, Suhirthakumar Puvanendran.</p>
 </div>
 
 <div class="pkgdown-footer-right">

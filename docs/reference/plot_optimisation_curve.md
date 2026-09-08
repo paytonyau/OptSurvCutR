@@ -45,8 +45,8 @@ res <- find_cutpoint(
   num_cuts      = 1,
   method        = "systematic"
 )
-#> ℹ Running regulared systematic search for 1 cut-point(s)...
-#> ✔ Systematic grid optimation complete.
+#> ℹ Running regularised systematic search for 1 cut-point(s)...
+#> ✔ Systematic grid optimisation complete.
 
 # Plot the 1D metric optimisation curve
 plot_optimisation_curve(res)

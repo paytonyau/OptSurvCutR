@@ -25,6 +25,7 @@ Useful links:
 Authors:
 \itemize{
   \item Payton Yau \email{tungon@gmail.com} (\href{https://orcid.org/0000-0002-3283-0370}{ORCID}) [copyright holder]
+  \item Suhirthakumar Puvanendran \email{kumar.puvan@uwl.ac.uk} (\href{https://orcid.org/0000-0003-2346-0483}{ORCID})
 }
 
 }

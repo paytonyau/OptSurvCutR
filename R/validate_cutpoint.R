@@ -351,6 +351,10 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     confidence_intervals = ci_df,
     bootstrap_distribution = bootstrap_df,
     boot_summary = boot_summary,
+    # Carry the analysis data forward so that summary() can compute the
+    # relative CI width against the spread of the PREDICTOR. Without this,
+    # summary() falls back to an incorrect denominator.
+    userdata = cutpoint_result$userdata,
     parameters = list(
       num_replicates = num_replicates,
       successful_reps = successful_reps,

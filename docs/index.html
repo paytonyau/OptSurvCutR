@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="index.html">OptSurvCutR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.10.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.11.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,8 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes">
-<li><a class="dropdown-item" href="articles/bilirubin.html">Bilirubin Workflow</a></li>
+<li><a class="dropdown-item" href="articles/bilirubin.html">Bilirubin: finding and validating a threshold</a></li>
+    <li><a class="dropdown-item" href="articles/crc.html">Lymph node burden: thresholds in a discrete predictor</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -74,17 +75,19 @@
 </h1>
 </div>
 <p><a href="https://github.com/paytonyau/OptSurvCutR/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/paytonyau/OptSurvCutR/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a> <a href="https://lifecycle.r-lib.org/articles/stages.html#Stable" class="external-link"><img src="https://lifecycle.r-lib.org/articles/figures/lifecycle-stable.svg" alt="Lifecycle: Stable"></a> <a href="https://app.codecov.io/gh/paytonyau/OptSurvCutR" class="external-link"><img src="https://codecov.io/gh/paytonyau/OptSurvCutR/branch/main/graph/badge.svg" alt="Codecov"></a> <a href="https://www.gnu.org/licenses/gpl-3.0.html" class="external-link"><img src="https://img.shields.io/badge/License-GPL%203-blue.svg" alt="License: GPL-3"></a> <img src="reference/figures/logo.png" align="right" height="165" alt="OptSurvCutR logo"></p>
-<p><code>OptSurvCutR</code> (<strong>Opt</strong>imal <strong>Surv</strong>ival <strong>Cut</strong>-points <strong>R</strong>) provides a rigorous, reproducible, and rOpenSci-compliant framework for discovering the optimal number and location of patient stratification thresholds in time-to-event (survival) data. Designed specifically for continuous predictors (such as gene expression measurements, microbiome abundance, or clinical biomarkers), this package moves beyond arbitrary median splits to deliver fully <strong>data-driven, covariate-adjusted stratification</strong>.</p>
+<p><code>OptSurvCutR</code> (<strong>Opt</strong>imal <strong>Surv</strong>ival <strong>Cut</strong>-points <strong>R</strong>) provides a reproducible framework for identifying the number and location of patient stratification thresholds in time-to-event (survival) data, and for assessing whether those thresholds are reproducible. Designed for continuous predictors (such as gene expression measurements, microbiome abundance, or clinical biomarkers), this package moves beyond arbitrary median splits to deliver <strong>data-driven, covariate-adjusted stratification</strong>. It is developed against rOpenSci software standards and is currently under rOpenSci review.</p>
 <div class="section level2">
-<h2 id="whats-new-in-version-010">What’s New in Version 0.10<a class="anchor" aria-label="anchor" href="#whats-new-in-version-010"></a>
+<h2 id="whats-new-in-version-011">What’s New in Version 0.11<a class="anchor" aria-label="anchor" href="#whats-new-in-version-011"></a>
 </h2>
-<p>We have significantly overhauled the validation and diagnostic engines to ensure your discovered thresholds are mathematically stable, and reproducible across complex survival cohorts:</p>
+<p><strong>Important bug fix.</strong> In versions 0.10.1 and earlier, <code><a href="reference/validate_cutpoint.html">validate_cutpoint()</a></code> did not carry the predictor into its result, so <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> computed relative confidence interval widths against the bootstrap distribution of the first cut-point rather than the predictor’s 10th–90th percentile range. Reported widths were inflated and <strong>Stability Tier 1 was unreachable for any input</strong>. If you have reported a stability tier from an earlier version, please recompute it.</p>
 <ul>
-<li><p><strong>Integer Index-Space Mapping:</strong> Replaced continuous floating-point search spaces with a discrete, bounded integer lattice mapped directly to sorted unique data indices. This shifts the engine mathematics from an infinite decimal space to a finite spectrum of actual observations, eliminating micro-decimal overfitting and stochastic seed drift.</p></li>
-<li><p><strong>The Four-Tier Stability Assessment:</strong> Bootstrap validation now automatically grades thresholds into four distinct tiers (Optimal, Distinct, Caution, and Unstable) based on confidence interval width and overlap metrics.</p></li>
-<li><p><strong>Automated Schoenfeld Diagnostics:</strong> The package now evaluates time-varying effects natively during the optimisation phase to ensure your thresholds do not violate the proportional hazards assumption.</p></li>
-<li><p><strong>Enhanced Parameter Controls:</strong> Fine-tune the underlying genetic algorithm using minimum group size (<code>nmin</code>) wedges and soft boundaries to rescue unstable thresholds and control for overfitting.</p></li>
-<li><p><strong>Continuous 2D Contour Validation Landscapes:</strong> Added native S3 routing support to project complex, multi-dimensional bootstrap distribution horizons onto smooth contour peaks.</p></li>
+<li><p><strong>Corrected stability metric:</strong> Relative interval width is now computed against the predictor’s percentile spread. Where the predictor is unavailable, the width is reported as undefined rather than substituted with an unrelated quantity.</p></li>
+<li><p><strong>Machine-readable stability output:</strong> <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> attaches a <code>stability</code> list to the returned object (<code>tier</code>, <code>percent</code>, <code>relative_widths</code> per cut-point, <code>data_spread</code>, <code>separated</code>, <code>worst_cut</code>), so tiers can be read programmatically instead of parsed from console text.</p></li>
+<li><p><strong>Single cut-point grading:</strong> Interval separation is undefined with one boundary, so single-threshold models are now graded on relative width alone and can no longer be assigned Tier 3.</p></li>
+<li><p><strong>Integer Index-Space Mapping:</strong> The search operates over a discrete, bounded integer lattice mapped to sorted unique observations rather than a continuous floating-point space, restricting candidate thresholds to observed values.</p></li>
+<li><p><strong>The Four-Tier Stability Assessment:</strong> Bootstrap validation grades thresholds into four tiers (Optimal, Distinct, Caution, Unstable) from confidence interval width and overlap. The tiers summarise two independent diagnostics rather than forming an ordinal scale, and the 30% and 60% boundaries are pragmatic conventions rather than calibrated thresholds.</p></li>
+<li><p><strong>Automated Schoenfeld Diagnostics:</strong> <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> reports a test of the proportional hazards assumption alongside the fitted model.</p></li>
+<li><p><strong>2D Contour Validation Landscapes:</strong> <code><a href="reference/plot_validation.html">plot_validation()</a></code> projects the joint bootstrap distribution of two thresholds onto a contour map, showing whether they vary independently or together.</p></li>
 </ul>
 </div>
 <div class="section level2">
@@ -102,27 +105,27 @@
 <tbody>
 <tr>
 <td align="left"><strong>Optimal number of cuts</strong></td>
-<td align="left">Uses AIC, AICc, or BIC to mathematically select between <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0</mn><annotation encoding="application/x-tex">0</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math> cut-points.</td>
+<td align="left">Uses AIC, AICc, or BIC to select between <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0</mn><annotation encoding="application/x-tex">0</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math> cut-points.</td>
 </tr>
 <tr>
 <td align="left"><strong>Covariate adjustment</strong></td>
-<td align="left">Demonstrates independent prognostic value by controlling for clinical confounders.</td>
+<td align="left">Selects thresholds conditionally on clinical confounders rather than marginally.</td>
 </tr>
 <tr>
 <td align="left"><strong>Four-tier bootstrap validation</strong></td>
-<td align="left">Generates 95% confidence intervals and automated stability grading for thresholds.</td>
+<td align="left">Generates 95% confidence intervals for each threshold and an automated stability grade.</td>
 </tr>
 <tr>
 <td align="left"><strong>Schoenfeld diagnostics</strong></td>
-<td align="left">Features a two-tier warning system to verify proportional hazards assumptions.</td>
+<td align="left">Reports a two-tier test of the proportional hazards assumption for the fitted model.</td>
 </tr>
 <tr>
 <td align="left"><strong>Flexible search engines</strong></td>
-<td align="left">Supports a deterministic systematic grid or a multithreaded Genetic Algorithm (<code>rgenoud</code>).</td>
+<td align="left">Supports a deterministic systematic grid or a multithreaded genetic algorithm (<code>rgenoud</code>).</td>
 </tr>
 <tr>
 <td align="left"><strong>Publication-ready plots</strong></td>
-<td align="left">Renders Kaplan–Meier curves, distribution splits, forest plots, and 2D topology surfaces.</td>
+<td align="left">Renders Kaplan–Meier curves, distribution splits, forest plots, objective surfaces, and 2D stability maps.</td>
 </tr>
 </tbody>
 </table>
@@ -141,57 +144,75 @@
 <span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"paytonyau/OptSurvCutR"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="example-quick-workflow-with-simulated-cohort-data">Example: Quick Workflow with Simulated Cohort Data<a class="anchor" aria-label="anchor" href="#example-quick-workflow-with-simulated-cohort-data"></a>
+<h2 id="example-serum-bilirubin-in-primary-biliary-cholangitis">Example: Serum Bilirubin in Primary Biliary Cholangitis<a class="anchor" aria-label="anchor" href="#example-serum-bilirubin-in-primary-biliary-cholangitis"></a>
 </h2>
+<p>This example uses the Mayo Clinic PBC trial cohort supplied with the <code>survival</code> package, and reproduces the analysis reported in the manuscript.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/paytonyau/OptSurvCutR" class="external-link">OptSurvCutR</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/therneau/survival" class="external-link">survival</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Generate a reproducible, synthetic survival dataset</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span>
-<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">200</span></span>
-<span><span class="va">crc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span></span>
-<span>  abundance <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span>, mean <span class="op">=</span> <span class="fl">5</span>, sd <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,</span>
-<span>  age <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span>, mean <span class="op">=</span> <span class="fl">60</span>, sd <span class="op">=</span> <span class="fl">10</span><span class="op">)</span>,</span>
-<span>  <span class="co"># Generate survival times influenced by biomarker abundance</span></span>
-<span>  time <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Exponential.html" class="external-link">rexp</a></span><span class="op">(</span><span class="va">n</span>, rate <span class="op">=</span> <span class="fl">0.05</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">exp</a></span><span class="op">(</span><span class="fl">0.3</span> <span class="op">*</span> <span class="op">(</span><span class="va">abundance</span> <span class="op">&gt;</span> <span class="fl">5.5</span><span class="op">)</span> <span class="op">+</span> <span class="fl">0.02</span> <span class="op">*</span> <span class="va">age</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  event <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">TRUE</span>, prob <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.3</span>, <span class="fl">0.7</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">time</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"pbc"</span>, package <span class="op">=</span> <span class="st">"survival"</span><span class="op">)</span></span>
+<span><span class="va">pbc_clean</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/na.fail.html" class="external-link">na.omit</a></span><span class="op">(</span><span class="va">pbc</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"time"</span>, <span class="st">"status"</span>, <span class="st">"bili"</span>, <span class="st">"age"</span>, <span class="st">"sex"</span>, <span class="st">"edema"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Step 1: Determine the optimal number of cut-points</span></span>
+<span><span class="co"># Composite endpoint: transplant-free survival</span></span>
+<span><span class="co"># status: 0 = censored, 1 = transplant, 2 = death</span></span>
+<span><span class="va">pbc_clean</span><span class="op">$</span><span class="va">event</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="va">pbc_clean</span><span class="op">$</span><span class="va">status</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Step 1: How many cut-points does the data support?</span></span>
 <span><span class="va">num_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/find_cutpoint_number.html">find_cutpoint_number</a></span><span class="op">(</span></span>
-<span>  data <span class="op">=</span> <span class="va">crc</span>, predictor <span class="op">=</span> <span class="st">"abundance"</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">pbc_clean</span>, predictor <span class="op">=</span> <span class="st">"bili"</span>,</span>
 <span>  outcome_time <span class="op">=</span> <span class="st">"time"</span>, outcome_event <span class="op">=</span> <span class="st">"event"</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"genetic"</span>, criterion <span class="op">=</span> <span class="st">"BIC"</span>,</span>
-<span>  max_cuts <span class="op">=</span> <span class="fl">3</span>, nmin <span class="op">=</span> <span class="fl">0.25</span>, seed <span class="op">=</span> <span class="fl">123</span></span>
+<span>  covariates <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"sex"</span>, <span class="st">"edema"</span><span class="op">)</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"genetic"</span>, criterion <span class="op">=</span> <span class="st">"AIC"</span>,</span>
+<span>  max_cuts <span class="op">=</span> <span class="fl">5</span>, nmin <span class="op">=</span> <span class="fl">0.15</span>, seed <span class="op">=</span> <span class="fl">123</span></span>
 <span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">num_res</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">num_res</span><span class="op">)</span>   <span class="co"># AIC minimised at 3 cut-points</span></span>
 <span></span>
-<span><span class="co"># Step 2: Find the precise cut-point locations</span></span>
+<span><span class="co"># Step 2: Where are the boundaries, adjusting for covariates?</span></span>
 <span><span class="va">cut_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/find_cutpoint.html">find_cutpoint</a></span><span class="op">(</span></span>
-<span>  data <span class="op">=</span> <span class="va">crc</span>, predictor <span class="op">=</span> <span class="st">"abundance"</span>,</span>
+<span>  data <span class="op">=</span> <span class="va">pbc_clean</span>, predictor <span class="op">=</span> <span class="st">"bili"</span>,</span>
 <span>  outcome_time <span class="op">=</span> <span class="st">"time"</span>, outcome_event <span class="op">=</span> <span class="st">"event"</span>,</span>
+<span>  covariates <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"sex"</span>, <span class="st">"edema"</span><span class="op">)</span>,</span>
 <span>  method <span class="op">=</span> <span class="st">"genetic"</span>, criterion <span class="op">=</span> <span class="st">"logrank"</span>,</span>
-<span>  num_cuts <span class="op">=</span> <span class="va">num_res</span><span class="op">$</span><span class="va">optimal_num_cuts</span>,  <span class="co"># Dynamically pass the result from Step 1</span></span>
-<span>  nmin <span class="op">=</span> <span class="fl">0.275</span>,                         <span class="co"># Fine-tuned for stability</span></span>
-<span>  n_perm <span class="op">=</span> <span class="fl">50</span>, n_cores <span class="op">=</span> <span class="fl">2</span>, seed <span class="op">=</span> <span class="fl">123</span></span>
+<span>  num_cuts <span class="op">=</span> <span class="va">num_res</span><span class="op">$</span><span class="va">optimal_num_cuts</span>,   <span class="co"># carried forward from Step 1</span></span>
+<span>  nmin <span class="op">=</span> <span class="fl">0.15</span>,</span>
+<span>  n_perm <span class="op">=</span> <span class="fl">200</span>,        <span class="co"># use &gt;= 1000 when reporting</span></span>
+<span>  n_cores <span class="op">=</span> <span class="fl">2</span>, seed <span class="op">=</span> <span class="fl">123</span></span>
 <span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">cut_res</span><span class="op">)</span>  <span class="co"># Automatically reports Hazard Ratios &amp; Schoenfeld Diagnostics!</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">cut_res</span><span class="op">)</span>   <span class="co"># thresholds, adjusted hazard ratios, Schoenfeld test</span></span>
 <span></span>
-<span><span class="co"># Step 3: Validate threshold stability with bootstrapping</span></span>
+<span><span class="co"># Step 3: Are those boundaries reproducible?</span></span>
 <span><span class="va">val_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/validate_cutpoint.html">validate_cutpoint</a></span><span class="op">(</span></span>
 <span>  cutpoint_result <span class="op">=</span> <span class="va">cut_res</span>,</span>
-<span>  num_replicates <span class="op">=</span> <span class="fl">150</span>, n_cores <span class="op">=</span> <span class="fl">2</span>, seed <span class="op">=</span> <span class="fl">123</span></span>
+<span>  num_replicates <span class="op">=</span> <span class="fl">200</span>,   <span class="co"># use &gt;= 500 when reporting</span></span>
+<span>  n_cores <span class="op">=</span> <span class="fl">2</span>, seed <span class="op">=</span> <span class="fl">123</span></span>
 <span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">val_res</span><span class="op">)</span>  <span class="co"># Automatically grades threshold stability (Tiers 1-4)!</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">val_res</span><span class="op">)</span>   <span class="co"># Tier 3: adjacent confidence intervals overlap</span></span>
 <span></span>
-<span><span class="co"># Step 4: Visualise outcomes via native S3 plot routes</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cut_res</span>, type <span class="op">=</span> <span class="st">"distribution"</span><span class="op">)</span>   <span class="co"># Continuous Predictor Density Split Map</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cut_res</span>, type <span class="op">=</span> <span class="st">"outcome"</span><span class="op">)</span>        <span class="co"># Premium Custom Kaplan-Meier Survival Curves</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cut_res</span>, type <span class="op">=</span> <span class="st">"forest"</span><span class="op">)</span>         <span class="co"># Hazard Ratio Forest Plot with Cohort Sample Sizes</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cut_res</span>, type <span class="op">=</span> <span class="st">"diagnostic"</span><span class="op">)</span>     <span class="co"># Schoenfeld Residual Proportional Hazards Check</span></span>
-<span><span class="fu"><a href="reference/plot_validation.html">plot_validation</a></span><span class="op">(</span><span class="va">val_res</span>, focus_cuts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span> <span class="co"># 2D Contour Elevation Stability Topology</span></span></code></pre></div>
+<span><span class="co"># The stability result is also available programmatically</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">val_res</span><span class="op">)</span><span class="op">$</span><span class="va">stability</span><span class="op">$</span><span class="va">tier</span></span>
+<span></span>
+<span><span class="co"># Step 4: Act on it. A single threshold proves highly reproducible.</span></span>
+<span><span class="va">cut_1</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/find_cutpoint.html">find_cutpoint</a></span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="va">pbc_clean</span>, predictor <span class="op">=</span> <span class="st">"bili"</span>,</span>
+<span>  outcome_time <span class="op">=</span> <span class="st">"time"</span>, outcome_event <span class="op">=</span> <span class="st">"event"</span>,</span>
+<span>  covariates <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"age"</span>, <span class="st">"sex"</span>, <span class="st">"edema"</span><span class="op">)</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"systematic"</span>, criterion <span class="op">=</span> <span class="st">"logrank"</span>,</span>
+<span>  num_cuts <span class="op">=</span> <span class="fl">1</span>, nmin <span class="op">=</span> <span class="fl">0.15</span>, n_perm <span class="op">=</span> <span class="fl">200</span>,</span>
+<span>  n_cores <span class="op">=</span> <span class="fl">2</span>, seed <span class="op">=</span> <span class="fl">123</span></span>
+<span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="fu"><a href="reference/validate_cutpoint.html">validate_cutpoint</a></span><span class="op">(</span><span class="va">cut_1</span>, num_replicates <span class="op">=</span> <span class="fl">200</span>,</span>
+<span>                          n_cores <span class="op">=</span> <span class="fl">2</span>, seed <span class="op">=</span> <span class="fl">123</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co"># Tier 1: threshold 2.3 mg/dL, bootstrap interval 2.0-3.4</span></span>
+<span></span>
+<span><span class="co"># Visualisation via native S3 plot routes</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cut_res</span>, type <span class="op">=</span> <span class="st">"distribution"</span><span class="op">)</span>            <span class="co"># predictor density with thresholds</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cut_res</span>, type <span class="op">=</span> <span class="st">"outcome"</span><span class="op">)</span>                 <span class="co"># adjusted Kaplan-Meier curves</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cut_res</span>, type <span class="op">=</span> <span class="st">"forest"</span><span class="op">)</span>                  <span class="co"># adjusted hazard ratios</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cut_res</span>, type <span class="op">=</span> <span class="st">"diagnostic"</span><span class="op">)</span>              <span class="co"># Schoenfeld residual check</span></span>
+<span><span class="fu"><a href="reference/plot_validation.html">plot_validation</a></span><span class="op">(</span><span class="va">val_res</span>, focus_cuts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>  <span class="co"># joint bootstrap distribution</span></span></code></pre></div>
+<p><strong>What this example shows.</strong> Information criteria selected four risk groups with 98.4% of the AIC weight and adjusted hazard ratios up to 20.9, a result that would pass any test of model fit or statistical significance. Bootstrap validation showed the boundaries were not reproducible across resampled cohorts. A single threshold at 2.3 mg/dL was. Statistical significance and threshold stability are distinct properties, and Step 3 is what separates them.</p>
+<p>See <code><a href="articles/bilirubin.html">vignette("bilirubin", package = "OptSurvCutR")</a></code> for the full analysis.</p>
 </div>
 <div class="section level2">
 <h2 id="workflow-summary">Workflow Summary<a class="anchor" aria-label="anchor" href="#workflow-summary"></a>
@@ -218,8 +239,6 @@
 <li>
 <strong>Vignettes &amp; Tutorials</strong>: Run <code>browseVignettes("OptSurvCutR")</code> within your R session to access complete walk-throughs.</li>
 <li>
-<strong>Troubleshooting &amp; FAQ</strong>: Review detailed optimisation and deployment notes located directly in the <code>vignettes/troubleshooting.Rmd</code> source path.</li>
-<li>
 <strong>Manuscript</strong>: Yau, Payton T. O. “OptSurvCutR: Validated Cut-point Selection for Survival Analysis.” bioRxiv preprint, posted October 18, 2025. <a href="https://doi.org/10.1101/2025.10.08.681246" class="external-link uri">https://doi.org/10.1101/2025.10.08.681246</a>.</li>
 </ul>
 </div>
@@ -233,7 +252,7 @@
 <span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="dt">doi</span>       = {10.1101/2025.10.08.681246},</span>
 <span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="dt">publisher</span> = {Cold Spring Harbor Laboratory},</span>
 <span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="dt">journal</span>   = {bioRxiv},</span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="dt">url</span>       = {[https://www.biorxiv.org/content/10.1101/2025.10.08.681246](https://www.biorxiv.org/content/10.1101/2025.10.08.681246)}</span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>  <span class="dt">url</span>       = {https://www.biorxiv.org/content/10.1101/2025.10.08.681246}</span>
 <span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a>}</span></code></pre></div>
 </div>
 <div class="section level2">
@@ -284,6 +303,7 @@
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>Payton Yau <br><small class="roles"> Author, maintainer, copyright holder </small> <a href="https://orcid.org/0000-0002-3283-0370" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li>Suhirthakumar Puvanendran <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0003-2346-0483" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
 </ul>
 </div>
 
@@ -294,7 +314,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Payton Yau.</p>
+  <p>Developed by Payton Yau, Suhirthakumar Puvanendran.</p>
 </div>
 
 <div class="pkgdown-footer-right">

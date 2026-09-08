@@ -13,19 +13,52 @@
 #'
 #' @section srrstats compliance:
 #' .
-#' @srrstats {G1.1} Grounded in information-theoretic model selection (AIC/BIC)
-#'   and multivariable survival optimization (Cox/log-rank) via exhaustive grid
-#'   search (k <= 2) and genetic algorithms via `rgenoud` (k > 2). Whereas tools
-#'   like `survminer` and `cutpointr` focus strictly on univariate single splits
-#'   (k = 1), OptSurvCutR optimizes multiple thresholds simultaneously under active
-#'   covariate adjustment with bootstrap stability validation. Accelerated using
-#'   base `Rcpp` (`src/matrix_factory.cpp`) for discrete index binning without external
-#'   linear algebra libraries.
+#' @srrstats {G1.1} This package implements an established approach — outcome-oriented
+#'   cut-point selection for censored survival data — and extends it in four key
+#'   directions. The methodological origin is the maximally selected rank statistic
+#'   (Miller & Siegmund 1982; Lausen & Schumacher 1992), in which a log-rank statistic
+#'   is maximised over candidate thresholds and the resulting p-value corrected for the
+#'   selection. Faraggi & Simon (1996) established by simulation that uncorrected
+#'   selection inflates Type I error and biases effect estimates, and Rota et al. (2015)
+#'   compared correction strategies for censored outcomes. These references define the
+#'   single-threshold problem that `maxstat`, `survminer::surv_cutpoint()`, and
+#'   `cutpointr` address.
+#'
+#'   Those packages are not deficient implementations of a multi-threshold method; the
+#'   multi-threshold problem is outside their stated scope. `cutpointr` is designed for
+#'   binary classification metrics and optimises a single cut-point over measures such as
+#'   the Youden index; `maxstat` computes asymptotic approximations and exact null
+#'   distributions of maximally selected rank statistics for a single split; `survminer`
+#'   provides a plotting-oriented interface to the latter. Where a single unadjusted
+#'   threshold answers the question, these remain appropriate tools.
+#'
+#'   `OptSurvCutR` addresses four methodological problems that fall outside that scope:
+#'   1. Number of thresholds: Treated as a model selection problem rather than fixed a
+#'      priori, using information criteria (Akaike 1974; Schwarz 1978) across candidate
+#'      complexities.
+#'   2. Simultaneous optimisation: Multiple thresholds are optimised simultaneously rather
+#'      than sequentially, using exhaustive enumeration for k <= 2 and an evolutionary
+#'      genetic algorithm (Mebane & Sekhon 2011, via `rgenoud`) for k > 2, avoiding the
+#'      path-dependence of hierarchical splitting.
+#'   3. Confounder control: Thresholds are selected within a multivariable Cox model
+#'      (Cox 1972), evaluating candidate boundaries conditionally on clinical covariates
+#'      rather than marginally.
+#'   4. Threshold reproducibility: Non-parametric bootstrap resampling (Efron 1979)
+#'      re-runs the search across resampled cohorts to quantify spatial stability. While
+#'      a permutation-corrected p-value establishes that an observed separation is unlikely
+#'      under the null, the bootstrap CI reports whether the threshold coordinate itself
+#'      is reproducible across comparable patient samples.
+#'
+#'   Numerical implementation uses base `Rcpp` (`src/matrix_factory.cpp`) for discrete
+#'   index binning, without external linear algebra dependencies.
 #' @srrstats {G1.0} References provided for Cox, log-rank, genetic optimisation.
 #' @srrstats {G1.3} Systematic grid search (1–2 cuts) and `rgenoud` global
 #'   optimisation documented.
-#' @srrstats {G1.5} Compared with `cutpointr` and `survminer` in package
-#'   vignette.
+#' @srrstats {G1.5} A feature-level comparison against `maxstat`, `survminer`,
+#'   `CutpointsOEHR`, Evaluate Cutpoints, X-tile and Cutoff Finder is provided in the
+#'   accompanying manuscript, and against `maxstat`/`survminer` in the bilirubin
+#'   vignette. Numerical comparison of results across implementations is not attempted,
+#'   as the packages address different estimands.
 #' @srrstats {G1.6} Numerical stability via `survival::coxph` and `rgenoud`;
 #'   edge cases return `NA`.
 #' @srrstats {G2.3a} Uses `match.arg()` to validate `method` and `criterion`
@@ -63,30 +96,49 @@
 #' @srrstats {RE2.4a} Checks for collinearity among predictors.
 #' @srrstats {RE2.4b} Checks for collinearity between X and Y.
 #'
-#' @details
-#' `method = "systematic"`: grid search respecting `nmin`. Optimised via internal quantiles.
-#' `method = "genetic"`: `rgenoud` global optimisation.
-#' Systematic search is slow for `num_cuts > 2`; use `genetic`.
-#' Core vector partitions are calculated in compiled C++ via `Rcpp` for optimal performance.
-#'
 #' @references
-#' Altman, D. G., Lausen, B., Sauerbrei, W., & Schumacher,
-#' M. (1994). Dangers of Using “Optimal” Cutpoints in the Evaluation of
-#' Prognostic Factors. *JNCI: Journal of the National Cancer Institute*,
-#' 86(11), 829–835. \doi{10.1093/jnci/86.11.829}
+#' Akaike, H. (1974). A new look at the statistical model identification.
+#' *IEEE Transactions on Automatic Control*, 19(6), 716–723.
+#' \doi{10.1109/TAC.1974.1100705}
 #'
-#' Cox, D. R. (1972). Regression Models and Life-Tables. *Journal
-#' of the Royal Statistical Society: Series B (Methodological)*, 34(2),
-#' 187–202. \doi{10.1111/j.2517-6161.1972.tb00899.x}
+#' Altman, D. G., Lausen, B., Sauerbrei, W., & Schumacher, M. (1994). Dangers
+#' of using "optimal" cutpoints in the evaluation of prognostic factors.
+#' *JNCI: Journal of the National Cancer Institute*, 86(11), 829–835.
+#' \doi{10.1093/jnci/86.11.829}
 #'
-#' Mantel, N. (1966). Evaluation of survival data and two new
-#' rank order statistics arising in its consideration. *Cancer
-#' Chemotherapy Reports*, 50(3).
+#' Cox, D. R. (1972). Regression models and life-tables. *Journal of the
+#' Royal Statistical Society: Series B (Methodological)*, 34(2), 187–202.
+#' \doi{10.1111/j.2517-6161.1972.tb00899.x}
 #'
-#' Mebane Jr, W. R., & Sekhon, J. S. (2011). Genetic
-#' Optimisation Using Derivatives: The rgenoud Package for R.
-#' *Journal of Statistical Software*, 42, 1–26.
-#' \doi{10.18637/jss.v042.i11}
+#' Efron, B. (1979). Bootstrap methods: Another look at the jackknife.
+#' *The Annals of Statistics*, 7(1), 1–26. \doi{10.1214/aos/1176344552}
+#'
+#' Faraggi, D., & Simon, R. (1996). A simulation study of cross-validation for
+#' selecting an optimal cutpoint in univariate survival analysis.
+#' *Statistics in Medicine*, 15(20), 2203–2213.
+#' \doi{10.1002/(SICI)1097-0258(19961030)15:20<2203::AID-SIM357>3.0.CO;2-G}
+#'
+#' Lausen, B., & Schumacher, M. (1992). Maximally selected rank statistics.
+#' *Biometrics*, 48(1), 73–85. \doi{10.2307/2532740}
+#'
+#' Mantel, N. (1966). Evaluation of survival data and two new rank order
+#' statistics arising in its consideration. *Cancer Chemotherapy Reports*,
+#' 50(3), 163–170.
+#'
+#' Mebane Jr, W. R., & Sekhon, J. S. (2011). Genetic optimization using
+#' derivatives: The rgenoud package for R. *Journal of Statistical Software*,
+#' 42(11), 1–26. \doi{10.18637/jss.v042.i11}
+#'
+#' Miller, R., & Siegmund, D. (1982). Maximally selected chi square statistics.
+#' *Biometrics*, 38(4), 1011–1016. \doi{10.2307/2529881}
+#'
+#' Rota, M., Antolini, L., & Valsecchi, M. G. (2015). Optimal cut-point
+#' definition in biomarkers: The case of censored failure time outcome.
+#' *BMC Medical Research Methodology*, 15(1), 24.
+#' \doi{10.1186/s12874-015-0009-y}
+#'
+#' Schwarz, G. (1978). Estimating the dimension of a model. *The Annals of
+#' Statistics*, 6(2), 461–464. \doi{10.1214/aos/1176344136}
 #'
 #' @param data A data frame containing the analysis variables.
 #' @param predictor The continuous predictor variable name (character).

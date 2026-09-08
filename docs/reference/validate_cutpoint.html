@@ -11,7 +11,7 @@ survival (time-to-event) analysis."><meta property="og:image" content="https://p
 
     <a class="navbar-brand me-2" href="../index.html">OptSurvCutR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.10.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.11.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -28,7 +28,8 @@ survival (time-to-event) analysis."><meta property="og:image" content="https://p
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/bilirubin.html">Bilirubin Workflow</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/bilirubin.html">Bilirubin: finding and validating a threshold</a></li>
+    <li><a class="dropdown-item" href="../articles/crc.html">Lymph node burden: thresholds in a discrete predictor</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://doi.org/10.1101/2025.10.08.681246" target="_blank">Manuscript</a></li>
@@ -143,8 +144,8 @@ original cuts, 95% CIs, bootstrap distribution, and parameters.</p>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">val_res</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">val_res</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Running regulared systematic search for 1 cut-point(s)...</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Systematic grid optimation complete.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Running regularised systematic search for 1 cut-point(s)...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Systematic grid optimisation complete.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Using random seed 123 for reproducibility.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Bootstrap `nmin` not set. Using 9 (90% of original) to improve stability.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Validating 1 cut(s) from 'systematic' search using 'logrank' over regularised coordinate lattice.</span>
@@ -196,10 +197,11 @@ original cuts, 95% CIs, bootstrap distribution, and parameters.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Stability Assessment:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ---------------------</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Maximum CI Width (Relative to 10th-90th Percentile Range): <span style="font-weight: bold;">120.7%</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Maximum CI Width (Relative to 10th-90th Percentile Range): <span style="font-weight: bold;">83.9%</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> Model Status: UNSTABLE (Tier 4)</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> The primary source of instability is <span style="font-weight: bold;">Cut 1</span>.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> Recommendation: Reduce `num_cuts` or increase `nmin`.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> The threshold varies widely across resamples (83.9%).</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BB0000;">✖</span> Recommendation: increase `nmin`, or report the threshold as an interval</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   rather than a point value.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-plt img"><img src="validate_cutpoint-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
@@ -210,7 +212,7 @@ original cuts, 95% CIs, bootstrap distribution, and parameters.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Payton Yau.</p>
+  <p>Developed by Payton Yau, Suhirthakumar Puvanendran.</p>
 </div>
 
 <div class="pkgdown-footer-right">

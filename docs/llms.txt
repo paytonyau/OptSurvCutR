@@ -9,53 +9,74 @@ GPL-3](https://img.shields.io/badge/License-GPL%203-blue.svg)](https://www.gnu.o
 ![OptSurvCutR logo](reference/figures/logo.png)
 
 `OptSurvCutR` (**Opt**imal **Surv**ival **Cut**-points **R**) provides a
-rigorous, reproducible, and rOpenSci-compliant framework for discovering
-the optimal number and location of patient stratification thresholds in
-time-to-event (survival) data. Designed specifically for continuous
-predictors (such as gene expression measurements, microbiome abundance,
-or clinical biomarkers), this package moves beyond arbitrary median
-splits to deliver fully **data-driven, covariate-adjusted
-stratification**.
+reproducible framework for identifying the number and location of
+patient stratification thresholds in time-to-event (survival) data, and
+for assessing whether those thresholds are reproducible. Designed for
+continuous predictors (such as gene expression measurements, microbiome
+abundance, or clinical biomarkers), this package moves beyond arbitrary
+median splits to deliver **data-driven, covariate-adjusted
+stratification**. It is developed against rOpenSci software standards
+and is currently under rOpenSci review.
 
-## What’s New in Version 0.10
+## What’s New in Version 0.11
 
-We have significantly overhauled the validation and diagnostic engines
-to ensure your discovered thresholds are mathematically stable, and
-reproducible across complex survival cohorts:
+**Important bug fix.** In versions 0.10.1 and earlier,
+[`validate_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/validate_cutpoint.md)
+did not carry the predictor into its result, so
+[`summary()`](https://rdrr.io/r/base/summary.html) computed relative
+confidence interval widths against the bootstrap distribution of the
+first cut-point rather than the predictor’s 10th–90th percentile range.
+Reported widths were inflated and **Stability Tier 1 was unreachable for
+any input**. If you have reported a stability tier from an earlier
+version, please recompute it.
 
-- **Integer Index-Space Mapping:** Replaced continuous floating-point
-  search spaces with a discrete, bounded integer lattice mapped directly
-  to sorted unique data indices. This shifts the engine mathematics from
-  an infinite decimal space to a finite spectrum of actual observations,
-  eliminating micro-decimal overfitting and stochastic seed drift.
+- **Corrected stability metric:** Relative interval width is now
+  computed against the predictor’s percentile spread. Where the
+  predictor is unavailable, the width is reported as undefined rather
+  than substituted with an unrelated quantity.
 
-- **The Four-Tier Stability Assessment:** Bootstrap validation now
-  automatically grades thresholds into four distinct tiers (Optimal,
-  Distinct, Caution, and Unstable) based on confidence interval width
-  and overlap metrics.
+- **Machine-readable stability output:**
+  [`summary()`](https://rdrr.io/r/base/summary.html) attaches a
+  `stability` list to the returned object (`tier`, `percent`,
+  `relative_widths` per cut-point, `data_spread`, `separated`,
+  `worst_cut`), so tiers can be read programmatically instead of parsed
+  from console text.
 
-- **Automated Schoenfeld Diagnostics:** The package now evaluates
-  time-varying effects natively during the optimisation phase to ensure
-  your thresholds do not violate the proportional hazards assumption.
+- **Single cut-point grading:** Interval separation is undefined with
+  one boundary, so single-threshold models are now graded on relative
+  width alone and can no longer be assigned Tier 3.
 
-- **Enhanced Parameter Controls:** Fine-tune the underlying genetic
-  algorithm using minimum group size (`nmin`) wedges and soft boundaries
-  to rescue unstable thresholds and control for overfitting.
+- **Integer Index-Space Mapping:** The search operates over a discrete,
+  bounded integer lattice mapped to sorted unique observations rather
+  than a continuous floating-point space, restricting candidate
+  thresholds to observed values.
 
-- **Continuous 2D Contour Validation Landscapes:** Added native S3
-  routing support to project complex, multi-dimensional bootstrap
-  distribution horizons onto smooth contour peaks.
+- **The Four-Tier Stability Assessment:** Bootstrap validation grades
+  thresholds into four tiers (Optimal, Distinct, Caution, Unstable) from
+  confidence interval width and overlap. The tiers summarise two
+  independent diagnostics rather than forming an ordinal scale, and the
+  30% and 60% boundaries are pragmatic conventions rather than
+  calibrated thresholds.
+
+- **Automated Schoenfeld Diagnostics:**
+  [`summary()`](https://rdrr.io/r/base/summary.html) reports a test of
+  the proportional hazards assumption alongside the fitted model.
+
+- **2D Contour Validation Landscapes:**
+  [`plot_validation()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
+  projects the joint bootstrap distribution of two thresholds onto a
+  contour map, showing whether they vary independently or together.
 
 ## Why OptSurvCutR?
 
 | Feature | Benefit |
 |:---|:---|
-| **Optimal number of cuts** | Uses AIC, AICc, or BIC to mathematically select between $`0`$ and $`k`$ cut-points. |
-| **Covariate adjustment** | Demonstrates independent prognostic value by controlling for clinical confounders. |
-| **Four-tier bootstrap validation** | Generates 95% confidence intervals and automated stability grading for thresholds. |
-| **Schoenfeld diagnostics** | Features a two-tier warning system to verify proportional hazards assumptions. |
-| **Flexible search engines** | Supports a deterministic systematic grid or a multithreaded Genetic Algorithm (`rgenoud`). |
-| **Publication-ready plots** | Renders Kaplan–Meier curves, distribution splits, forest plots, and 2D topology surfaces. |
+| **Optimal number of cuts** | Uses AIC, AICc, or BIC to select between $`0`$ and $`k`$ cut-points. |
+| **Covariate adjustment** | Selects thresholds conditionally on clinical confounders rather than marginally. |
+| **Four-tier bootstrap validation** | Generates 95% confidence intervals for each threshold and an automated stability grade. |
+| **Schoenfeld diagnostics** | Reports a two-tier test of the proportional hazards assumption for the fitted model. |
+| **Flexible search engines** | Supports a deterministic systematic grid or a multithreaded genetic algorithm (`rgenoud`). |
+| **Publication-ready plots** | Renders Kaplan–Meier curves, distribution splits, forest plots, objective surfaces, and 2D stability maps. |
 
 ## Installation
 
@@ -76,59 +97,90 @@ if (!requireNamespace("remotes", quietly = TRUE)) {
 remotes::install_github("paytonyau/OptSurvCutR")
 ```
 
-## Example: Quick Workflow with Simulated Cohort Data
+## Example: Serum Bilirubin in Primary Biliary Cholangitis
+
+This example uses the Mayo Clinic PBC trial cohort supplied with the
+`survival` package, and reproduces the analysis reported in the
+manuscript.
 
 ``` r
 
 library(OptSurvCutR)
 library(survival)
-library(dplyr)
 
-# Generate a reproducible, synthetic survival dataset
-set.seed(123)
-n <- 200
-crc <- tibble(
-  abundance = rnorm(n, mean = 5, sd = 2),
-  age = rnorm(n, mean = 60, sd = 10),
-  # Generate survival times influenced by biomarker abundance
-  time = rexp(n, rate = 0.05 * exp(0.3 * (abundance > 5.5) + 0.02 * age)),
-  event = sample(c(0, 1), n, replace = TRUE, prob = c(0.3, 0.7))
-) %>% filter(time > 0)
+data("pbc", package = "survival")
+pbc_clean <- na.omit(pbc[, c("time", "status", "bili", "age", "sex", "edema")])
 
-# Step 1: Determine the optimal number of cut-points
+# Composite endpoint: transplant-free survival
+# status: 0 = censored, 1 = transplant, 2 = death
+pbc_clean$event <- as.integer(pbc_clean$status %in% c(1, 2))
+
+# Step 1: How many cut-points does the data support?
 num_res <- find_cutpoint_number(
-  data = crc, predictor = "abundance",
+  data = pbc_clean, predictor = "bili",
   outcome_time = "time", outcome_event = "event",
-  method = "genetic", criterion = "BIC",
-  max_cuts = 3, nmin = 0.25, seed = 123
+  covariates = c("age", "sex", "edema"),
+  method = "genetic", criterion = "AIC",
+  max_cuts = 5, nmin = 0.15, seed = 123
 )
-summary(num_res)
+summary(num_res)   # AIC minimised at 3 cut-points
 
-# Step 2: Find the precise cut-point locations
+# Step 2: Where are the boundaries, adjusting for covariates?
 cut_res <- find_cutpoint(
-  data = crc, predictor = "abundance",
+  data = pbc_clean, predictor = "bili",
   outcome_time = "time", outcome_event = "event",
+  covariates = c("age", "sex", "edema"),
   method = "genetic", criterion = "logrank",
-  num_cuts = num_res$optimal_num_cuts,  # Dynamically pass the result from Step 1
-  nmin = 0.275,                         # Fine-tuned for stability
-  n_perm = 50, n_cores = 2, seed = 123
+  num_cuts = num_res$optimal_num_cuts,   # carried forward from Step 1
+  nmin = 0.15,
+  n_perm = 200,        # use >= 1000 when reporting
+  n_cores = 2, seed = 123
 )
-summary(cut_res)  # Automatically reports Hazard Ratios & Schoenfeld Diagnostics!
+summary(cut_res)   # thresholds, adjusted hazard ratios, Schoenfeld test
 
-# Step 3: Validate threshold stability with bootstrapping
+# Step 3: Are those boundaries reproducible?
 val_res <- validate_cutpoint(
   cutpoint_result = cut_res,
-  num_replicates = 150, n_cores = 2, seed = 123
+  num_replicates = 200,   # use >= 500 when reporting
+  n_cores = 2, seed = 123
 )
-summary(val_res)  # Automatically grades threshold stability (Tiers 1-4)!
+summary(val_res)   # Tier 3: adjacent confidence intervals overlap
 
-# Step 4: Visualise outcomes via native S3 plot routes
-plot(cut_res, type = "distribution")   # Continuous Predictor Density Split Map
-plot(cut_res, type = "outcome")        # Premium Custom Kaplan-Meier Survival Curves
-plot(cut_res, type = "forest")         # Hazard Ratio Forest Plot with Cohort Sample Sizes
-plot(cut_res, type = "diagnostic")     # Schoenfeld Residual Proportional Hazards Check
-plot_validation(val_res, focus_cuts = c(1, 2)) # 2D Contour Elevation Stability Topology
+# The stability result is also available programmatically
+summary(val_res)$stability$tier
+
+# Step 4: Act on it. A single threshold proves highly reproducible.
+cut_1 <- find_cutpoint(
+  data = pbc_clean, predictor = "bili",
+  outcome_time = "time", outcome_event = "event",
+  covariates = c("age", "sex", "edema"),
+  method = "systematic", criterion = "logrank",
+  num_cuts = 1, nmin = 0.15, n_perm = 200,
+  n_cores = 2, seed = 123
+)
+summary(validate_cutpoint(cut_1, num_replicates = 200,
+                          n_cores = 2, seed = 123))
+# Tier 1: threshold 2.3 mg/dL, bootstrap interval 2.0-3.4
+
+# Visualisation via native S3 plot routes
+plot(cut_res, type = "distribution")            # predictor density with thresholds
+plot(cut_res, type = "outcome")                 # adjusted Kaplan-Meier curves
+plot(cut_res, type = "forest")                  # adjusted hazard ratios
+plot(cut_res, type = "diagnostic")              # Schoenfeld residual check
+plot_validation(val_res, focus_cuts = c(1, 2))  # joint bootstrap distribution
 ```
+
+**What this example shows.** Information criteria selected four risk
+groups with 98.4% of the AIC weight and adjusted hazard ratios up to
+20.9, a result that would pass any test of model fit or statistical
+significance. Bootstrap validation showed the boundaries were not
+reproducible across resampled cohorts. A single threshold at 2.3 mg/dL
+was. Statistical significance and threshold stability are distinct
+properties, and Step 3 is what separates them.
+
+See
+[`vignette("bilirubin", package = "OptSurvCutR")`](https://paytonyau.github.io/OptSurvCutR/articles/bilirubin.md)
+for the full analysis.
 
 ## Workflow Summary
 
@@ -156,9 +208,6 @@ details on code standards, local test workflows, and issue reporting.
 
 - **Vignettes & Tutorials**: Run `browseVignettes("OptSurvCutR")` within
   your R session to access complete walk-throughs.
-- **Troubleshooting & FAQ**: Review detailed optimisation and deployment
-  notes located directly in the `vignettes/troubleshooting.Rmd` source
-  path.
 - **Manuscript**: Yau, Payton T. O. “OptSurvCutR: Validated Cut-point
   Selection for Survival Analysis.” bioRxiv preprint, posted October
   18, 2025. <https://doi.org/10.1101/2025.10.08.681246>.
@@ -173,7 +222,7 @@ details on code standards, local test workflows, and issue reporting.
   doi       = {10.1101/2025.10.08.681246},
   publisher = {Cold Spring Harbor Laboratory},
   journal   = {bioRxiv},
-  url       = {[https://www.biorxiv.org/content/10.1101/2025.10.08.681246](https://www.biorxiv.org/content/10.1101/2025.10.08.681246)}
+  url       = {https://www.biorxiv.org/content/10.1101/2025.10.08.681246}
 }
 ```
 
@@ -255,5 +304,5 @@ Methods for summarising analysis objects and extracting raw data.
 
 - [Analysing Clinical Survival Data with
   OptSurvCutR](https://paytonyau.github.io/OptSurvCutR/articles/bilirubin.md):
-- [Stratifying Colorectal Cancer Patients by Lymph Node
-  Involvement](https://paytonyau.github.io/OptSurvCutR/articles/crc.md):
+- [Thresholds in a Discrete
+  Predictor](https://paytonyau.github.io/OptSurvCutR/articles/crc.md):

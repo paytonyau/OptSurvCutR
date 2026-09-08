@@ -94,8 +94,8 @@ if (requireNamespace("survival", quietly = TRUE)) {
   summary(val_res)
   plot(val_res)
 }
-#> ℹ Running regulared systematic search for 1 cut-point(s)...
-#> ✔ Systematic grid optimation complete.
+#> ℹ Running regularised systematic search for 1 cut-point(s)...
+#> ✔ Systematic grid optimisation complete.
 #> ℹ Using random seed 123 for reproducibility.
 #> ℹ Bootstrap `nmin` not set. Using 9 (90% of original) to improve stability.
 #> ℹ Validating 1 cut(s) from 'systematic' search using 'logrank' over regularised coordinate lattice.
@@ -147,10 +147,11 @@ if (requireNamespace("survival", quietly = TRUE)) {
 #> 
 #> Stability Assessment:
 #> ---------------------
-#> Maximum CI Width (Relative to 10th-90th Percentile Range): 120.7%
+#> Maximum CI Width (Relative to 10th-90th Percentile Range): 83.9%
 #> ✖ Model Status: UNSTABLE (Tier 4)
-#> ! The primary source of instability is Cut 1.
-#> ✖ Recommendation: Reduce `num_cuts` or increase `nmin`.
+#> ! The threshold varies widely across resamples (83.9%).
+#> ✖ Recommendation: increase `nmin`, or report the threshold as an interval
+#>   rather than a point value.
 #> 
 
 # }

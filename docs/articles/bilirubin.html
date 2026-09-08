@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">OptSurvCutR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.10.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.11.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -47,7 +47,8 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes">
-<li><a class="dropdown-item" href="../articles/bilirubin.html">Bilirubin Workflow</a></li>
+<li><a class="dropdown-item" href="../articles/bilirubin.html">Bilirubin: finding and validating a threshold</a></li>
+    <li><a class="dropdown-item" href="../articles/crc.html">Lymph node burden: thresholds in a discrete predictor</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -71,11 +72,13 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Analysing Clinical Survival Data with OptSurvCutR</h1>
-            <h3 data-toc-skip class="subtitle">Discovering Biomarker
-Thresholds and Tier Systems in Liver Disease</h3>
+            <h3 data-toc-skip class="subtitle">Discovering biomarker
+thresholds and tier systems in liver disease</h3>
                         <h4 data-toc-skip class="author">Payton Yau</h4>
+                        <h4 data-toc-skip class="author">Suhirthakumar
+Puvanendran</h4>
             
-            <h4 data-toc-skip class="date">2026-09-05</h4>
+            <h4 data-toc-skip class="date">2026-09-08</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/paytonyau/OptSurvCutR/blob/HEAD/vignettes/bilirubin.Rmd" class="external-link"><code>vignettes/bilirubin.Rmd</code></a></small>
       <div class="d-none name"><code>bilirubin.Rmd</code></div>
@@ -83,579 +86,508 @@ Thresholds and Tier Systems in Liver Disease</h3>
 
     
     
-<style>
-/* Restrict blockquote styling to document text bodies to shield gridtext */
-  .main-container blockquote, .body-content blockquote, article blockquote {
-    padding: 15px 20px;
-    margin: 0 0 20px;
-    font-size: 1.05em;
-    border-left: 5px solid #E74C3C; 
-    background-color: #fdfdfd;
-    color: #444;
-    border-radius: 0px 8px 8px 0px;
-    box-shadow: 2px 2px 8px rgba(0,0,0,0.05);
-  }
-  .main-container blockquote p, .body-content blockquote p, article blockquote p {
-    margin-bottom: 0;
-  }
-</style>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>In clinical research, continuous biomarkers are frequently
-categorised into binary groups using arbitrary thresholds, such as
-median splits. Although convenient, this approach obscures meaningful
-biological variations and non-linear risk profiles.</p>
-<p>The <strong>OptSurvCutR</strong> package is designed specifically to
-discover mathematically optimal thresholds. The core mechanism relies on
-a <strong>Genetic Algorithm</strong>—an evolutionary search engine
-capable of navigating complex, multi-dimensional data landscapes to
-identify multiple optimal cut-points simultaneously, a task that often
-causes traditional grid searches to fail due to computational
-limits.</p>
-<p>Furthermore, the package features built-in statistical safeguards,
-including a two-tier Schoenfeld diagnostic check and a comprehensive
-four-tier validation stability system. Crucially, the optimisation
-framework supports <strong>covariate adjustment</strong>. This ensures
-that the discovered biomarker thresholds provide independent prognostic
-value, even when controlling for established clinical confounders such
-as age, sex, or disease stage.</p>
-<p>In this vignette, we apply this workflow to the classic <strong>Mayo
-Clinic Primary Biliary Cholangitis (PBC)</strong> dataset to evaluate
-<strong>serum bilirubin</strong> levels while controlling for
-confounding clinical factors, specifically patient age and the presence
-of edema.</p>
+<p>Continuous biomarkers are routinely split into risk groups using a
+median or a threshold borrowed from another study. Both are arbitrary,
+and a single split cannot represent a relationship where risk rises in
+stages.</p>
+<p><code>OptSurvCutR</code> selects thresholds by optimising a survival
+criterion, and then assesses how far those thresholds move under
+resampling.</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Function</th>
+<th align="left">Question</th>
+<th align="left">Output</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left"><code><a href="../reference/find_cutpoint_number.html">find_cutpoint_number()</a></code></td>
+<td align="left">How many groups?</td>
+<td align="left">A number, <em>k</em>
+</td>
+</tr>
+<tr class="even">
+<td align="left"><code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code></td>
+<td align="left">Where are the boundaries?</td>
+<td align="left">
+<em>k</em> thresholds</td>
+</tr>
+<tr class="odd">
+<td align="left"><code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code></td>
+<td align="left">How much do they move?</td>
+<td align="left">Intervals + stability tier</td>
+</tr>
+</tbody>
+</table>
+<div class="section level3">
+<h3 id="how-this-differs-from-a-single-optimal-cut-point">How this differs from a single optimal cut-point<a class="anchor" aria-label="anchor" href="#how-this-differs-from-a-single-optimal-cut-point"></a>
+</h3>
+<p>Established tools solve part of this problem well.
+<code>maxstat</code> computes a maximally selected rank statistic with a
+corrected <em>p</em>-value, which addresses the inflation that comes
+from testing many candidate thresholds;
+<code><a href="https://rdrr.io/pkg/survminer/man/surv_cutpoint.html" class="external-link">survminer::surv_cutpoint()</a></code> wraps it in a convenient
+interface. If a single unadjusted threshold is what the question needs,
+they are a sound choice.</p>
+<p><code>OptSurvCutR</code> covers three things they do not:</p>
+<table class="table">
+<thead><tr class="header">
+<th align="left"></th>
+<th align="left">
+<code>maxstat</code> / <code>survminer</code>
+</th>
+<th align="left"><code>OptSurvCutR</code></th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Number of cut-points</td>
+<td align="left">One</td>
+<td align="left">Chosen from the data, one or more</td>
+</tr>
+<tr class="even">
+<td align="left">Covariate adjustment</td>
+<td align="left">No</td>
+<td align="left">Yes, inside the search</td>
+</tr>
+<tr class="odd">
+<td align="left">Threshold stability</td>
+<td align="left">Not assessed</td>
+<td align="left">Bootstrap intervals and a tier</td>
+</tr>
+</tbody>
+</table>
+<p>The third is the one that changes conclusions. A corrected
+<em>p</em>-value tells you a threshold is unlikely to have arisen by
+chance; it says nothing about whether the same threshold would be found
+again in a comparable sample. Those are different questions, and in this
+vignette they give different answers: the four-group model is
+significant by any test, yet its boundaries are not reproducible.</p>
+</div>
+<div class="section level3">
+<h3 id="the-data">The data<a class="anchor" aria-label="anchor" href="#the-data"></a>
+</h3>
+<p>The Mayo Clinic trial of D-penicillamine in <strong>primary biliary
+cholangitis</strong> (Dickson et al., 1989) followed 418 patients with
+this chronic autoimmune liver disease, in which progressive destruction
+of the bile ducts leads to cholestasis, cirrhosis and eventually liver
+failure.</p>
+<p><strong>Serum bilirubin</strong> is the classic marker of that
+progression: as bile drainage fails, bilirubin accumulates. It is the
+strongest single component of the Mayo risk score, and clinicians have
+long used thresholds of it to time referral for transplantation. Values
+above roughly 1.2 mg/dL are considered abnormal.</p>
+<p>Here we ask what threshold the data themselves support, adjusting for
+age, sex and the presence of edema.</p>
 <hr>
 </div>
+</div>
 <div class="section level2">
-<h2 id="setup-data-preparation">1. Setup &amp; Data Preparation<a class="anchor" aria-label="anchor" href="#setup-data-preparation"></a>
+<h2 id="data-preparation">1. Data preparation<a class="anchor" aria-label="anchor" href="#data-preparation"></a>
 </h2>
-<p>To begin the analysis, we load the required data manipulation
-libraries, graphics systems, and the underlying survival and
-optimisation packages into the R workspace.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/therneau/survival" class="external-link">survival</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://patchwork.data-imaginist.com" class="external-link">patchwork</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://yihui.org/knitr/" class="external-link">knitr</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://cli.r-lib.org" class="external-link">cli</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/paytonyau/OptSurvCutR" class="external-link">OptSurvCutR</a></span><span class="op">)</span></span></code></pre></div>
-<p>Next, we load the baseline clinical dataset into memory, remove
-records containing missing entries across our features of interest, and
-map all active survival statuses to isolate true endpoints.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">data</span>(pbc, <span class="at">package =</span> <span class="st">"survival"</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co"># Extract complete cases for predictor, outcome, and clinical covariates</span></span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>pbc_clean <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(pbc[, <span class="fu">c</span>(<span class="st">"time"</span>, <span class="st">"status"</span>, <span class="st">"bili"</span>, <span class="st">"age"</span>, <span class="st">"sex"</span>, <span class="st">"edema"</span>)])</span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a></span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co"># Define composite endpoint: Transplant-Free Survival (TFS)</span></span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co"># status: 0 = censored, 1 = liver transplant, 2 = deceased</span></span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co"># Patients with status 1 or 2 are coded as 1 (event); status 0 is coded as 0 (censored)</span></span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>pbc_clean<span class="sc">$</span>event <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(pbc_clean<span class="sc">$</span>status <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</span>
-<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a></span>
-<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="fu">head</span>(pbc_clean)</span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="sc">+</span>   time status bili      age sex edema event</span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="sc">+</span> <span class="dv">1</span>  <span class="dv">400</span>      <span class="dv">2</span> <span class="fl">14.5</span> <span class="fl">58.76523</span>   f   <span class="fl">1.0</span>     <span class="dv">1</span></span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="sc">+</span> <span class="dv">2</span> <span class="dv">4500</span>      <span class="dv">0</span>  <span class="fl">1.1</span> <span class="fl">56.44627</span>   f   <span class="fl">0.0</span>     <span class="dv">0</span></span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="sc">+</span> <span class="dv">3</span> <span class="dv">1012</span>      <span class="dv">2</span>  <span class="fl">1.4</span> <span class="fl">70.07255</span>   m   <span class="fl">0.5</span>     <span class="dv">1</span></span>
-<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="sc">+</span> <span class="dv">4</span> <span class="dv">1925</span>      <span class="dv">2</span>  <span class="fl">1.8</span> <span class="fl">54.74059</span>   f   <span class="fl">0.5</span>     <span class="dv">1</span></span>
-<span id="cb2-17"><a href="#cb2-17" tabindex="-1"></a><span class="sc">+</span> <span class="dv">5</span> <span class="dv">1504</span>      <span class="dv">1</span>  <span class="fl">3.4</span> <span class="fl">38.10541</span>   f   <span class="fl">0.0</span>     <span class="dv">1</span></span>
-<span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a><span class="sc">+</span> <span class="dv">6</span> <span class="dv">2503</span>      <span class="dv">2</span>  <span class="fl">0.8</span> <span class="fl">66.25873</span>   f   <span class="fl">0.0</span>     <span class="dv">1</span></span></code></pre></div>
-<blockquote>
-<p><strong>💡 Key Insight: Multi-State Endpoints &amp; Informative
-Censoring</strong> In the raw <code><a href="https://rdrr.io/pkg/survival/man/pbc.html" class="external-link">survival::pbc</a></code> dataset,
-patient status is recorded with three discrete outcomes: <code>0</code>
-(alive/censored), <code>1</code> (received liver transplant), and
-<code>2</code> (deceased). <code>OptSurvCutR</code> models standard
-single-event survival data and requires a binary event indicator
-(<code>0</code> vs <code>1</code>).</p>
-<p>In end-stage liver disease, transplantation is allocated
-preferentially to the highest-risk patients. Treating transplant
-recipients as right-censored would introduce substantial
-<strong>informative censoring bias</strong>, artificially deflating
-observed hazard rates in higher bilirubin tiers. We therefore define a
-composite <strong>Transplant-Free Survival (TFS)</strong> endpoint where
-both death and transplantation are treated as events (<code>1</code>),
-while patients surviving event-free with their native liver remain
-censored (<code>0</code>).</p>
-</blockquote>
-<blockquote>
-<p><strong>💡 Key Insight: Managing Skewed Distributions &amp;
-Confounders</strong> Raw clinical laboratory values are often heavily
-right-skewed. Because <code>OptSurvCutR</code> evaluates survival using
-rank-based statistics (such as the Log-rank and Cox score tests), it
-relies on the <em>rank order</em> of patients rather than absolute
-numerical distances. This makes the algorithm mathematically robust
-against distributional skewness.</p>
-<p>By specifying <code>covariates = c("age", "sex", "edema")</code>, the
-optimisation routine transitions from a univariate survival split to an
-adjusted Cox proportional hazards framework. This guarantees that the
-discovered cut-points reflect true changes in baseline risk independent
-of age, biological sex, or the physical presentation of edema.</p>
-</blockquote>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>pbc_clean <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(pbc[, <span class="fu">c</span>(<span class="st">"time"</span>, <span class="st">"status"</span>, <span class="st">"bili"</span>, <span class="st">"age"</span>, <span class="st">"sex"</span>, <span class="st">"edema"</span>)])</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co"># Endpoint: transplant-free survival</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co"># status: 0 = censored, 1 = transplant, 2 = death</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>pbc_clean<span class="sc">$</span>event <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(pbc_clean<span class="sc">$</span>status <span class="sc">%in%</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>))</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="fu">nrow</span>(pbc_clean)</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">1</span>] <span class="dv">418</span></span></code></pre></div>
+<p>All six variables are complete across <code>pbc</code>, so the
+analysis retains all 418 patients. The figure of 312 often quoted for
+this dataset refers to records with complete <code>trt</code> and
+laboratory values, which this model does not use.</p>
+<p>Transplant is treated as an event rather than a censoring.
+Transplants are allocated preferentially to the sickest patients, so
+censoring them would remove the highest-risk patients from the
+high-bilirubin groups just as they were about to fail.</p>
+<p>Adjusting for <code>age</code>, <code>sex</code> and
+<code>edema</code> means thresholds are selected inside a Cox model
+containing those variables, so a threshold cannot appear useful merely
+by tracking one of them.</p>
 <hr>
 </div>
 <div class="section level2">
-<h2 id="the-three-step-analysis-workflow">2. The Three-Step Analysis Workflow<a class="anchor" aria-label="anchor" href="#the-three-step-analysis-workflow"></a>
+<h2 id="how-many-cut-points">2. How many cut-points?<a class="anchor" aria-label="anchor" href="#how-many-cut-points"></a>
 </h2>
-<div class="section level3">
-<h3 id="step-1-determine-the-optimal-number-of-cuts">Step 1: Determine the Optimal Number of Cuts<a class="anchor" aria-label="anchor" href="#step-1-determine-the-optimal-number-of-cuts"></a>
-</h3>
-<p>Before identifying the specific locations of the thresholds, we must
-determine how many cut-points actually exist in our data when adjusting
-for our baseline clinical covariates.</p>
-<div class="section level4">
-<h4 id="choosing-an-information-criterion">Choosing an Information Criterion<a class="anchor" aria-label="anchor" href="#choosing-an-information-criterion"></a>
-</h4>
-<p>The algorithm evaluates candidate models using an Information
-Criterion, which balances descriptive accuracy against model
-complexity:</p>
-<table class="table">
-<colgroup>
-<col width="33%">
-<col width="33%">
-<col width="33%">
-</colgroup>
-<thead><tr class="header">
-<th align="left">Criterion</th>
-<th align="left">Statistical Mechanism</th>
-<th align="left">Best Use Case</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td align="left"><strong>AIC</strong></td>
-<td align="left">Imposes a light penalty for complexity.</td>
-<td align="left">Exploratory research; permits a higher number of
-cuts.</td>
-</tr>
-<tr class="even">
-<td align="left"><strong>AICc</strong></td>
-<td align="left">Applies a second-order correction to AIC for small
-sample sizes.</td>
-<td align="left">Small clinical datasets
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>&lt;</mo><mn>200</mn></mrow><annotation encoding="application/x-tex">N &lt; 200</annotation></semantics></math>).</td>
-</tr>
-<tr class="odd">
-<td align="left"><strong>BIC</strong></td>
-<td align="left">Imposes a strict penalty based on the sample size
-logarithm.</td>
-<td align="left">Confirmatory research; favours simpler, highly robust
-models.</td>
-</tr>
-</tbody>
-</table>
-<p>We deploy the multi-model search routine to calculate fitness scores
-across various grouping parameters, enforcing safety boundaries so that
-the resulting risk cohorts do not become unsustainably small.</p>
+<p><code><a href="../reference/find_cutpoint_number.html">find_cutpoint_number()</a></code> compares models of increasing
+complexity using an information criterion. AIC penalises complexity
+lightly and suits exploratory work; BIC is stricter and is the better
+choice when a threshold is intended for clinical use. AICc corrects AIC
+for small samples
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>&lt;</mo><mn>200</mn></mrow><annotation encoding="application/x-tex">N &lt; 200</annotation></semantics></math>).</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>num_res <span class="ot">&lt;-</span> <span class="fu">find_cutpoint_number</span>(</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="co"># ==========================================</span></span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="co"># 1. CORE DATA &amp; COVARIATE INPUTS</span></span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="co"># ==========================================</span></span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">data =</span> pbc_clean,                       <span class="co"># The patient dataset</span></span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="at">predictor =</span> <span class="st">"bili"</span>,                     <span class="co"># The continuous biomarker</span></span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="at">outcome_time =</span> <span class="st">"time"</span>,                  <span class="co"># Survival time column</span></span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>  <span class="at">outcome_event =</span> <span class="st">"event"</span>,                <span class="co"># Binary TFS event column</span></span>
-<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>  <span class="at">covariates =</span> <span class="fu">c</span>(<span class="st">"age"</span>, <span class="st">"sex"</span>, <span class="st">"edema"</span>),  <span class="co"># Confounders to control for</span></span>
-<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a></span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>  <span class="co"># ==========================================</span></span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>  <span class="co"># 2. SEARCH ENGINE SETTINGS</span></span>
-<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>  <span class="co"># ==========================================</span></span>
-<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">"genetic"</span>,                     <span class="co"># The evolutionary search engine</span></span>
-<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>  <span class="at">criterion =</span> <span class="st">"AIC"</span>,                      <span class="co"># Evaluates adjusted model fit</span></span>
-<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>  <span class="at">max_cuts =</span> <span class="dv">5</span>,                           <span class="co"># Test models ranging from 0 to 5 cuts</span></span>
-<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>  <span class="at">nmin =</span> <span class="fl">0.15</span>,                            <span class="co"># SAFETY LIMIT: Minimum 15% of patients per group</span></span>
-<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a></span>
-<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>  <span class="co"># ==========================================</span></span>
-<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a>  <span class="co"># 3. ADVANCED GENETIC TUNING</span></span>
-<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a>  <span class="co"># ==========================================</span></span>
-<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a>  <span class="at">max.generations =</span> <span class="cn">NULL</span>,                 <span class="co"># LIFESPAN: Number of evolutionary cycles to run</span></span>
-<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a>  <span class="at">pop.size =</span> <span class="cn">NULL</span>,                        <span class="co"># SEARCH PARTY: Number of random guesses per generation</span></span>
-<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a>  <span class="at">boundary.enforcement =</span> <span class="dv">2</span>,               <span class="co"># EDGE CONTROL: 2 = Soft boundary configuration</span></span>
-<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a>  <span class="at">seed =</span> <span class="dv">123</span>                              <span class="co"># REPRODUCIBILITY</span></span>
-<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a>)</span>
-<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a><span class="sc">+</span> ℹ nmin <span class="fl">0.15</span> is a proportion. Min. group size set to <span class="fl">62.</span></span>
-<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a><span class="sc">+</span> ℹ Finding optimal cut number<span class="sc">:</span> method <span class="ot">=</span> genetic</span>
-<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a><span class="sc">+</span> Running discrete genetic algorithm <span class="cf">for</span> <span class="dv">1</span> cut<span class="sc">-</span><span class="fu">point</span>(s)...</span>
-<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a><span class="sc">+</span> Running discrete genetic algorithm <span class="cf">for</span> <span class="dv">2</span> cut<span class="sc">-</span><span class="fu">point</span>(s)...</span>
-<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a><span class="sc">+</span> Running discrete genetic algorithm <span class="cf">for</span> <span class="dv">3</span> cut<span class="sc">-</span><span class="fu">point</span>(s)...</span>
-<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a><span class="sc">+</span> Running discrete genetic algorithm <span class="cf">for</span> <span class="dv">4</span> cut<span class="sc">-</span><span class="fu">point</span>(s)...</span>
-<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a><span class="sc">+</span> <span class="sc">!</span> Model with <span class="dv">4</span> cut<span class="sc">-</span><span class="fu">point</span>(s) collapsed<span class="sc">:</span> Subgroups violated the minimum <span class="st">'nmin'</span> constraint of <span class="dv">62</span> subjects.</span>
-<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a><span class="sc">+</span> Running discrete genetic algorithm <span class="cf">for</span> <span class="dv">5</span> cut<span class="sc">-</span><span class="fu">point</span>(s)...</span>
-<span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a><span class="sc">+</span> <span class="sc">!</span> Model with <span class="dv">5</span> cut<span class="sc">-</span><span class="fu">point</span>(s) collapsed<span class="sc">:</span> Subgroups violated the minimum <span class="st">'nmin'</span> constraint of <span class="dv">62</span> subjects.</span></code></pre></div>
-<p>We execute the <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> method to review detailed model
-fit parameters.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">summary</span>(num_res)</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="sc">+</span> ── Optimal Cut<span class="sc">-</span>point Number <span class="fu">Analysis</span> (Genetic) ─────────────────────────────────</span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="sc">+</span> ✔ Best Model<span class="sc">:</span> <span class="dv">3</span> Cut<span class="sc">-</span><span class="fu">points</span> (Criterion<span class="sc">:</span> AIC)</span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="sc">+</span> ℹ Optimal Thresholds<span class="sc">:</span> <span class="st">"0.9, 1.4, 3.5"</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="sc">+</span> ── <span class="fl">1.</span> Model Comparison ──</span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="sc">+</span>  Marker num_cuts     AIC Delta_AIC AIC_Weight    Evidence</span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="sc">+</span>                <span class="dv">0</span> <span class="fl">1957.60</span>    <span class="fl">130.11</span>         <span class="dv">0</span>%     Minimal</span>
-<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="sc">+</span>                <span class="dv">1</span> <span class="fl">1882.37</span>     <span class="fl">54.88</span>         <span class="dv">0</span>%     Minimal</span>
-<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="sc">+</span>                <span class="dv">2</span> <span class="fl">1835.71</span>      <span class="fl">8.22</span>       <span class="fl">1.6</span>%     Minimal</span>
-<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="sc">+</span>       <span class="er">&gt;</span>        <span class="dv">3</span> <span class="fl">1827.49</span>      <span class="fl">0.00</span>      <span class="fl">98.4</span>% Substantial</span>
-<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="sc">+</span> ── <span class="fl">2.</span> Clinical Risk Cohorts ──</span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="sc">+</span>  Group   N Events          Median_CI</span>
-<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="sc">+</span>     G1 <span class="dv">142</span>     <span class="dv">23</span>       <span class="cn">NA</span> (<span class="cn">NA</span> <span class="sc">-</span> <span class="cn">NA</span>)</span>
-<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="sc">+</span>     G2  <span class="dv">76</span>     <span class="dv">26</span>   <span class="dv">3561</span> (<span class="dv">3086</span> <span class="sc">-</span> <span class="cn">NA</span>)</span>
-<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="sc">+</span>     G3 <span class="dv">102</span>     <span class="dv">59</span> <span class="dv">2286</span> (<span class="dv">1725</span> <span class="sc">-</span> <span class="dv">3222</span>)</span>
-<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="sc">+</span>     G4  <span class="dv">98</span>     <span class="dv">78</span>   <span class="dv">980</span> (<span class="dv">859</span> <span class="sc">-</span> <span class="dv">1235</span>)</span>
-<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="sc">+</span> ── <span class="fl">3.</span> Cox Proportional<span class="sc">-</span>Hazards ──</span>
-<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a><span class="sc">+</span>    Group     HR Lower  Upper P_Value Signif</span>
-<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="sc">+</span>  groupG2  <span class="fl">2.169</span> <span class="fl">1.236</span>  <span class="fl">3.809</span>   <span class="fl">0.007</span>     <span class="sc">**</span></span>
-<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="sc">+</span>  groupG3  <span class="fl">4.934</span> <span class="fl">3.020</span>  <span class="fl">8.062</span>   <span class="fl">0.000</span>    <span class="sc">**</span><span class="er">*</span></span>
-<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a><span class="sc">+</span>  groupG4 <span class="fl">12.178</span> <span class="fl">7.503</span> <span class="fl">19.766</span>   <span class="fl">0.000</span>    <span class="sc">**</span><span class="er">*</span></span>
-<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a><span class="sc">+</span>      age  <span class="fl">1.025</span> <span class="fl">1.011</span>  <span class="fl">1.039</span>   <span class="fl">0.001</span>    <span class="sc">**</span><span class="er">*</span></span>
-<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="sc">+</span>     sexf  <span class="fl">0.940</span> <span class="fl">0.612</span>  <span class="fl">1.444</span>   <span class="fl">0.778</span>       </span>
-<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a><span class="sc">+</span>    edema  <span class="fl">4.965</span> <span class="fl">3.099</span>  <span class="fl">7.955</span>   <span class="fl">0.000</span>    <span class="sc">**</span><span class="er">*</span></span>
-<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a><span class="sc">+</span> ℹ Overall Model<span class="sc">:</span> Concordance <span class="ot">=</span> <span class="fl">0.802</span> <span class="sc">|</span> Log<span class="sc">-</span>rank p <span class="ot">=</span> <span class="dv">0</span></span>
-<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a><span class="sc">+</span> ── <span class="fl">4.</span> Time<span class="sc">-</span>Dependent <span class="fu">Diagnostics</span> (Schoenfeld) ──</span>
-<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a><span class="sc">+</span> ✔ Passed<span class="sc">:</span> The proportional hazards assumption holds across the follow<span class="sc">-</span>up <span class="fu">period</span> (Global <span class="at">p =</span> <span class="fl">0.29</span>).</span>
-<span id="cb4-33"><a href="#cb4-33" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb4-34"><a href="#cb4-34" tabindex="-1"></a><span class="sc">+</span> ── <span class="fl">5.</span> Analysis Parameters ──</span>
-<span id="cb4-35"><a href="#cb4-35" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb4-36"><a href="#cb4-36" tabindex="-1"></a><span class="sc">+</span> <span class="er">*</span> Search Method<span class="sc">:</span> Genetic</span>
-<span id="cb4-37"><a href="#cb4-37" tabindex="-1"></a><span class="sc">+</span> <span class="er">*</span> Predictor<span class="sc">:</span> bili</span>
-<span id="cb4-38"><a href="#cb4-38" tabindex="-1"></a><span class="sc">+</span> <span class="er">*</span> Criterion<span class="sc">:</span> AIC</span>
-<span id="cb4-39"><a href="#cb4-39" tabindex="-1"></a><span class="sc">+</span> <span class="er">*</span> Maximum Cuts<span class="sc">:</span> <span class="dv">5</span></span>
-<span id="cb4-40"><a href="#cb4-40" tabindex="-1"></a><span class="sc">+</span> <span class="er">*</span> Minimum Group <span class="fu">Size</span> (nmin)<span class="sc">:</span> <span class="dv">62</span></span>
-<span id="cb4-41"><a href="#cb4-41" tabindex="-1"></a><span class="sc">+</span> <span class="er">*</span> Covariates<span class="sc">:</span> age, sex, edema</span></code></pre></div>
-<p>To easily track the inflection points where adding more thresholds
-yields diminishing mathematical returns, we plot the multi-model fitness
-curve.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">plot</span>(num_res) <span class="sc">+</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>    <span class="at">method =</span> <span class="st">"loess"</span>,</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>    <span class="at">se =</span> <span class="cn">FALSE</span>,</span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>    <span class="at">colour =</span> <span class="st">"darkgrey"</span>,</span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>    <span class="at">linetype =</span> <span class="st">"dashed"</span>,</span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>    <span class="at">alpha =</span> <span class="fl">0.5</span></span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  )</span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="sc">+</span> <span class="st">`</span><span class="at">geom_smooth()</span><span class="st">`</span> using formula <span class="ot">=</span> <span class="st">'y ~ x'</span></span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="sc">+</span> Warning <span class="cf">in</span> <span class="fu">simpleLoess</span>(y, x, w, span, <span class="at">degree =</span> degree, <span class="at">parametric =</span> parametric,</span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="sc">+</span> <span class="er">:</span> span too small.  fewer data values than degrees of freedom.</span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="sc">+</span> Warning <span class="cf">in</span> <span class="fu">simpleLoess</span>(y, x, w, span, <span class="at">degree =</span> degree, <span class="at">parametric =</span> parametric,</span>
-<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="sc">+</span> <span class="er">:</span> pseudoinverse used at <span class="sc">-</span><span class="fl">0.015</span></span>
-<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="sc">+</span> Warning <span class="cf">in</span> <span class="fu">simpleLoess</span>(y, x, w, span, <span class="at">degree =</span> degree, <span class="at">parametric =</span> parametric,</span>
-<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="sc">+</span> <span class="er">:</span> neighborhood radius <span class="fl">2.015</span></span>
-<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="sc">+</span> Warning <span class="cf">in</span> <span class="fu">simpleLoess</span>(y, x, w, span, <span class="at">degree =</span> degree, <span class="at">parametric =</span> parametric,</span>
-<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="sc">+</span> <span class="er">:</span> reciprocal condition number <span class="dv">0</span></span>
-<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="sc">+</span> Warning <span class="cf">in</span> <span class="fu">simpleLoess</span>(y, x, w, span, <span class="at">degree =</span> degree, <span class="at">parametric =</span> parametric,</span>
-<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="sc">+</span> <span class="er">:</span> There are other near singularities as well. <span class="fl">4.0602</span></span></code></pre></div>
-<p><img src="bilirubin_files/figure-html/loess-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
-<p><strong>Interpretation:</strong> The model that minimises the
-information landscape layout is identified at <strong>2
-cut-points</strong> (which divides the patient cohort into 3 distinct
-risk groups). This confirms that even after controlling for the
-confounding baseline effects of age and sex, a multi-tier risk
-classification model is statistically superior to a traditional binary
-median split.</p>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="at">data =</span> pbc_clean, <span class="at">predictor =</span> <span class="st">"bili"</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">outcome_time =</span> <span class="st">"time"</span>, <span class="at">outcome_event =</span> <span class="st">"event"</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">covariates =</span> <span class="fu">c</span>(<span class="st">"age"</span>, <span class="st">"sex"</span>, <span class="st">"edema"</span>),</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">"genetic"</span>, <span class="at">criterion =</span> <span class="st">"AIC"</span>,</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="at">max_cuts =</span> <span class="dv">5</span>,</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="at">nmin =</span> <span class="fl">0.15</span>,          <span class="co"># each group holds at least 15% of patients</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>  <span class="at">max.generations =</span> <span class="cn">NULL</span>, <span class="at">pop.size =</span> <span class="cn">NULL</span>,</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>  <span class="at">boundary.enforcement =</span> <span class="dv">2</span>, <span class="at">seed =</span> <span class="dv">123</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>)</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="sc">+</span> ℹ nmin <span class="fl">0.15</span> is a proportion. Min. group size set to <span class="fl">62.</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="sc">+</span> ℹ Finding optimal cut number<span class="sc">:</span> method <span class="ot">=</span> genetic</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a><span class="sc">+</span> Running discrete genetic algorithm <span class="cf">for</span> <span class="dv">1</span> cut<span class="sc">-</span><span class="fu">point</span>(s)...</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="sc">+</span> Running discrete genetic algorithm <span class="cf">for</span> <span class="dv">2</span> cut<span class="sc">-</span><span class="fu">point</span>(s)...</span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="sc">+</span> Running discrete genetic algorithm <span class="cf">for</span> <span class="dv">3</span> cut<span class="sc">-</span><span class="fu">point</span>(s)...</span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="sc">+</span> Running discrete genetic algorithm <span class="cf">for</span> <span class="dv">4</span> cut<span class="sc">-</span><span class="fu">point</span>(s)...</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="sc">+</span> <span class="sc">!</span> Model with <span class="dv">4</span> cut<span class="sc">-</span><span class="fu">point</span>(s) collapsed<span class="sc">:</span> Subgroups violated the minimum <span class="st">'nmin'</span> constraint of <span class="dv">62</span> subjects.</span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="sc">+</span> Running discrete genetic algorithm <span class="cf">for</span> <span class="dv">5</span> cut<span class="sc">-</span><span class="fu">point</span>(s)...</span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="sc">+</span> <span class="sc">!</span> Model with <span class="dv">5</span> cut<span class="sc">-</span><span class="fu">point</span>(s) collapsed<span class="sc">:</span> Subgroups violated the minimum <span class="st">'nmin'</span> constraint of <span class="dv">62</span> subjects.</span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a><span class="fu">summary</span>(num_res)</span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="sc">+</span> ── Optimal Cut<span class="sc">-</span>point Number <span class="fu">Analysis</span> (Genetic) ─────────────────────────────────</span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a><span class="sc">+</span> ✔ Best Model<span class="sc">:</span> <span class="dv">3</span> Cut<span class="sc">-</span><span class="fu">points</span> (Criterion<span class="sc">:</span> AIC)</span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="sc">+</span> ℹ Optimal Thresholds<span class="sc">:</span> <span class="st">"0.9, 1.4, 3.5"</span></span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a><span class="sc">+</span> ── <span class="fl">1.</span> Model Comparison ──</span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a><span class="sc">+</span>  Marker num_cuts     AIC Delta_AIC AIC_Weight    Evidence</span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a><span class="sc">+</span>                <span class="dv">0</span> <span class="fl">1957.60</span>    <span class="fl">130.11</span>         <span class="dv">0</span>%     Minimal</span>
+<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a><span class="sc">+</span>                <span class="dv">1</span> <span class="fl">1882.37</span>     <span class="fl">54.88</span>         <span class="dv">0</span>%     Minimal</span>
+<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a><span class="sc">+</span>                <span class="dv">2</span> <span class="fl">1835.71</span>      <span class="fl">8.22</span>       <span class="fl">1.6</span>%     Minimal</span>
+<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a><span class="sc">+</span>       <span class="er">&gt;</span>        <span class="dv">3</span> <span class="fl">1827.49</span>      <span class="fl">0.00</span>      <span class="fl">98.4</span>% Substantial</span>
+<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a><span class="sc">+</span> ── <span class="fl">2.</span> Clinical Risk Cohorts ──</span>
+<span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a><span class="sc">+</span>  Group   N Events          Median_CI</span>
+<span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a><span class="sc">+</span>     G1 <span class="dv">142</span>     <span class="dv">23</span>       <span class="cn">NA</span> (<span class="cn">NA</span> <span class="sc">-</span> <span class="cn">NA</span>)</span>
+<span id="cb3-37"><a href="#cb3-37" tabindex="-1"></a><span class="sc">+</span>     G2  <span class="dv">76</span>     <span class="dv">26</span>   <span class="dv">3561</span> (<span class="dv">3086</span> <span class="sc">-</span> <span class="cn">NA</span>)</span>
+<span id="cb3-38"><a href="#cb3-38" tabindex="-1"></a><span class="sc">+</span>     G3 <span class="dv">102</span>     <span class="dv">59</span> <span class="dv">2286</span> (<span class="dv">1725</span> <span class="sc">-</span> <span class="dv">3222</span>)</span>
+<span id="cb3-39"><a href="#cb3-39" tabindex="-1"></a><span class="sc">+</span>     G4  <span class="dv">98</span>     <span class="dv">78</span>   <span class="dv">980</span> (<span class="dv">859</span> <span class="sc">-</span> <span class="dv">1235</span>)</span>
+<span id="cb3-40"><a href="#cb3-40" tabindex="-1"></a><span class="sc">+</span> ── <span class="fl">3.</span> Cox Proportional<span class="sc">-</span>Hazards ──</span>
+<span id="cb3-41"><a href="#cb3-41" tabindex="-1"></a><span class="sc">+</span>    Group     HR Lower  Upper P_Value Signif</span>
+<span id="cb3-42"><a href="#cb3-42" tabindex="-1"></a><span class="sc">+</span>  groupG2  <span class="fl">2.169</span> <span class="fl">1.236</span>  <span class="fl">3.809</span>   <span class="fl">0.007</span>     <span class="sc">**</span></span>
+<span id="cb3-43"><a href="#cb3-43" tabindex="-1"></a><span class="sc">+</span>  groupG3  <span class="fl">4.934</span> <span class="fl">3.020</span>  <span class="fl">8.062</span>   <span class="fl">0.000</span>    <span class="sc">**</span><span class="er">*</span></span>
+<span id="cb3-44"><a href="#cb3-44" tabindex="-1"></a><span class="sc">+</span>  groupG4 <span class="fl">12.178</span> <span class="fl">7.503</span> <span class="fl">19.766</span>   <span class="fl">0.000</span>    <span class="sc">**</span><span class="er">*</span></span>
+<span id="cb3-45"><a href="#cb3-45" tabindex="-1"></a><span class="sc">+</span>      age  <span class="fl">1.025</span> <span class="fl">1.011</span>  <span class="fl">1.039</span>   <span class="fl">0.001</span>    <span class="sc">**</span><span class="er">*</span></span>
+<span id="cb3-46"><a href="#cb3-46" tabindex="-1"></a><span class="sc">+</span>     sexf  <span class="fl">0.940</span> <span class="fl">0.612</span>  <span class="fl">1.444</span>   <span class="fl">0.778</span>       </span>
+<span id="cb3-47"><a href="#cb3-47" tabindex="-1"></a><span class="sc">+</span>    edema  <span class="fl">4.965</span> <span class="fl">3.099</span>  <span class="fl">7.955</span>   <span class="fl">0.000</span>    <span class="sc">**</span><span class="er">*</span></span>
+<span id="cb3-48"><a href="#cb3-48" tabindex="-1"></a><span class="sc">+</span> ℹ Overall Model<span class="sc">:</span> Concordance <span class="ot">=</span> <span class="fl">0.802</span> <span class="sc">|</span> Log<span class="sc">-</span>rank p <span class="ot">=</span> <span class="dv">0</span></span>
+<span id="cb3-49"><a href="#cb3-49" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb3-50"><a href="#cb3-50" tabindex="-1"></a><span class="sc">+</span> ── <span class="fl">4.</span> Time<span class="sc">-</span>Dependent <span class="fu">Diagnostics</span> (Schoenfeld) ──</span>
+<span id="cb3-51"><a href="#cb3-51" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb3-52"><a href="#cb3-52" tabindex="-1"></a><span class="sc">+</span> ✔ Passed<span class="sc">:</span> The proportional hazards assumption holds across the follow<span class="sc">-</span>up <span class="fu">period</span> (Global <span class="at">p =</span> <span class="fl">0.29</span>).</span>
+<span id="cb3-53"><a href="#cb3-53" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb3-54"><a href="#cb3-54" tabindex="-1"></a><span class="sc">+</span> ── <span class="fl">5.</span> Analysis Parameters ──</span>
+<span id="cb3-55"><a href="#cb3-55" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb3-56"><a href="#cb3-56" tabindex="-1"></a><span class="sc">+</span> <span class="er">*</span> Search Method<span class="sc">:</span> Genetic</span>
+<span id="cb3-57"><a href="#cb3-57" tabindex="-1"></a><span class="sc">+</span> <span class="er">*</span> Predictor<span class="sc">:</span> bili</span>
+<span id="cb3-58"><a href="#cb3-58" tabindex="-1"></a><span class="sc">+</span> <span class="er">*</span> Criterion<span class="sc">:</span> AIC</span>
+<span id="cb3-59"><a href="#cb3-59" tabindex="-1"></a><span class="sc">+</span> <span class="er">*</span> Maximum Cuts<span class="sc">:</span> <span class="dv">5</span></span>
+<span id="cb3-60"><a href="#cb3-60" tabindex="-1"></a><span class="sc">+</span> <span class="er">*</span> Minimum Group <span class="fu">Size</span> (nmin)<span class="sc">:</span> <span class="dv">62</span></span>
+<span id="cb3-61"><a href="#cb3-61" tabindex="-1"></a><span class="sc">+</span> <span class="er">*</span> Covariates<span class="sc">:</span> age, sex, edema</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">num_res</span><span class="op">)</span></span></code></pre></div>
+<p><img src="bilirubin_files/figure-html/criterion-curve-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
+<p>AIC is minimised at <strong>three cut-points</strong>, carrying 98.4%
+of the AIC weight against 1.6% for the two-cut model.</p>
+<p>The four- and five-cut models return no valid solution: with
+<code>nmin = 0.15</code> each group needs 62 patients, and the genetic
+search found no partition that satisfied this. A search returning
+nothing does not prove that nothing exists — raising
+<code>max.generations</code> and <code>pop.size</code>, or lowering
+<code>nmin</code>, may find one.</p>
+<hr>
 </div>
-</div>
-<div class="section level3">
-<h3 id="step-2-pinpointing-the-exact-cut-point-values">Step 2: Pinpointing the Exact Cut-point Values<a class="anchor" aria-label="anchor" href="#step-2-pinpointing-the-exact-cut-point-values"></a>
-</h3>
-<p>This step forms the algorithmic core of <code>OptSurvCutR</code>. We
-direct the search engine to locate the optimal dividing lines while
-holding our adjusted clinical covariates constant.</p>
-<p>We initiate the core optimisation loop, guiding the engine across the
-index coordinate topology to find the thresholds that maximise group
-risk divergence under active covariate adjustment.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>cut_res <span class="ot">&lt;-</span> <span class="fu">find_cutpoint</span>(</span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="co"># ==========================================</span></span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="co"># 1. CORE DATA &amp; COVARIATE INPUTS</span></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="co"># ==========================================</span></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="at">data =</span> pbc_clean,</span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  <span class="at">predictor =</span> <span class="st">"bili"</span>,</span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="at">outcome_time =</span> <span class="st">"time"</span>,</span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  <span class="at">outcome_event =</span> <span class="st">"event"</span>,</span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>  <span class="at">covariates =</span> <span class="fu">c</span>(<span class="st">"age"</span>, <span class="st">"sex"</span>, <span class="st">"edema"</span>), <span class="co"># Adjusted during location discovery</span></span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a></span>
-<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>  <span class="co"># ==========================================</span></span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>  <span class="co"># 2. SEARCH ENGINE SETTINGS</span></span>
-<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>  <span class="co"># ==========================================</span></span>
-<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">"genetic"</span>,</span>
-<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>  <span class="at">criterion =</span> <span class="st">"logrank"</span>,</span>
-<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>  <span class="at">num_cuts =</span> <span class="dv">3</span>,                          <span class="co"># Setting 3 cuts for clinical tier separation</span></span>
-<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a>  <span class="at">nmin =</span> <span class="fl">0.15</span>,                           <span class="co"># SAFETY LIMIT: Minimum patients per risk cohort</span></span>
-<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a>  <span class="at">n_perm =</span> <span class="dv">20</span>,                           <span class="co"># Streamlined permutation cycle</span></span>
-<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a></span>
-<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a>  <span class="co"># ==========================================</span></span>
-<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a>  <span class="co"># 3. ADVANCED GENETIC TUNING</span></span>
-<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a>  <span class="co"># ==========================================</span></span>
-<span id="cb6-23"><a href="#cb6-23" tabindex="-1"></a>  <span class="at">max.generations =</span> <span class="cn">NULL</span>,</span>
-<span id="cb6-24"><a href="#cb6-24" tabindex="-1"></a>  <span class="at">pop.size =</span> <span class="cn">NULL</span>,</span>
-<span id="cb6-25"><a href="#cb6-25" tabindex="-1"></a>  <span class="at">boundary.enforcement =</span> <span class="dv">2</span>,</span>
-<span id="cb6-26"><a href="#cb6-26" tabindex="-1"></a>  <span class="at">seed =</span> <span class="dv">123</span>,</span>
-<span id="cb6-27"><a href="#cb6-27" tabindex="-1"></a>  <span class="at">n_cores =</span> <span class="dv">1</span></span>
-<span id="cb6-28"><a href="#cb6-28" tabindex="-1"></a>)</span>
-<span id="cb6-29"><a href="#cb6-29" tabindex="-1"></a><span class="sc">+</span> ℹ nmin <span class="fl">0.15</span> is a proportion. Min. group size set to <span class="fl">62.</span></span>
-<span id="cb6-30"><a href="#cb6-30" tabindex="-1"></a><span class="sc">+</span> ℹ Starting regularised genetic search <span class="cf">for</span> <span class="dv">3</span> <span class="fu">cut</span>(s)...</span>
-<span id="cb6-31"><a href="#cb6-31" tabindex="-1"></a><span class="sc">+</span> ℹ Running <span class="dv">20</span> permutations to calculate adjusted p<span class="sc">-</span>value...</span></code></pre></div>
-<p>Now, we request the optimisation summary report to extract the hazard
-thresholds, model coefficients, and preliminary diagnostics.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">summary</span>(cut_res)</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="sc">+</span> ── Optimal Cut<span class="sc">-</span>point Analysis <span class="cf">for</span> Survival <span class="fu">Data</span> (Genetic) ──────────────────────</span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="sc">+</span> ✔ Optimal <span class="fu">Threshold</span>(s)<span class="sc">:</span> <span class="st">"0.7, 2.3, 5.945"</span></span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="sc">+</span> ℹ Permutation<span class="sc">-</span>Adjusted P<span class="sc">-</span><span class="fu">value</span> (<span class="dv">20</span> runs)<span class="sc">:</span> <span class="fl">0.0476</span></span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="sc">+</span> ── <span class="fl">1.</span> Stratified Risk Cohorts ──</span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="sc">+</span>  Group   N Events      Median_Time OS Rate at T<span class="ot">=</span><span class="dv">4795</span></span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="sc">+</span>     G1 <span class="dv">100</span>     <span class="dv">12</span> <span class="fu">NR</span> (Not Reached) <span class="fl">80.8</span>% (<span class="fl">70.8-92.1</span>)</span>
-<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="sc">+</span>     G2 <span class="dv">175</span>     <span class="dv">62</span>             <span class="dv">3445</span> <span class="fl">33.3</span>% (<span class="fl">22.4-49.3</span>)</span>
-<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="sc">+</span>     G3  <span class="dv">80</span>     <span class="dv">60</span>             <span class="dv">1504</span>        <span class="dv">0</span>% (<span class="cn">NA</span><span class="sc">-</span><span class="cn">NA</span>)</span>
-<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="sc">+</span>     G4  <span class="dv">63</span>     <span class="dv">52</span>              <span class="dv">930</span>   <span class="fl">3.9</span>% (<span class="fl">0.6-24.4</span>)</span>
-<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="sc">+</span> ── <span class="fl">2.</span> Cox Proportional<span class="sc">-</span>Hazards ──</span>
-<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="sc">+</span>  Group     HR  Lower  Upper P_Value Signif</span>
-<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="sc">+</span>     G2  <span class="fl">3.267</span>  <span class="fl">1.759</span>  <span class="fl">6.066</span>   <span class="fl">0.000</span>    <span class="sc">**</span><span class="er">*</span></span>
-<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a><span class="sc">+</span>     G3 <span class="fl">12.197</span>  <span class="fl">6.502</span> <span class="fl">22.881</span>   <span class="fl">0.000</span>    <span class="sc">**</span><span class="er">*</span></span>
-<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a><span class="sc">+</span>     G4 <span class="fl">20.929</span> <span class="fl">10.853</span> <span class="fl">40.359</span>   <span class="fl">0.000</span>    <span class="sc">**</span><span class="er">*</span></span>
-<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="sc">+</span>    age  <span class="fl">1.027</span>  <span class="fl">1.012</span>  <span class="fl">1.041</span>   <span class="fl">0.000</span>    <span class="sc">**</span><span class="er">*</span></span>
-<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a><span class="sc">+</span>   sexf  <span class="fl">0.938</span>  <span class="fl">0.613</span>  <span class="fl">1.435</span>   <span class="fl">0.769</span>       </span>
-<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a><span class="sc">+</span>  edema  <span class="fl">4.048</span>  <span class="fl">2.542</span>  <span class="fl">6.446</span>   <span class="fl">0.000</span>    <span class="sc">**</span><span class="er">*</span></span>
-<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a><span class="sc">+</span> ℹ Overall Model<span class="sc">:</span> Concordance <span class="ot">=</span> <span class="fl">0.811</span> <span class="sc">|</span> Log<span class="sc">-</span>rank p <span class="ot">=</span> <span class="dv">0</span></span>
-<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a><span class="sc">+</span> ── <span class="fl">3.</span> Time<span class="sc">-</span>Dependent <span class="fu">Diagnostics</span> (Schoenfeld) ──</span>
-<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a><span class="sc">+</span> ✔ Passed<span class="sc">:</span> The proportional hazards assumption holds across the follow<span class="sc">-</span>up <span class="fu">period</span> (Global <span class="at">p =</span> <span class="fl">0.103</span>).</span>
-<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a><span class="sc">+</span> ── <span class="fl">4.</span> Analysis Parameters ──</span>
-<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a><span class="sc">+</span> • Search Method<span class="sc">:</span> Genetic</span>
-<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a><span class="sc">+</span> • Predictor<span class="sc">:</span> bili</span>
-<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a><span class="sc">+</span> • Number of cuts<span class="sc">:</span> <span class="dv">3</span></span>
-<span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a><span class="sc">+</span> • Minimum group <span class="fu">size</span> (nmin)<span class="sc">:</span> <span class="dv">62</span></span>
-<span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a><span class="sc">+</span> • Covariates<span class="sc">:</span> age, sex, edema</span>
-<span id="cb7-35"><a href="#cb7-35" tabindex="-1"></a><span class="sc">+</span> • Permutations<span class="sc">:</span> <span class="dv">20</span></span></code></pre></div>
-<div class="section level4">
-<h4 id="automated-diagnostic-check-the-two-tier-schoenfeld-diagnostic">🔍 Automated Diagnostic Check: The Two-Tier Schoenfeld
-Diagnostic<a class="anchor" aria-label="anchor" href="#automated-diagnostic-check-the-two-tier-schoenfeld-diagnostic"></a>
-</h4>
-<p>When evaluating the <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> output, the package
-automatically calculates a Schoenfeld residuals validation check against
-the adjusted model matrix to verify whether the Proportional Hazards
-assumption holds:</p>
-<table class="table">
-<colgroup>
-<col width="33%">
-<col width="33%">
-<col width="33%">
-</colgroup>
-<thead><tr class="header">
-<th align="left">Diagnostic Status</th>
-<th align="left">Statistical Property (Schoenfeld Test)</th>
-<th align="left">Clinical Implication</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td align="left"><strong>Tier 1 (Proportional)</strong></td>
-<td align="left">The proportional hazards assumption holds
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>&gt;</mo><mn>0.05</mn></mrow><annotation encoding="application/x-tex">p &gt; 0.05</annotation></semantics></math>).</td>
-<td align="left">Your cut-points remain equally predictive across
-follow-up. Reporting a standard adjusted Hazard Ratio is valid.</td>
-</tr>
-<tr class="even">
-<td align="left"><strong>Tier 2 (Time-Varying)</strong></td>
-<td align="left">The hazard ratio changes significantly over time
-(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi><mo>&lt;</mo><mn>0.05</mn></mrow><annotation encoding="application/x-tex">p &lt; 0.05</annotation></semantics></math>).</td>
-<td align="left">Your cut-point remains biologically valid, but its
-relative predictive power shifts over time. Consider reporting
-time-dependent Hazard Ratios.</td>
-</tr>
-</tbody>
-</table>
-<p>To visualise where these calculated cut-points cross the clinical
-cohort, we generate a plot mapping the continuous marker
-distribution.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="section level2">
+<h2 id="where-are-the-boundaries">3. Where are the boundaries?<a class="anchor" aria-label="anchor" href="#where-are-the-boundaries"></a>
+</h2>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>cut_res <span class="ot">&lt;-</span> <span class="fu">find_cutpoint</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="at">data =</span> pbc_clean, <span class="at">predictor =</span> <span class="st">"bili"</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">outcome_time =</span> <span class="st">"time"</span>, <span class="at">outcome_event =</span> <span class="st">"event"</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">covariates =</span> <span class="fu">c</span>(<span class="st">"age"</span>, <span class="st">"sex"</span>, <span class="st">"edema"</span>),</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">method =</span> <span class="st">"genetic"</span>, <span class="at">criterion =</span> <span class="st">"logrank"</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">num_cuts =</span> num_res<span class="sc">$</span>optimal_num_cuts,   <span class="co"># carried from step 1</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="at">nmin =</span> <span class="fl">0.15</span>,</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  <span class="at">n_perm =</span> <span class="dv">20</span>,          <span class="co"># low for build speed; use &gt;= 1000 when reporting</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>  <span class="at">max.generations =</span> <span class="cn">NULL</span>, <span class="at">pop.size =</span> <span class="cn">NULL</span>,</span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>  <span class="at">boundary.enforcement =</span> <span class="dv">2</span>, <span class="at">seed =</span> <span class="dv">123</span>, <span class="at">n_cores =</span> <span class="dv">2</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>)</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="sc">+</span> ℹ nmin <span class="fl">0.15</span> is a proportion. Min. group size set to <span class="fl">62.</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="sc">+</span> ℹ Starting regularised genetic search <span class="cf">for</span> <span class="dv">3</span> <span class="fu">cut</span>(s)...</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="sc">+</span> ℹ Running <span class="dv">20</span> permutations to calculate adjusted p<span class="sc">-</span>value...</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="fu">summary</span>(cut_res)</span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="sc">+</span> ── Optimal Cut<span class="sc">-</span>point Analysis <span class="cf">for</span> Survival <span class="fu">Data</span> (Genetic) ──────────────────────</span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="sc">+</span> ✔ Optimal <span class="fu">Threshold</span>(s)<span class="sc">:</span> <span class="st">"0.7, 2.3, 5.945"</span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="sc">+</span> ℹ Permutation<span class="sc">-</span>Adjusted P<span class="sc">-</span><span class="fu">value</span> (<span class="dv">20</span> runs)<span class="sc">:</span> <span class="fl">0.0476</span></span>
+<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="sc">+</span> ── <span class="fl">1.</span> Stratified Risk Cohorts ──</span>
+<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="sc">+</span>  Group   N Events      Median_Time OS Rate at T<span class="ot">=</span><span class="dv">4795</span></span>
+<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="sc">+</span>     G1 <span class="dv">100</span>     <span class="dv">12</span> <span class="fu">NR</span> (Not Reached) <span class="fl">80.8</span>% (<span class="fl">70.8-92.1</span>)</span>
+<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="sc">+</span>     G2 <span class="dv">175</span>     <span class="dv">62</span>             <span class="dv">3445</span> <span class="fl">33.3</span>% (<span class="fl">22.4-49.3</span>)</span>
+<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a><span class="sc">+</span>     G3  <span class="dv">80</span>     <span class="dv">60</span>             <span class="dv">1504</span>        <span class="dv">0</span>% (<span class="cn">NA</span><span class="sc">-</span><span class="cn">NA</span>)</span>
+<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="sc">+</span>     G4  <span class="dv">63</span>     <span class="dv">52</span>              <span class="dv">930</span>   <span class="fl">3.9</span>% (<span class="fl">0.6-24.4</span>)</span>
+<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a><span class="sc">+</span> ── <span class="fl">2.</span> Cox Proportional<span class="sc">-</span>Hazards ──</span>
+<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a><span class="sc">+</span>  Group     HR  Lower  Upper P_Value Signif</span>
+<span id="cb5-31"><a href="#cb5-31" tabindex="-1"></a><span class="sc">+</span>     G2  <span class="fl">3.267</span>  <span class="fl">1.759</span>  <span class="fl">6.066</span>   <span class="fl">0.000</span>    <span class="sc">**</span><span class="er">*</span></span>
+<span id="cb5-32"><a href="#cb5-32" tabindex="-1"></a><span class="sc">+</span>     G3 <span class="fl">12.197</span>  <span class="fl">6.502</span> <span class="fl">22.881</span>   <span class="fl">0.000</span>    <span class="sc">**</span><span class="er">*</span></span>
+<span id="cb5-33"><a href="#cb5-33" tabindex="-1"></a><span class="sc">+</span>     G4 <span class="fl">20.929</span> <span class="fl">10.853</span> <span class="fl">40.359</span>   <span class="fl">0.000</span>    <span class="sc">**</span><span class="er">*</span></span>
+<span id="cb5-34"><a href="#cb5-34" tabindex="-1"></a><span class="sc">+</span>    age  <span class="fl">1.027</span>  <span class="fl">1.012</span>  <span class="fl">1.041</span>   <span class="fl">0.000</span>    <span class="sc">**</span><span class="er">*</span></span>
+<span id="cb5-35"><a href="#cb5-35" tabindex="-1"></a><span class="sc">+</span>   sexf  <span class="fl">0.938</span>  <span class="fl">0.613</span>  <span class="fl">1.435</span>   <span class="fl">0.769</span>       </span>
+<span id="cb5-36"><a href="#cb5-36" tabindex="-1"></a><span class="sc">+</span>  edema  <span class="fl">4.048</span>  <span class="fl">2.542</span>  <span class="fl">6.446</span>   <span class="fl">0.000</span>    <span class="sc">**</span><span class="er">*</span></span>
+<span id="cb5-37"><a href="#cb5-37" tabindex="-1"></a><span class="sc">+</span> ℹ Overall Model<span class="sc">:</span> Concordance <span class="ot">=</span> <span class="fl">0.811</span> <span class="sc">|</span> Log<span class="sc">-</span>rank p <span class="ot">=</span> <span class="dv">0</span></span>
+<span id="cb5-38"><a href="#cb5-38" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb5-39"><a href="#cb5-39" tabindex="-1"></a><span class="sc">+</span> ── <span class="fl">3.</span> Time<span class="sc">-</span>Dependent <span class="fu">Diagnostics</span> (Schoenfeld) ──</span>
+<span id="cb5-40"><a href="#cb5-40" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb5-41"><a href="#cb5-41" tabindex="-1"></a><span class="sc">+</span> ✔ Passed<span class="sc">:</span> The proportional hazards assumption holds across the follow<span class="sc">-</span>up <span class="fu">period</span> (Global <span class="at">p =</span> <span class="fl">0.103</span>).</span>
+<span id="cb5-42"><a href="#cb5-42" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb5-43"><a href="#cb5-43" tabindex="-1"></a><span class="sc">+</span> ── <span class="fl">4.</span> Analysis Parameters ──</span>
+<span id="cb5-44"><a href="#cb5-44" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb5-45"><a href="#cb5-45" tabindex="-1"></a><span class="sc">+</span> • Search Method<span class="sc">:</span> Genetic</span>
+<span id="cb5-46"><a href="#cb5-46" tabindex="-1"></a><span class="sc">+</span> • Predictor<span class="sc">:</span> bili</span>
+<span id="cb5-47"><a href="#cb5-47" tabindex="-1"></a><span class="sc">+</span> • Number of cuts<span class="sc">:</span> <span class="dv">3</span></span>
+<span id="cb5-48"><a href="#cb5-48" tabindex="-1"></a><span class="sc">+</span> • Minimum group <span class="fu">size</span> (nmin)<span class="sc">:</span> <span class="dv">62</span></span>
+<span id="cb5-49"><a href="#cb5-49" tabindex="-1"></a><span class="sc">+</span> • Covariates<span class="sc">:</span> age, sex, edema</span>
+<span id="cb5-50"><a href="#cb5-50" tabindex="-1"></a><span class="sc">+</span> • Permutations<span class="sc">:</span> <span class="dv">20</span></span></code></pre></div>
+<p><code>num_cuts</code> is taken from the Step 1 object rather than
+specified directly. Selecting the number of groups after inspecting the
+survival curves would reintroduce the selection problem that Step 1 is
+intended to control.</p>
+<p>The thresholds are <strong>0.7, 2.3 and 5.945 mg/dL</strong>, giving
+groups of 100, 175, 80 and 63 patients. Hazard ratios rise across them
+(3.27, 12.20, 20.93 relative to the lowest group) and median
+transplant-free survival falls from not reached to 3445, 1504 and 930
+days. Concordance is 0.811.</p>
+<p>The reported permutation <em>p</em> of 0.0476 is exactly 1/(20+1),
+the smallest value <code>n_perm = 20</code> can return. It means no
+permutation exceeded the observed statistic, not that <em>p</em> equals
+0.0476.</p>
+<p>The Schoenfeld test gives <em>p</em> = 0.103, so there is no evidence
+against proportional hazards and the hazard ratios can be read as
+approximately constant over follow-up.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cut_res</span>, type <span class="op">=</span> <span class="st">"distribution"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_rug.html" class="external-link">geom_rug</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>caption <span class="op">=</span> <span class="st">"KDE interpolation reveals the covariate-adjusted thresholds of bilirubin"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="bilirubin_files/figure-html/plot_find-cutpoint-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>caption <span class="op">=</span> <span class="st">"Bilirubin thresholds on the marker distribution"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="bilirubin_files/figure-html/plot-distribution-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
 <hr>
 </div>
-</div>
+<div class="section level2">
+<h2 id="are-the-boundaries-stable">4. Are the boundaries stable?<a class="anchor" aria-label="anchor" href="#are-the-boundaries-stable"></a>
+</h2>
+<p><code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> re-runs the search on resampled
+cohorts and records where each boundary lands.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>val_res <span class="ot">&lt;-</span> <span class="fu">validate_cutpoint</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="at">cutpoint_result =</span> cut_res,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">num_replicates =</span> <span class="dv">30</span>,      <span class="co"># reduced for build speed; use &gt;= 500 when reporting</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">n_cores =</span> <span class="dv">2</span>,</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="at">max.generations =</span> <span class="cn">NULL</span>, <span class="at">pop.size =</span> <span class="cn">NULL</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="at">boundary.enforcement =</span> <span class="dv">2</span>, <span class="at">seed =</span> <span class="dv">123</span></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>)</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="sc">+</span> ℹ Using random seed <span class="dv">123</span> <span class="cf">for</span> reproducibility.</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="sc">+</span> ℹ Bootstrap <span class="st">`</span><span class="at">nmin</span><span class="st">`</span> not set. Using <span class="dv">55</span> (<span class="dv">90</span>% of original) to improve stability.</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="sc">+</span> ℹ Validating <span class="dv">3</span> <span class="fu">cut</span>(s) from <span class="st">'genetic'</span> search using <span class="st">'logrank'</span> over regularised coordinate lattice.</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="sc">+</span> ℹ Running <span class="dv">30</span> replicates on <span class="dv">2</span> cores...</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="sc">+</span> ✔ <span class="dv">30</span> replicates completed.</span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a></span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="fu">summary</span>(val_res)</span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="sc">+</span> Cut<span class="sc">-</span>point Stability <span class="fu">Analysis</span> (Bootstrap)</span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="sc">+</span> <span class="sc">----------------------------------------</span></span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a><span class="sc">+</span> Original Optimal Cut<span class="sc">-</span><span class="fu">point</span>(s)<span class="sc">:</span> <span class="fl">0.7</span>, <span class="fl">2.3</span>, <span class="fl">5.945</span> </span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="sc">+</span> Bootstrap Distribution Summary</span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a><span class="sc">+</span> <span class="sc">-----------------------------</span></span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a><span class="sc">+</span>       Cut  Mean    SD Median   Q1    Q3</span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a><span class="sc">+</span> <span class="dv">25</span>%  Cut1 <span class="fl">0.951</span> <span class="fl">0.307</span>  <span class="fl">0.900</span> <span class="fl">0.70</span> <span class="fl">1.200</span></span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a><span class="sc">+</span> <span class="dv">25</span>%<span class="dv">1</span> Cut2 <span class="fl">2.295</span> <span class="fl">0.324</span>  <span class="fl">2.300</span> <span class="fl">2.20</span> <span class="fl">2.300</span></span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a><span class="sc">+</span> <span class="dv">25</span>%<span class="dv">2</span> Cut3 <span class="fl">5.703</span> <span class="fl">1.120</span>  <span class="fl">6.021</span> <span class="fl">4.95</span> <span class="fl">6.487</span></span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a><span class="sc">+</span> <span class="dv">95</span>% Confidence Intervals</span>
+<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a><span class="sc">+</span> <span class="sc">------------------------</span></span>
+<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a><span class="sc">+</span>       Lower Upper</span>
+<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a><span class="sc">+</span> Cut <span class="dv">1</span> <span class="fl">0.600</span> <span class="fl">1.582</span></span>
+<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a><span class="sc">+</span> Cut <span class="dv">2</span> <span class="fl">1.845</span> <span class="fl">3.082</span></span>
+<span id="cb7-31"><a href="#cb7-31" tabindex="-1"></a><span class="sc">+</span> Cut <span class="dv">3</span> <span class="fl">3.247</span> <span class="fl">7.054</span></span>
+<span id="cb7-32"><a href="#cb7-32" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb7-33"><a href="#cb7-33" tabindex="-1"></a><span class="sc">+</span> Validation Parameters</span>
+<span id="cb7-34"><a href="#cb7-34" tabindex="-1"></a><span class="sc">+</span> <span class="sc">---------------------</span></span>
+<span id="cb7-35"><a href="#cb7-35" tabindex="-1"></a><span class="sc">+</span> Replicates Requested<span class="sc">:</span> <span class="dv">30</span> </span>
+<span id="cb7-36"><a href="#cb7-36" tabindex="-1"></a><span class="sc">+</span> Successful Replicates<span class="sc">:</span> <span class="dv">30</span> <span class="sc">/</span> <span class="dv">30</span> ( <span class="dv">100</span> %)</span>
+<span id="cb7-37"><a href="#cb7-37" tabindex="-1"></a><span class="sc">+</span> Failed Replicates<span class="sc">:</span> <span class="dv">0</span> </span>
+<span id="cb7-38"><a href="#cb7-38" tabindex="-1"></a><span class="sc">+</span> Cores Used<span class="sc">:</span> <span class="dv">2</span> </span>
+<span id="cb7-39"><a href="#cb7-39" tabindex="-1"></a><span class="sc">+</span> Seed<span class="sc">:</span> <span class="dv">123</span> </span>
+<span id="cb7-40"><a href="#cb7-40" tabindex="-1"></a><span class="sc">+</span> Minimum Group <span class="fu">Size</span> (nmin)<span class="sc">:</span> <span class="dv">55</span> </span>
+<span id="cb7-41"><a href="#cb7-41" tabindex="-1"></a><span class="sc">+</span> Method<span class="sc">:</span> genetic </span>
+<span id="cb7-42"><a href="#cb7-42" tabindex="-1"></a><span class="sc">+</span> Criterion<span class="sc">:</span> logrank </span>
+<span id="cb7-43"><a href="#cb7-43" tabindex="-1"></a><span class="sc">+</span> Covariates<span class="sc">:</span> age, sex, edema </span>
+<span id="cb7-44"><a href="#cb7-44" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb7-45"><a href="#cb7-45" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb7-46"><a href="#cb7-46" tabindex="-1"></a><span class="sc">+</span> Stability Assessment<span class="sc">:</span></span>
+<span id="cb7-47"><a href="#cb7-47" tabindex="-1"></a><span class="sc">+</span> <span class="sc">---------------------</span></span>
+<span id="cb7-48"><a href="#cb7-48" tabindex="-1"></a><span class="sc">+</span> Maximum CI <span class="fu">Width</span> (Relative to <span class="dv">10</span>th<span class="dv">-90</span>th Percentile Range)<span class="sc">:</span> <span class="fl">51.2</span>%</span>
+<span id="cb7-49"><a href="#cb7-49" tabindex="-1"></a><span class="sc">+</span> ✔ Model Status<span class="sc">:</span> <span class="fu">DISTINCT</span> (Tier <span class="dv">2</span>)</span>
+<span id="cb7-50"><a href="#cb7-50" tabindex="-1"></a><span class="sc">+</span> The relative mathematical variance is <span class="fu">moderate</span> (<span class="fl">51.2</span><span class="sc">%), but 95%</span> Confidence</span>
+<span id="cb7-51"><a href="#cb7-51" tabindex="-1"></a><span class="sc">+</span> Intervals do not overlap.</span></code></pre></div>
+<p>The bootstrap <code>nmin</code> is relaxed to 55 automatically.
+Resampled cohorts contain duplicates and fewer distinct values, so
+holding the original constraint would cause replicates to fail.</p>
 <div class="section level3">
-<h3 id="step-3-validate-threshold-stability">Step 3: Validate Threshold Stability<a class="anchor" aria-label="anchor" href="#step-3-validate-threshold-stability"></a>
+<h3 id="reading-the-tier">Reading the tier<a class="anchor" aria-label="anchor" href="#reading-the-tier"></a>
 </h3>
-<p>We use Bootstrap Resampling to ensure that our covariate-adjusted
-thresholds reflect stable biology and are completely independent of
-sample-specific noise.</p>
-<p>We run repetitive bootstrap sampling loops, forcing the optimisation
-engine to re-verify the marker thresholds across randomised slices of
-our patient cohort.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>val_res <span class="ot">&lt;-</span> <span class="fu">validate_cutpoint</span>(</span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="co"># ==========================================</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="co"># 1. VALIDATION INPUTS</span></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="co"># ==========================================</span></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">cutpoint_result =</span> cut_res,</span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  <span class="at">num_replicates =</span> <span class="dv">30</span>, <span class="co"># 500+ is the standard for final publication</span></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>  <span class="at">n_cores =</span> <span class="dv">1</span>,</span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a></span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  <span class="co"># ==========================================</span></span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  <span class="co"># 2. ADVANCED SETTINGS (Must match Step 2)</span></span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>  <span class="co"># ==========================================</span></span>
-<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>  <span class="at">max.generations =</span> <span class="cn">NULL</span>,</span>
-<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>  <span class="at">pop.size =</span> <span class="cn">NULL</span>,</span>
-<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>  <span class="at">boundary.enforcement =</span> <span class="dv">2</span>,</span>
-<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>  <span class="at">seed =</span> <span class="dv">123</span></span>
-<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a>)</span>
-<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a><span class="sc">+</span> ℹ Using random seed <span class="dv">123</span> <span class="cf">for</span> reproducibility.</span>
-<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a><span class="sc">+</span> ℹ Bootstrap <span class="st">`</span><span class="at">nmin</span><span class="st">`</span> not set. Using <span class="dv">55</span> (<span class="dv">90</span>% of original) to improve stability.</span>
-<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="sc">+</span> ℹ Validating <span class="dv">3</span> <span class="fu">cut</span>(s) from <span class="st">'genetic'</span> search using <span class="st">'logrank'</span> over regularised coordinate lattice.</span>
-<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a><span class="sc">+</span> ℹ Running <span class="dv">30</span> replicates <span class="fu">sequentially</span> (<span class="at">n_cores =</span> <span class="dv">1</span>).</span>
-<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a><span class="sc">+</span> Bootstrapping ■■■■                              <span class="dv">10</span><span class="sc">% | ETA: 12sBootstrapping ■■■■■                             13%</span> <span class="er">|</span> ETA<span class="sc">:</span> <span class="dv">13</span>sBootstrapping ■■■■■■                            <span class="dv">17</span><span class="sc">% | ETA: 14sBootstrapping ■■■■■■■                           20%</span> <span class="er">|</span> ETA<span class="sc">:</span> <span class="dv">14</span>sBootstrapping ■■■■■■■■                          <span class="dv">23</span><span class="sc">% | ETA: 14sBootstrapping ■■■■■■■■■                         27%</span> <span class="er">|</span> ETA<span class="sc">:</span> <span class="dv">14</span>sBootstrapping ■■■■■■■■■■                        <span class="dv">30</span><span class="sc">% | ETA: 13sBootstrapping ■■■■■■■■■■■                       33%</span> <span class="er">|</span> ETA<span class="sc">:</span> <span class="dv">13</span>sBootstrapping ■■■■■■■■■■■■                      <span class="dv">37</span><span class="sc">% | ETA: 12sBootstrapping ■■■■■■■■■■■■■                     40%</span> <span class="er">|</span> ETA<span class="sc">:</span> <span class="dv">12</span>sBootstrapping ■■■■■■■■■■■■■■                    <span class="dv">43</span><span class="sc">% | ETA: 11sBootstrapping ■■■■■■■■■■■■■■■                   47%</span> <span class="er">|</span> ETA<span class="sc">:</span> <span class="dv">11</span>sBootstrapping ■■■■■■■■■■■■■■■■                  <span class="dv">50</span><span class="sc">% | ETA: 10sBootstrapping ■■■■■■■■■■■■■■■■■                 53%</span> <span class="er">|</span> ETA<span class="sc">:</span>  <span class="dv">9</span>sBootstrapping ■■■■■■■■■■■■■■■■■■                <span class="dv">57</span><span class="sc">% | ETA:  8sBootstrapping ■■■■■■■■■■■■■■■■■■■               60%</span> <span class="er">|</span> ETA<span class="sc">:</span>  <span class="dv">8</span>sBootstrapping ■■■■■■■■■■■■■■■■■■■■              <span class="dv">63</span><span class="sc">% | ETA:  7sBootstrapping ■■■■■■■■■■■■■■■■■■■■■             67%</span> <span class="er">|</span> ETA<span class="sc">:</span>  <span class="dv">6</span>sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■            <span class="dv">70</span><span class="sc">% | ETA:  6sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■           73%</span> <span class="er">|</span> ETA<span class="sc">:</span>  <span class="dv">5</span>sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■          <span class="dv">77</span><span class="sc">% | ETA:  5sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■         80%</span> <span class="er">|</span> ETA<span class="sc">:</span>  <span class="dv">4</span>sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■        <span class="dv">83</span><span class="sc">% | ETA:  3sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■       87%</span> <span class="er">|</span> ETA<span class="sc">:</span>  <span class="dv">3</span>sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      <span class="dv">90</span><span class="sc">% | ETA:  2sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■     93%</span> <span class="er">|</span> ETA<span class="sc">:</span>  <span class="dv">1</span>sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    <span class="dv">97</span>% <span class="sc">|</span> ETA<span class="sc">:</span>  <span class="dv">1</span>s                                                               ✔ <span class="dv">30</span> replicates completed.</span></code></pre></div>
-<p>We look at the aggregated validation metrics to review the underlying
-variance parameters across our calculated thresholds.</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">summary</span>(val_res)</span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="sc">+</span> Cut<span class="sc">-</span>point Stability <span class="fu">Analysis</span> (Bootstrap)</span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="sc">+</span> <span class="sc">----------------------------------------</span></span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="sc">+</span> Original Optimal Cut<span class="sc">-</span><span class="fu">point</span>(s)<span class="sc">:</span> <span class="fl">0.7</span>, <span class="fl">2.3</span>, <span class="fl">5.945</span> </span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="sc">+</span> Bootstrap Distribution Summary</span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="sc">+</span> <span class="sc">-----------------------------</span></span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="sc">+</span>       Cut  Mean    SD Median    Q1    Q3</span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="sc">+</span> <span class="dv">25</span>%  Cut1 <span class="fl">0.947</span> <span class="fl">0.290</span>  <span class="fl">0.830</span> <span class="fl">0.700</span> <span class="fl">1.275</span></span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="sc">+</span> <span class="dv">25</span>%<span class="dv">1</span> Cut2 <span class="fl">2.290</span> <span class="fl">0.341</span>  <span class="fl">2.300</span> <span class="fl">2.142</span> <span class="fl">2.339</span></span>
-<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="sc">+</span> <span class="dv">25</span>%<span class="dv">2</span> Cut3 <span class="fl">5.892</span> <span class="fl">1.094</span>  <span class="fl">6.353</span> <span class="fl">5.700</span> <span class="fl">6.447</span></span>
-<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="sc">+</span> <span class="dv">95</span>% Confidence Intervals</span>
-<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="sc">+</span> <span class="sc">------------------------</span></span>
-<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="sc">+</span>       Lower Upper</span>
-<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a><span class="sc">+</span> Cut <span class="dv">1</span> <span class="fl">0.600</span> <span class="fl">1.423</span></span>
-<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a><span class="sc">+</span> Cut <span class="dv">2</span> <span class="fl">1.723</span> <span class="fl">3.125</span></span>
-<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a><span class="sc">+</span> Cut <span class="dv">3</span> <span class="fl">3.372</span> <span class="fl">7.426</span></span>
-<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a><span class="sc">+</span> Validation Parameters</span>
-<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a><span class="sc">+</span> <span class="sc">---------------------</span></span>
-<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a><span class="sc">+</span> Replicates Requested<span class="sc">:</span> <span class="dv">30</span> </span>
-<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a><span class="sc">+</span> Successful Replicates<span class="sc">:</span> <span class="dv">30</span> <span class="sc">/</span> <span class="dv">30</span> ( <span class="dv">100</span> %)</span>
-<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a><span class="sc">+</span> Failed Replicates<span class="sc">:</span> <span class="dv">0</span> </span>
-<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="sc">+</span> Cores Used<span class="sc">:</span> <span class="dv">1</span> </span>
-<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="sc">+</span> Seed<span class="sc">:</span> <span class="dv">123</span> </span>
-<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a><span class="sc">+</span> Minimum Group <span class="fu">Size</span> (nmin)<span class="sc">:</span> <span class="dv">55</span> </span>
-<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a><span class="sc">+</span> Method<span class="sc">:</span> genetic </span>
-<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a><span class="sc">+</span> Criterion<span class="sc">:</span> logrank </span>
-<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a><span class="sc">+</span> Covariates<span class="sc">:</span> age, sex, edema </span>
-<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb10-33"><a href="#cb10-33" tabindex="-1"></a><span class="sc">+</span> Stability Assessment<span class="sc">:</span></span>
-<span id="cb10-34"><a href="#cb10-34" tabindex="-1"></a><span class="sc">+</span> <span class="sc">---------------------</span></span>
-<span id="cb10-35"><a href="#cb10-35" tabindex="-1"></a><span class="sc">+</span> Maximum CI <span class="fu">Width</span> (Relative to <span class="dv">10</span>th<span class="dv">-90</span>th Percentile Range)<span class="sc">:</span> <span class="fl">664.6</span>%</span>
-<span id="cb10-36"><a href="#cb10-36" tabindex="-1"></a><span class="sc">+</span> ✔ Model Status<span class="sc">:</span> <span class="fu">DISTINCT</span> (Tier <span class="dv">2</span>) <span class="sc">-</span> SEPARATION OVERRIDE</span>
-<span id="cb10-37"><a href="#cb10-37" tabindex="-1"></a><span class="sc">+</span> The relative mathematical variance is <span class="fu">high</span> (<span class="fl">664.6</span><span class="sc">%), but 95%</span> Confidence</span>
-<span id="cb10-38"><a href="#cb10-38" tabindex="-1"></a><span class="sc">+</span> Intervals do not overlap.</span></code></pre></div>
-<div class="section level4">
-<h4 id="automated-performance-grading-the-four-tier-stability-assessment">🔍 Automated Performance Grading: The Four-Tier Stability
-Assessment<a class="anchor" aria-label="anchor" href="#automated-performance-grading-the-four-tier-stability-assessment"></a>
-</h4>
-<p>Following bootstrap calculations, <code>OptSurvCutR</code> evaluates
-both <strong>Precision</strong> (Confidence Interval width relative to
-the overall data range) and <strong>Validity</strong> (absence of
-interval overlap), grading model health into four distinct performance
-tiers:</p>
-<ol style="list-style-type: decimal">
-<li>
-<strong>Tier 1 (OPTIMAL):</strong> Narrow intervals (CI Width
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>&lt;</mo><mn>30</mn><mi>%</mi></mrow><annotation encoding="application/x-tex">&lt; 30\%</annotation></semantics></math>)
-paired with complete cohort separation.</li>
-<li>
-<strong>Tier 2 (DISTINCT):</strong> Zero overlap between confidence
-zones regardless of absolute width. Thresholds may float slightly, but
-risk boundaries remain clear.</li>
-<li>
-<strong>Tier 3 (CAUTION):</strong> Moderate parameter variance (CI
-Width
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>30</mn><mi>%</mi><mi>–</mi><mn>60</mn><mi>%</mi></mrow><annotation encoding="application/x-tex">30\%–60\%</annotation></semantics></math>)
-accompanied by overlapping intervals.</li>
-<li>
-<strong>Tier 4 (UNSTABLE):</strong> High variance (CI Width
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>&gt;</mo><mn>60</mn><mi>%</mi></mrow><annotation encoding="application/x-tex">&gt; 60\%</annotation></semantics></math>)
-with overlapping intervals, signaling severe data over-fitting.</li>
-</ol>
-<p>For precise documentation, we compile our numerical confidence
-intervals directly into a clean markdown summary table.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">val_res</span><span class="op">$</span><span class="va">confidence_intervals</span>, digits <span class="op">=</span> <span class="fl">3</span>, caption <span class="op">=</span> <span class="st">"Covariate-Adjusted Stability Intervals for Bilirubin Risk Thresholds"</span><span class="op">)</span></span></code></pre></div>
+<p>Two quantities are assessed: whether adjacent intervals
+<strong>overlap</strong>, and each interval’s <strong>width</strong>
+relative to the predictor’s 10th–90th percentile range.</p>
 <table class="table">
-<caption>Covariate-Adjusted Stability Intervals for Bilirubin Risk
-Thresholds</caption>
+<colgroup>
+<col width="25%">
+<col width="25%">
+<col width="25%">
+<col width="25%">
+</colgroup>
 <thead><tr class="header">
-<th align="left"></th>
-<th align="right">Lower</th>
-<th align="right">Upper</th>
+<th align="left">Tier</th>
+<th align="left">Overlap</th>
+<th align="left">Width</th>
+<th align="left">Meaning</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">Cut 1</td>
-<td align="right">0.600</td>
-<td align="right">1.423</td>
+<td align="left">1 — OPTIMAL</td>
+<td align="left">None</td>
+<td align="left">&lt; 30%</td>
+<td align="left">Precise boundaries, distinct groups</td>
 </tr>
 <tr class="even">
-<td align="left">Cut 2</td>
-<td align="right">1.723</td>
-<td align="right">3.125</td>
+<td align="left">2 — DISTINCT</td>
+<td align="left">None</td>
+<td align="left">Any</td>
+<td align="left">Groups distinct, boundaries move</td>
 </tr>
 <tr class="odd">
-<td align="left">Cut 3</td>
-<td align="right">3.372</td>
-<td align="right">7.426</td>
+<td align="left">3 — CAUTION</td>
+<td align="left">Present</td>
+<td align="left">30–60%</td>
+<td align="left">Adjacent groups not cleanly separated</td>
+</tr>
+<tr class="even">
+<td align="left">4 — UNSTABLE</td>
+<td align="left">Present</td>
+<td align="left">&gt; 60%</td>
+<td align="left">Boundaries not reproducible</td>
 </tr>
 </tbody>
 </table>
-<p>To determine if our thresholds remain tightly anchored or scatter
-across iterations, we inspect the bootstrap density landscape.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">val_res</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>caption <span class="op">=</span> <span class="st">"Density interpolation of bootstrap-derived cut-points under adjustment"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="bilirubin_files/figure-html/validate-cutpoint-plot-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
+<p>These are two independent diagnostics rather than an ordinal scale:
+overlap matters most for a multi-tier rule, width for a single reported
+boundary. The percentages are practical conventions.</p>
+<p>The number of replicates affects the width of the intervals. With few
+replicates the 2.5th and 97.5th percentiles fall close to the extremes
+of the resampled values, and the intervals are narrower than they should
+be. Use at least 500 replicates for any reported analysis. The chunk
+above uses 30 to keep the vignette build short; the section below
+reports the 500-replicate results.</p>
 <hr>
 </div>
 </div>
+<div class="section level2">
+<h2 id="results-at-500-replicates">5. Results at 500 replicates<a class="anchor" aria-label="anchor" href="#results-at-500-replicates"></a>
+</h2>
+<p>Running the same validation with <code>num_replicates = 500</code>
+gives:</p>
+<table class="table">
+<thead><tr class="header">
+<th align="left">Model</th>
+<th align="left">Thresholds</th>
+<th align="right">Widest interval</th>
+<th align="left">Tier</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Three cut-points</td>
+<td align="left">0.7, 2.3, 5.945</td>
+<td align="right">54.2%</td>
+<td align="left">3 — CAUTION</td>
+</tr>
+<tr class="even">
+<td align="left">Two cut-points</td>
+<td align="left">2.3, 5.945</td>
+<td align="right">59.9%</td>
+<td align="left">3 — CAUTION</td>
+</tr>
+<tr class="odd">
+<td align="left"><strong>One cut-point</strong></td>
+<td align="left"><strong>2.3</strong></td>
+<td align="right"><strong>18.8%</strong></td>
+<td align="left"><strong>1 — OPTIMAL</strong></td>
+</tr>
+</tbody>
+</table>
+<p>For the three-cut model the intervals are 0.6–1.6, 1.4–3.3 and
+3.0–7.03 mg/dL. Both adjacent pairs intersect, so a patient with a
+bilirubin of 1.5 mg/dL is assigned to a different group depending on the
+resample. The component widths are uneven: the two lower boundaries are
+well resolved at 13.5% and 25.6%, both within Tier 1 bounds on width
+alone, whereas the upper boundary, situated in the sparse right tail, is
+not reproducible at 54.2%.</p>
+<p>The two-cut model performs less well, with a widest interval of 59.9%
+and the lowest boundary widening from 0.6–1.6 to 0.7–3.0 mg/dL. With
+three groups the minimum stratum constraint admits a wider feasible
+region, so the optimum varies more across resamples. Reducing the number
+of cut-points does not necessarily improve stability, and is worth
+testing rather than assuming.</p>
+<p>The threshold is <strong>2.3 mg/dL</strong> with a bootstrap interval
+of 2.0–3.4. The median across 500 resamples is 2.3, identical to the
+value found in the full data, and the interquartile range is 2.3–3.0.
+This is also the middle boundary of the three-cut model: the search
+returned to the same point regardless of how many groups it was asked
+for.</p>
+<p>The reduction from three cut-points to one followed the stability
+assessment and constitutes a post-hoc simplification, which should be
+reported as such. Two considerations support it: the sequence is
+prescribed by the workflow in advance rather than selected for this
+dataset, and <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> issues the recommendation
+as part of its diagnostic output. The adjusted hazard ratio for the
+single-threshold model nonetheless remains optimistic, since the
+threshold was selected from the same data used to estimate it.</p>
+<hr>
 </div>
 <div class="section level2">
-<h2 id="advanced-visualisation-reporting">3. Advanced Visualisation &amp; Reporting<a class="anchor" aria-label="anchor" href="#advanced-visualisation-reporting"></a>
+<h2 id="reporting">6. Reporting<a class="anchor" aria-label="anchor" href="#reporting"></a>
 </h2>
 <div class="section level3">
-<h3 id="group-composition-table">3.1 Group Composition Table<a class="anchor" aria-label="anchor" href="#group-composition-table"></a>
+<h3 id="group-composition">Group composition<a class="anchor" aria-label="anchor" href="#group-composition"></a>
 </h3>
-<p>We can check the actual sample distributions and average baseline
-parameters across our newly established medical risk tiers.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">final_dataset</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cut_res</span>, return_data <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">composition_table</span> <span class="op">&lt;-</span> <span class="va">final_dataset</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span><span class="va">final_dataset</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html" class="external-link">group_by</a></span><span class="op">(</span><span class="va">group</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span></span>
-<span>    Bilirubin_Range <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span>
-<span>      <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">factor</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span>, <span class="st">" – "</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">factor</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
-<span>    <span class="op">)</span>,</span>
+<span>    Bilirubin <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">factor</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span>, <span class="st">" – "</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">factor</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>    N <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>    TFS_Events <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">event</span><span class="op">)</span>,</span>
+<span>    Events <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">event</span><span class="op">)</span>,</span>
 <span>    Mean_Age <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">age</span><span class="op">)</span>, <span class="fl">1</span><span class="op">)</span>,</span>
-<span>    Edema_Rate <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">edema</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span></span>
-<span>  <span class="op">)</span></span>
-<span></span>
-<span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">composition_table</span>, caption <span class="op">=</span> <span class="st">"Composition and Covariate Profiles of Discovered Bilirubin Risk Groups"</span><span class="op">)</span></span></code></pre></div>
+<span>    Edema <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">edema</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span></span>
+<span>  <span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span>caption <span class="op">=</span> <span class="st">"Composition of the four-group model"</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
-<caption>Composition and Covariate Profiles of Discovered Bilirubin Risk
-Groups</caption>
+<caption>Composition of the four-group model</caption>
 <thead><tr class="header">
 <th align="left">group</th>
-<th align="left">Bilirubin_Range</th>
+<th align="left">Bilirubin</th>
 <th align="right">N</th>
-<th align="right">TFS_Events</th>
+<th align="right">Events</th>
 <th align="right">Mean_Age</th>
-<th align="right">Edema_Rate</th>
+<th align="right">Edema</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
@@ -692,140 +624,124 @@ Groups</caption>
 </tr>
 </tbody>
 </table>
+<p>Mean age is flat across groups, so the survival gradient is not age
+in disguise. Edema is seven times more common in the highest group than
+the lowest and is strongly associated with the outcome, which is why it
+is included as an adjustment variable. The highest group contains 63
+patients against a floor of 62, so its lower boundary is determined
+partly by the <code>nmin</code> constraint rather than by the data
+alone.</p>
 </div>
 <div class="section level3">
-<h3 id="adjusted-hazard-ratio-forest-plot-type-forest">3.2 Adjusted Hazard Ratio Forest Plot
-(<code>type = "forest"</code>)<a class="anchor" aria-label="anchor" href="#adjusted-hazard-ratio-forest-plot-type-forest"></a>
+<h3 id="hazard-ratios-and-diagnostics">Hazard ratios and diagnostics<a class="anchor" aria-label="anchor" href="#hazard-ratios-and-diagnostics"></a>
 </h3>
-<p>We can plot a custom forest chart to display our adjusted hazard
-models relative to the low-risk baseline tier.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cut_res</span>,</span>
-<span>  type <span class="op">=</span> <span class="st">"forest"</span>,</span>
-<span>  main <span class="op">=</span> <span class="st">"Adjusted TFS Hazard Ratios Relative to Group 1"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cut_res</span>, type <span class="op">=</span> <span class="st">"forest"</span>,</span>
+<span>     main <span class="op">=</span> <span class="st">"Adjusted hazard ratios relative to group 1"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="bilirubin_files/figure-html/plot-forest-1.png" class="r-plt" alt="" width="672" style="display: block; margin: auto;"></p>
-</div>
-<div class="section level3">
-<h3 id="time-dependent-diagnostics-type-diagnostic">3.3 Time-Dependent Diagnostics
-(<code>type = "diagnostic"</code>)<a class="anchor" aria-label="anchor" href="#time-dependent-diagnostics-type-diagnostic"></a>
-</h3>
-<p>We track whether our optimisation groups safely adhere to
-proportional variance targets across the complete time scope.</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">plot</span>(cut_res, <span class="at">type =</span> <span class="st">"diagnostic"</span>)</span>
-<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="sc">+</span> <span class="st">`</span><span class="at">geom_smooth()</span><span class="st">`</span> using formula <span class="ot">=</span> <span class="st">'y ~ x'</span></span></code></pre></div>
+<p>These estimates come from the data that selected the thresholds and
+are therefore optimistic.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">plot</span>(cut_res, <span class="at">type =</span> <span class="st">"diagnostic"</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="sc">+</span> <span class="st">`</span><span class="at">geom_smooth()</span><span class="st">`</span> using formula <span class="ot">=</span> <span class="st">'y ~ x'</span></span></code></pre></div>
 <p><img src="bilirubin_files/figure-html/plot-diagnostic-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
-</div>
-<div class="section level3">
-<h3 id="d-cut-point-stability-surface-plot_validation">3.4 2D Cut-point Stability Surface
-(<code>plot_validation()</code>)<a class="anchor" aria-label="anchor" href="#d-cut-point-stability-surface-plot_validation"></a>
-</h3>
-<p>Rather than relying on blocky grids, <code><a href="../reference/plot_validation.html">plot_validation()</a></code>
-projects high-dimensional bootstrap convergence horizons onto a smooth
-2D continuous contour map, highlighting exactly where our optimal
-threshold combinations cluster.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_validation.html">plot_validation</a></span><span class="op">(</span><span class="va">val_res</span>,</span>
-<span>  focus_cuts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>,</span>
-<span>  main <span class="op">=</span> <span class="st">"Upper Tier Threshold Stability Map"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p><img src="bilirubin_files/figure-html/plot_validation-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
-</div>
-<div class="section level3">
-<h3 id="adjusted-kaplan-meier-survival-curves-type-outcome">3.5 Adjusted Kaplan-Meier Survival Curves
-(<code>type = "outcome"</code>)<a class="anchor" aria-label="anchor" href="#adjusted-kaplan-meier-survival-curves-type-outcome"></a>
-</h3>
-<p>We evaluate the clear divergence in survival over time by mapping the
-adjusted step functions for our risk groups.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cut_res</span>,</span>
-<span>  type <span class="op">=</span> <span class="st">"outcome"</span>,</span>
-<span>  title <span class="op">=</span> <span class="st">"PBC Transplant-Free Survival by Bilirubin Tier (Covariate Adjusted)"</span>,</span>
-<span>  xlab <span class="op">=</span> <span class="st">"Follow-up Time (Days)"</span>,</span>
-<span>  ylab <span class="op">=</span> <span class="st">"Transplant-Free Survival Probability"</span>,</span>
-<span>  legend.title <span class="op">=</span> <span class="st">"Bilirubin Tier"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">cut_res</span>, type <span class="op">=</span> <span class="st">"outcome"</span>,</span>
+<span>     title <span class="op">=</span> <span class="st">"Transplant-free survival by bilirubin group"</span>,</span>
+<span>     xlab <span class="op">=</span> <span class="st">"Follow-up (days)"</span>, ylab <span class="op">=</span> <span class="st">"Transplant-free survival"</span>,</span>
+<span>     legend.title <span class="op">=</span> <span class="st">"Bilirubin group"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="bilirubin_files/figure-html/plot-km-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
 </div>
 <div class="section level3">
-<h3 id="exporting-your-stratified-data">3.6 Exporting Your Stratified Data<a class="anchor" aria-label="anchor" href="#exporting-your-stratified-data"></a>
+<h3 id="joint-stability">Joint stability<a class="anchor" aria-label="anchor" href="#joint-stability"></a>
 </h3>
-<p>By passing <code>return_data = TRUE</code>, you can extract your
-original clinical dataset paired with the newly calculated
-<code>group</code> factor and original covariate assignments.</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>stratified_patients <span class="ot">&lt;-</span> <span class="fu">plot</span>(cut_res, <span class="at">return_data =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="fu">head</span>(stratified_patients[, <span class="fu">c</span>(<span class="st">"time"</span>, <span class="st">"event"</span>, <span class="st">"factor"</span>, <span class="st">"age"</span>, <span class="st">"sex"</span>, <span class="st">"edema"</span>, <span class="st">"group"</span>)])</span>
-<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="sc">+</span>   time event factor      age sex edema group</span>
-<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a><span class="sc">+</span> <span class="dv">1</span>  <span class="dv">400</span>     <span class="dv">1</span>   <span class="fl">14.5</span> <span class="fl">58.76523</span>   f   <span class="fl">1.0</span>     <span class="dv">4</span></span>
-<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a><span class="sc">+</span> <span class="dv">2</span> <span class="dv">4500</span>     <span class="dv">0</span>    <span class="fl">1.1</span> <span class="fl">56.44627</span>   f   <span class="fl">0.0</span>     <span class="dv">2</span></span>
-<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a><span class="sc">+</span> <span class="dv">3</span> <span class="dv">1012</span>     <span class="dv">1</span>    <span class="fl">1.4</span> <span class="fl">70.07255</span>   m   <span class="fl">0.5</span>     <span class="dv">2</span></span>
-<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a><span class="sc">+</span> <span class="dv">4</span> <span class="dv">1925</span>     <span class="dv">1</span>    <span class="fl">1.8</span> <span class="fl">54.74059</span>   f   <span class="fl">0.5</span>     <span class="dv">2</span></span>
-<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a><span class="sc">+</span> <span class="dv">5</span> <span class="dv">1504</span>     <span class="dv">1</span>    <span class="fl">3.4</span> <span class="fl">38.10541</span>   f   <span class="fl">0.0</span>     <span class="dv">3</span></span>
-<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a><span class="sc">+</span> <span class="dv">6</span> <span class="dv">2503</span>     <span class="dv">1</span>    <span class="fl">0.8</span> <span class="fl">66.25873</span>   f   <span class="fl">0.0</span>     <span class="dv">2</span></span></code></pre></div>
+<p>An interval shows how one threshold moves; it cannot show whether two
+move together.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_validation.html">plot_validation</a></span><span class="op">(</span><span class="va">val_res</span>, focus_cuts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>,</span>
+<span>                main <span class="op">=</span> <span class="st">"Cuts 1 and 2 across resamples"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="bilirubin_files/figure-html/plot-validation-2d-12-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;"></p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_validation.html">plot_validation</a></span><span class="op">(</span><span class="va">val_res</span>, focus_cuts <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>,</span>
+<span>                main <span class="op">=</span> <span class="st">"Cuts 2 and 3 across resamples"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="bilirubin_files/figure-html/plot-validation-2d-23-1.png" class="r-plt" alt="" width="768" style="display: block; margin: auto;">
+A tight cloud indicates both boundaries are well determined. Elongation
+along one axis identifies the imprecise boundary. A diagonal spread
+means the two are trading off, with several partitions scoring
+similarly.</p>
 <hr>
 </div>
 </div>
 <div class="section level2">
-<h2 id="conclusion">4. Conclusion<a class="anchor" aria-label="anchor" href="#conclusion"></a>
+<h2 id="conclusion">7. Conclusion<a class="anchor" aria-label="anchor" href="#conclusion"></a>
 </h2>
-<p>This vignette demonstrates how <strong>OptSurvCutR</strong> controls
-for clinical confounding factors during optimal threshold selection. By
-providing a streamlined pipeline for covariate-adjusted optimisation,
-clinical scientists can establish reliable diagnostic thresholds that
-retain absolute structural validity across independent validation
-cohorts.</p>
-<hr>
+<p>AIC selected four bilirubin groups with 98.4% of the model weight,
+monotonic hazard ratios and concordance of 0.81. The bootstrap showed
+that the boundaries overlapped and would not survive a different sample
+of the same size. A single threshold at <strong>2.3 mg/dL</strong> —
+close to twice the upper limit of normal — proved highly
+reproducible.</p>
+<p>Significance and stability are different properties. A tool reporting
+only thresholds and a <em>p</em>-value would have returned four groups
+here, and every check it ran would have supported them. The third step
+is one function call, and in this analysis it is the difference between
+reporting “0.7, 2.3 and 5.945 mg/dL” and reporting “2.3 mg/dL”.</p>
+<p>When reporting an analysis of this kind: use BIC for confirmatory
+work, <code>n_perm</code> of at least 1000, at least 500 bootstrap
+replicates, and check the composition table for covariate imbalance.
+Bootstrap stability describes sampling variability within one cohort; it
+is not a prediction about an independent one.</p>
+<div class="section level3">
+<h3 id="reference">Reference<a class="anchor" aria-label="anchor" href="#reference"></a>
+</h3>
+<p>Dickson ER, Grambsch PM, Fleming TR, Fisher LD, Langworthy A (1989).
+Prognosis in primary biliary cirrhosis: model for decision making.
+<em>Hepatology</em> 10:1–7.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="sc">+</span> R version <span class="dv">4</span>.<span class="fl">6.1</span> (<span class="dv">2026-06-24</span> ucrt)</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a><span class="sc">+</span> Platform<span class="sc">:</span> x86_64<span class="sc">-</span>w64<span class="sc">-</span>mingw32<span class="sc">/</span>x64</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="sc">+</span> Running under<span class="sc">:</span> Windows <span class="dv">11</span> <span class="fu">x64</span> (build <span class="dv">26200</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="sc">+</span> Matrix products<span class="sc">:</span> default</span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="sc">+</span>   LAPACK version <span class="dv">3</span>.<span class="fl">12.1</span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="sc">+</span> locale<span class="sc">:</span></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">1</span>] LC_COLLATE<span class="ot">=</span>English_United Kingdom.utf8 </span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">2</span>] LC_CTYPE<span class="ot">=</span>English_United Kingdom.utf8   </span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">3</span>] LC_MONETARY<span class="ot">=</span>English_United Kingdom.utf8</span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">4</span>] LC_NUMERIC<span class="ot">=</span>C                           </span>
+<span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">5</span>] LC_TIME<span class="ot">=</span>English_United Kingdom.utf8    </span>
+<span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a><span class="sc">+</span> time zone<span class="sc">:</span> Europe<span class="sc">/</span>London</span>
+<span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a><span class="sc">+</span> tzcode source<span class="sc">:</span> internal</span>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb14-19"><a href="#cb14-19" tabindex="-1"></a><span class="sc">+</span> attached base packages<span class="sc">:</span></span>
+<span id="cb14-20"><a href="#cb14-20" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">1</span>] stats     graphics  grDevices utils     datasets  methods   base     </span>
+<span id="cb14-21"><a href="#cb14-21" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb14-22"><a href="#cb14-22" tabindex="-1"></a><span class="sc">+</span> other attached packages<span class="sc">:</span></span>
+<span id="cb14-23"><a href="#cb14-23" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">1</span>] OptSurvCutR_0.<span class="fl">11.0</span> knitr_1<span class="fl">.51</span>         ggplot2_4.<span class="fl">0.3</span>      dplyr_1.<span class="fl">2.1</span>       </span>
+<span id="cb14-24"><a href="#cb14-24" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">5</span>] survival_3<span class="fl">.8</span><span class="dv">-9</span>    </span>
+<span id="cb14-25"><a href="#cb14-25" tabindex="-1"></a><span class="sc">+</span> </span>
+<span id="cb14-26"><a href="#cb14-26" tabindex="-1"></a><span class="sc">+</span> loaded via a <span class="fu">namespace</span> (and not attached)<span class="sc">:</span></span>
+<span id="cb14-27"><a href="#cb14-27" tabindex="-1"></a><span class="sc">+</span>  [<span class="dv">1</span>] gtable_0.<span class="fl">3.6</span>       xfun_0<span class="fl">.60</span>          bslib_0.<span class="fl">12.0</span>       htmlwidgets_1.<span class="fl">6.4</span> </span>
+<span id="cb14-28"><a href="#cb14-28" tabindex="-1"></a><span class="sc">+</span>  [<span class="dv">5</span>] rstatix_1.<span class="fl">1.0</span>      lattice_0<span class="fl">.22</span><span class="dv">-9</span>     vctrs_0.<span class="fl">7.3</span>        tools_4.<span class="fl">6.1</span>       </span>
+<span id="cb14-29"><a href="#cb14-29" tabindex="-1"></a><span class="sc">+</span>  [<span class="dv">9</span>] generics_0.<span class="fl">1.4</span>     parallel_4.<span class="fl">6.1</span>     tibble_3.<span class="fl">3.1</span>       pkgconfig_2.<span class="fl">0.3</span>   </span>
+<span id="cb14-30"><a href="#cb14-30" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">13</span>] Matrix_1<span class="fl">.7</span><span class="dv">-6</span>       RColorBrewer_1<span class="fl">.1</span><span class="dv">-3</span> S7_0.<span class="fl">2.2</span>           desc_1.<span class="fl">4.3</span>        </span>
+<span id="cb14-31"><a href="#cb14-31" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">17</span>] rngtools_1.<span class="fl">5.2</span>     lifecycle_1.<span class="fl">0.5</span>    compiler_4.<span class="fl">6.1</span>     farver_2.<span class="fl">1.2</span>      </span>
+<span id="cb14-32"><a href="#cb14-32" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">21</span>] textshaping_1.<span class="fl">0.5</span>  codetools_0<span class="fl">.2</span><span class="dv">-20</span>   carData_3<span class="fl">.0</span><span class="dv">-6</span>      htmltools_0.<span class="fl">5.9</span>   </span>
+<span id="cb14-33"><a href="#cb14-33" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">25</span>] sass_0.<span class="fl">4.10</span>        yaml_2.<span class="fl">3.12</span>        Formula_1<span class="fl">.2</span><span class="dv">-6</span>      pillar_1.<span class="fl">11.1</span>     </span>
+<span id="cb14-34"><a href="#cb14-34" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">29</span>] pkgdown_2.<span class="fl">2.1</span>      car_3<span class="fl">.1</span><span class="dv">-5</span>          ggpubr_1.<span class="fl">0.0</span>       jquerylib_0.<span class="fl">1.4</span>   </span>
+<span id="cb14-35"><a href="#cb14-35" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">33</span>] tidyr_1.<span class="fl">3.2</span>        MASS_7<span class="fl">.3</span><span class="dv">-66</span>        cachem_1.<span class="fl">1.0</span>       survminer_0.<span class="fl">5.2</span>   </span>
+<span id="cb14-36"><a href="#cb14-36" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">37</span>] doRNG_1.<span class="dv">8</span>.<span class="fl">6.3</span>      iterators_1.<span class="fl">0.14</span>   rgenoud_5<span class="fl">.9-0.11</span>   abind_1<span class="fl">.4</span><span class="dv">-8</span>       </span>
+<span id="cb14-37"><a href="#cb14-37" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">41</span>] foreach_1.<span class="fl">5.2</span>      nlme_3<span class="fl">.1</span><span class="dv">-170</span>       tidyselect_1.<span class="fl">2.1</span>   digest_0.<span class="fl">6.39</span>     </span>
+<span id="cb14-38"><a href="#cb14-38" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">45</span>] purrr_1.<span class="fl">2.2</span>        labeling_0.<span class="fl">4.3</span>     splines_4.<span class="fl">6.1</span>      fastmap_1.<span class="fl">2.0</span>     </span>
+<span id="cb14-39"><a href="#cb14-39" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">49</span>] grid_4.<span class="fl">6.1</span>         cli_3.<span class="fl">6.6</span>          magrittr_2.<span class="fl">0.5</span>     patchwork_1.<span class="fl">3.2</span>   </span>
+<span id="cb14-40"><a href="#cb14-40" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">53</span>] broom_1.<span class="fl">0.13</span>       withr_3.<span class="fl">0.3</span>        scales_1.<span class="fl">4.0</span>       backports_1.<span class="fl">5.1</span>   </span>
+<span id="cb14-41"><a href="#cb14-41" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">57</span>] rmarkdown_2<span class="fl">.31</span>     otel_0.<span class="fl">2.0</span>         gridExtra_2.<span class="fl">3.1</span>    ggsignif_0.<span class="fl">6.4</span>    </span>
+<span id="cb14-42"><a href="#cb14-42" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">61</span>] ragg_1.<span class="fl">5.2</span>         evaluate_1.<span class="fl">0.5</span>     doParallel_1.<span class="fl">0.17</span>  viridisLite_0.<span class="fl">4.3</span> </span>
+<span id="cb14-43"><a href="#cb14-43" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">65</span>] mgcv_1<span class="fl">.9</span><span class="dv">-4</span>         rlang_1.<span class="fl">3.0</span>        isoband_0.<span class="fl">3.0</span>      Rcpp_1.<span class="fl">1.2</span>        </span>
+<span id="cb14-44"><a href="#cb14-44" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">69</span>] glue_1.<span class="fl">8.1</span>         rstudioapi_0.<span class="fl">19.0</span>  jsonlite_2.<span class="fl">0.0</span>     R6_2.<span class="fl">6.1</span>          </span>
+<span id="cb14-45"><a href="#cb14-45" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">73</span>] systemfonts_1.<span class="fl">3.2</span>  fs_2.<span class="fl">1.0</span></span></code></pre></div>
 </div>
-<div class="section level2">
-<h2 id="session-information">5. Session Information<a class="anchor" aria-label="anchor" href="#session-information"></a>
-</h2>
-<p>Finally, we print our system specifications, environmental packages,
-and runtime tracking indices to ensure perfect documentation
-reproducibility.</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span>
-<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="sc">+</span> R version <span class="dv">4</span>.<span class="fl">6.1</span> (<span class="dv">2026-06-24</span> ucrt)</span>
-<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a><span class="sc">+</span> Platform<span class="sc">:</span> x86_64<span class="sc">-</span>w64<span class="sc">-</span>mingw32<span class="sc">/</span>x64</span>
-<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a><span class="sc">+</span> Running under<span class="sc">:</span> Windows <span class="dv">11</span> <span class="fu">x64</span> (build <span class="dv">26200</span>)</span>
-<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a><span class="sc">+</span> Matrix products<span class="sc">:</span> default</span>
-<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a><span class="sc">+</span>   LAPACK version <span class="dv">3</span>.<span class="fl">12.1</span></span>
-<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a><span class="sc">+</span> locale<span class="sc">:</span></span>
-<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">1</span>] LC_COLLATE<span class="ot">=</span>English_United Kingdom.utf8 </span>
-<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">2</span>] LC_CTYPE<span class="ot">=</span>English_United Kingdom.utf8   </span>
-<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">3</span>] LC_MONETARY<span class="ot">=</span>English_United Kingdom.utf8</span>
-<span id="cb19-13"><a href="#cb19-13" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">4</span>] LC_NUMERIC<span class="ot">=</span>C                           </span>
-<span id="cb19-14"><a href="#cb19-14" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">5</span>] LC_TIME<span class="ot">=</span>English_United Kingdom.utf8    </span>
-<span id="cb19-15"><a href="#cb19-15" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb19-16"><a href="#cb19-16" tabindex="-1"></a><span class="sc">+</span> time zone<span class="sc">:</span> Europe<span class="sc">/</span>London</span>
-<span id="cb19-17"><a href="#cb19-17" tabindex="-1"></a><span class="sc">+</span> tzcode source<span class="sc">:</span> internal</span>
-<span id="cb19-18"><a href="#cb19-18" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb19-19"><a href="#cb19-19" tabindex="-1"></a><span class="sc">+</span> attached base packages<span class="sc">:</span></span>
-<span id="cb19-20"><a href="#cb19-20" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">1</span>] stats     graphics  grDevices utils     datasets  methods   base     </span>
-<span id="cb19-21"><a href="#cb19-21" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb19-22"><a href="#cb19-22" tabindex="-1"></a><span class="sc">+</span> other attached packages<span class="sc">:</span></span>
-<span id="cb19-23"><a href="#cb19-23" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">1</span>] OptSurvCutR_0.<span class="fl">10.1</span> cli_3.<span class="fl">6.6</span>          knitr_1<span class="fl">.51</span>         patchwork_1.<span class="fl">3.2</span>   </span>
-<span id="cb19-24"><a href="#cb19-24" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">5</span>] ggplot2_4.<span class="fl">0.3</span>      dplyr_1.<span class="fl">2.1</span>        survival_3<span class="fl">.8</span><span class="dv">-9</span>    </span>
-<span id="cb19-25"><a href="#cb19-25" tabindex="-1"></a><span class="sc">+</span> </span>
-<span id="cb19-26"><a href="#cb19-26" tabindex="-1"></a><span class="sc">+</span> loaded via a <span class="fu">namespace</span> (and not attached)<span class="sc">:</span></span>
-<span id="cb19-27"><a href="#cb19-27" tabindex="-1"></a><span class="sc">+</span>  [<span class="dv">1</span>] gtable_0.<span class="fl">3.6</span>       xfun_0<span class="fl">.60</span>          bslib_0.<span class="fl">12.0</span>       htmlwidgets_1.<span class="fl">6.4</span> </span>
-<span id="cb19-28"><a href="#cb19-28" tabindex="-1"></a><span class="sc">+</span>  [<span class="dv">5</span>] rstatix_1.<span class="fl">1.0</span>      lattice_0<span class="fl">.22</span><span class="dv">-9</span>     vctrs_0.<span class="fl">7.3</span>        tools_4.<span class="fl">6.1</span>       </span>
-<span id="cb19-29"><a href="#cb19-29" tabindex="-1"></a><span class="sc">+</span>  [<span class="dv">9</span>] generics_0.<span class="fl">1.4</span>     parallel_4.<span class="fl">6.1</span>     tibble_3.<span class="fl">3.1</span>       pkgconfig_2.<span class="fl">0.3</span>   </span>
-<span id="cb19-30"><a href="#cb19-30" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">13</span>] Matrix_1<span class="fl">.7</span><span class="dv">-6</span>       RColorBrewer_1<span class="fl">.1</span><span class="dv">-3</span> S7_0.<span class="fl">2.2</span>           desc_1.<span class="fl">4.3</span>        </span>
-<span id="cb19-31"><a href="#cb19-31" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">17</span>] lifecycle_1.<span class="fl">0.5</span>    compiler_4.<span class="fl">6.1</span>     farver_2.<span class="fl">1.2</span>       textshaping_1.<span class="fl">0.5</span> </span>
-<span id="cb19-32"><a href="#cb19-32" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">21</span>] codetools_0<span class="fl">.2</span><span class="dv">-20</span>   carData_3<span class="fl">.0</span><span class="dv">-6</span>      htmltools_0.<span class="fl">5.9</span>    sass_0.<span class="fl">4.10</span>       </span>
-<span id="cb19-33"><a href="#cb19-33" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">25</span>] yaml_2.<span class="fl">3.12</span>        Formula_1<span class="fl">.2</span><span class="dv">-6</span>      pillar_1.<span class="fl">11.1</span>      pkgdown_2.<span class="fl">2.1</span>     </span>
-<span id="cb19-34"><a href="#cb19-34" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">29</span>] car_3<span class="fl">.1</span><span class="dv">-5</span>          ggpubr_1.<span class="fl">0.0</span>       jquerylib_0.<span class="fl">1.4</span>    tidyr_1.<span class="fl">3.2</span>       </span>
-<span id="cb19-35"><a href="#cb19-35" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">33</span>] MASS_7<span class="fl">.3</span><span class="dv">-66</span>        cachem_1.<span class="fl">1.0</span>       survminer_0.<span class="fl">5.2</span>    iterators_1.<span class="fl">0.14</span>  </span>
-<span id="cb19-36"><a href="#cb19-36" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">37</span>] rgenoud_5<span class="fl">.9-0.11</span>   abind_1<span class="fl">.4</span><span class="dv">-8</span>        foreach_1.<span class="fl">5.2</span>      nlme_3<span class="fl">.1</span><span class="dv">-170</span>      </span>
-<span id="cb19-37"><a href="#cb19-37" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">41</span>] tidyselect_1.<span class="fl">2.1</span>   digest_0.<span class="fl">6.39</span>      purrr_1.<span class="fl">2.2</span>        labeling_0.<span class="fl">4.3</span>    </span>
-<span id="cb19-38"><a href="#cb19-38" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">45</span>] splines_4.<span class="fl">6.1</span>      fastmap_1.<span class="fl">2.0</span>      grid_4.<span class="fl">6.1</span>         magrittr_2.<span class="fl">0.5</span>    </span>
-<span id="cb19-39"><a href="#cb19-39" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">49</span>] broom_1.<span class="fl">0.13</span>       withr_3.<span class="fl">0.3</span>        scales_1.<span class="fl">4.0</span>       backports_1.<span class="fl">5.1</span>   </span>
-<span id="cb19-40"><a href="#cb19-40" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">53</span>] rmarkdown_2<span class="fl">.31</span>     otel_0.<span class="fl">2.0</span>         gridExtra_2.<span class="fl">3.1</span>    ggsignif_0.<span class="fl">6.4</span>    </span>
-<span id="cb19-41"><a href="#cb19-41" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">57</span>] ragg_1.<span class="fl">5.2</span>         evaluate_1.<span class="fl">0.5</span>     doParallel_1.<span class="fl">0.17</span>  viridisLite_0.<span class="fl">4.3</span> </span>
-<span id="cb19-42"><a href="#cb19-42" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">61</span>] mgcv_1<span class="fl">.9</span><span class="dv">-4</span>         rlang_1.<span class="fl">3.0</span>        Rcpp_1.<span class="fl">1.2</span>         isoband_0.<span class="fl">3.0</span>     </span>
-<span id="cb19-43"><a href="#cb19-43" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">65</span>] glue_1.<span class="fl">8.1</span>         rstudioapi_0.<span class="fl">19.0</span>  jsonlite_2.<span class="fl">0.0</span>     R6_2.<span class="fl">6.1</span>          </span>
-<span id="cb19-44"><a href="#cb19-44" tabindex="-1"></a><span class="sc">+</span> [<span class="dv">69</span>] systemfonts_1.<span class="fl">3.2</span>  fs_2.<span class="fl">1.0</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -834,7 +750,7 @@ reproducibility.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Payton Yau.</p>
+  <p>Developed by Payton Yau, Suhirthakumar Puvanendran.</p>
 </div>
 
 <div class="pkgdown-footer-right">

@@ -28,3 +28,6 @@ Authors:
 
 - Payton Yau <tungon@gmail.com>
   ([ORCID](https://orcid.org/0000-0002-3283-0370)) \[copyright holder\]
+
+- Suhirthakumar Puvanendran <kumar.puvan@uwl.ac.uk>
+  ([ORCID](https://orcid.org/0000-0003-2346-0483))

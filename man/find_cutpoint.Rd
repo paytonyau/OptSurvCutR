@@ -104,12 +104,6 @@ cuts) or a genetic algorithm (any number of cuts). Features high-speed
 integer partitioning via compiled C++ vector assignments and automated
 quantile grid downsampling.
 }
-\details{
-`method = "systematic"`: grid search respecting `nmin`. Optimised via internal quantiles.
-`method = "genetic"`: `rgenoud` global optimisation.
-Systematic search is slow for `num_cuts > 2`; use `genetic`.
-Core vector partitions are calculated in compiled C++ via `Rcpp` for optimal performance.
-}
 \section{srrstats compliance}{
 
 .
@@ -149,21 +143,46 @@ if (requireNamespace("survival", quietly = TRUE)) {
 }
 }
 \references{
-Altman, D. G., Lausen, B., Sauerbrei, W., & Schumacher,
-M. (1994). Dangers of Using “Optimal” Cutpoints in the Evaluation of
-Prognostic Factors. *JNCI: Journal of the National Cancer Institute*,
-86(11), 829–835. \doi{10.1093/jnci/86.11.829}
+Akaike, H. (1974). A new look at the statistical model identification.
+*IEEE Transactions on Automatic Control*, 19(6), 716–723.
+\doi{10.1109/TAC.1974.1100705}
 
-Cox, D. R. (1972). Regression Models and Life-Tables. *Journal
-of the Royal Statistical Society: Series B (Methodological)*, 34(2),
-187–202. \doi{10.1111/j.2517-6161.1972.tb00899.x}
+Altman, D. G., Lausen, B., Sauerbrei, W., & Schumacher, M. (1994). Dangers
+of using "optimal" cutpoints in the evaluation of prognostic factors.
+*JNCI: Journal of the National Cancer Institute*, 86(11), 829–835.
+\doi{10.1093/jnci/86.11.829}
 
-Mantel, N. (1966). Evaluation of survival data and two new
-rank order statistics arising in its consideration. *Cancer
-Chemotherapy Reports*, 50(3).
+Cox, D. R. (1972). Regression models and life-tables. *Journal of the
+Royal Statistical Society: Series B (Methodological)*, 34(2), 187–202.
+\doi{10.1111/j.2517-6161.1972.tb00899.x}
 
-Mebane Jr, W. R., & Sekhon, J. S. (2011). Genetic
-Optimisation Using Derivatives: The rgenoud Package for R.
-*Journal of Statistical Software*, 42, 1–26.
-\doi{10.18637/jss.v042.i11}
+Efron, B. (1979). Bootstrap methods: Another look at the jackknife.
+*The Annals of Statistics*, 7(1), 1–26. \doi{10.1214/aos/1176344552}
+
+Faraggi, D., & Simon, R. (1996). A simulation study of cross-validation for
+selecting an optimal cutpoint in univariate survival analysis.
+*Statistics in Medicine*, 15(20), 2203–2213.
+\doi{10.1002/(SICI)1097-0258(19961030)15:20<2203::AID-SIM357>3.0.CO;2-G}
+
+Lausen, B., & Schumacher, M. (1992). Maximally selected rank statistics.
+*Biometrics*, 48(1), 73–85. \doi{10.2307/2532740}
+
+Mantel, N. (1966). Evaluation of survival data and two new rank order
+statistics arising in its consideration. *Cancer Chemotherapy Reports*,
+50(3), 163–170.
+
+Mebane Jr, W. R., & Sekhon, J. S. (2011). Genetic optimization using
+derivatives: The rgenoud package for R. *Journal of Statistical Software*,
+42(11), 1–26. \doi{10.18637/jss.v042.i11}
+
+Miller, R., & Siegmund, D. (1982). Maximally selected chi square statistics.
+*Biometrics*, 38(4), 1011–1016. \doi{10.2307/2529881}
+
+Rota, M., Antolini, L., & Valsecchi, M. G. (2015). Optimal cut-point
+definition in biomarkers: The case of censored failure time outcome.
+*BMC Medical Research Methodology*, 15(1), 24.
+\doi{10.1186/s12874-015-0009-y}
+
+Schwarz, G. (1978). Estimating the dimension of a model. *The Annals of
+Statistics*, 6(2), 461–464. \doi{10.1214/aos/1176344136}
 }

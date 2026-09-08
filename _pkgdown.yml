@@ -51,8 +51,10 @@ navbar:
     articles:
       text: Vignettes
       menu:
-        - text: "Bilirubin Workflow"
+        - text: "Bilirubin: finding and validating a threshold"
           href: articles/bilirubin.html
+        - text: "Lymph node burden: thresholds in a discrete predictor"
+          href: articles/crc.html
     news:
       text: Changelog
       href: news/index.html
@@ -110,24 +112,15 @@ footer:
 toc:
   depth: 3
 
+# Home page sidebar. `links`, `license`, `community`, `citation`, `authors`
+# and `dev` are pkgdown's built-in blocks; omitting one removes it from the page.
 sidebar:
-  structure: [links, vignettes, reference, license, community, dev]
+  structure: [links, license, community, citation, authors, dev]
   components:
-    vignettes:
-      title: Vignettes
-      links:
-        - text: "CRC Virome Workflow"
-          href: articles/crc_virome.html  # Updated to match the processed filename
-        - text: "Bilirubin Workflow"
-          href: articles/bilirubin.html
-        - text: "Q&A and Troubleshooting"
-          href: articles/QA.html
     community:
-      title: Community & Help
+      title: Community
       links:
-        - text: Report an Issue
-          href: https://github.com/paytonyau/OptSurvCutR/issues
-        - text: Contributing Guide
-          href: contributing.html
-        - text: Code of Conduct
+        - text: Contributing guide
+          href: CONTRIBUTING.html
+        - text: Code of conduct
           href: CODE_OF_CONDUCT.html

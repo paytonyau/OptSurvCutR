@@ -15,7 +15,7 @@ quantile grid downsampling."><meta property="og:image" content="https://paytonya
 
     <a class="navbar-brand me-2" href="../index.html">OptSurvCutR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.10.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.11.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -32,7 +32,8 @@ quantile grid downsampling."><meta property="og:image" content="https://paytonya
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/bilirubin.html">Bilirubin Workflow</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/bilirubin.html">Bilirubin: finding and validating a threshold</a></li>
+    <li><a class="dropdown-item" href="../articles/crc.html">Lymph node burden: thresholds in a discrete predictor</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://doi.org/10.1101/2025.10.08.681246" target="_blank">Manuscript</a></li>
@@ -212,13 +213,6 @@ quantile grid downsampling.</p>
      optimal cut-points, statistic, and analysis parameters.</p>
     </div>
     <div class="section level2">
-    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>`method = "systematic"`: grid search respecting `nmin`. Optimised via internal quantiles.
-`method = "genetic"`: `rgenoud` global optimisation.
-Systematic search is slow for `num_cuts &gt; 2`; use `genetic`.
-Core vector partitions are calculated in compiled C++ via `Rcpp` for optimal performance.</p>
-    </div>
-    <div class="section level2">
     <h2 id="srrstats-compliance">srrstats compliance<a class="anchor" aria-label="anchor" href="#srrstats-compliance"></a></h2>
 
 
@@ -230,20 +224,38 @@ Core vector partitions are calculated in compiled C++ via `Rcpp` for optimal per
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Altman, D. G., Lausen, B., Sauerbrei, W., &amp; Schumacher,
-M. (1994). Dangers of Using “Optimal” Cutpoints in the Evaluation of
-Prognostic Factors. *JNCI: Journal of the National Cancer Institute*,
-86(11), 829–835. <a href="https://doi.org/10.1093/jnci/86.11.829" class="external-link">doi:10.1093/jnci/86.11.829</a></p>
-<p>Cox, D. R. (1972). Regression Models and Life-Tables. *Journal
-of the Royal Statistical Society: Series B (Methodological)*, 34(2),
-187–202. <a href="https://doi.org/10.1111/j.2517-6161.1972.tb00899.x" class="external-link">doi:10.1111/j.2517-6161.1972.tb00899.x</a></p>
-<p>Mantel, N. (1966). Evaluation of survival data and two new
-rank order statistics arising in its consideration. *Cancer
-Chemotherapy Reports*, 50(3).</p>
-<p>Mebane Jr, W. R., &amp; Sekhon, J. S. (2011). Genetic
-Optimisation Using Derivatives: The rgenoud Package for R.
-*Journal of Statistical Software*, 42, 1–26.
-<a href="https://doi.org/10.18637/jss.v042.i11" class="external-link">doi:10.18637/jss.v042.i11</a></p>
+    <p>Akaike, H. (1974). A new look at the statistical model identification.
+*IEEE Transactions on Automatic Control*, 19(6), 716–723.
+<a href="https://doi.org/10.1109/TAC.1974.1100705" class="external-link">doi:10.1109/TAC.1974.1100705</a></p>
+<p>Altman, D. G., Lausen, B., Sauerbrei, W., &amp; Schumacher, M. (1994). Dangers
+of using "optimal" cutpoints in the evaluation of prognostic factors.
+*JNCI: Journal of the National Cancer Institute*, 86(11), 829–835.
+<a href="https://doi.org/10.1093/jnci/86.11.829" class="external-link">doi:10.1093/jnci/86.11.829</a></p>
+<p>Cox, D. R. (1972). Regression models and life-tables. *Journal of the
+Royal Statistical Society: Series B (Methodological)*, 34(2), 187–202.
+<a href="https://doi.org/10.1111/j.2517-6161.1972.tb00899.x" class="external-link">doi:10.1111/j.2517-6161.1972.tb00899.x</a></p>
+<p>Efron, B. (1979). Bootstrap methods: Another look at the jackknife.
+*The Annals of Statistics*, 7(1), 1–26. <a href="https://doi.org/10.1214/aos/1176344552" class="external-link">doi:10.1214/aos/1176344552</a></p>
+<p>Faraggi, D., &amp; Simon, R. (1996). A simulation study of cross-validation for
+selecting an optimal cutpoint in univariate survival analysis.
+*Statistics in Medicine*, 15(20), 2203–2213.
+<a href="https://doi.org/10.1002/%28SICI%291097-0258%2819961030%2915%3A20%3C2203%3A%3AAID-SIM357%3E3.0.CO%3B2-G" class="external-link">doi:10.1002/(SICI)1097-0258(19961030)15:20&lt;2203::AID-SIM357&gt;3.0.CO;2-G</a></p>
+<p>Lausen, B., &amp; Schumacher, M. (1992). Maximally selected rank statistics.
+*Biometrics*, 48(1), 73–85. <a href="https://doi.org/10.2307/2532740" class="external-link">doi:10.2307/2532740</a></p>
+<p>Mantel, N. (1966). Evaluation of survival data and two new rank order
+statistics arising in its consideration. *Cancer Chemotherapy Reports*,
+50(3), 163–170.</p>
+<p>Mebane Jr, W. R., &amp; Sekhon, J. S. (2011). Genetic optimization using
+derivatives: The rgenoud package for R. *Journal of Statistical Software*,
+42(11), 1–26. <a href="https://doi.org/10.18637/jss.v042.i11" class="external-link">doi:10.18637/jss.v042.i11</a></p>
+<p>Miller, R., &amp; Siegmund, D. (1982). Maximally selected chi square statistics.
+*Biometrics*, 38(4), 1011–1016. <a href="https://doi.org/10.2307/2529881" class="external-link">doi:10.2307/2529881</a></p>
+<p>Rota, M., Antolini, L., &amp; Valsecchi, M. G. (2015). Optimal cut-point
+definition in biomarkers: The case of censored failure time outcome.
+*BMC Medical Research Methodology*, 15(1), 24.
+<a href="https://doi.org/10.1186/s12874-015-0009-y" class="external-link">doi:10.1186/s12874-015-0009-y</a></p>
+<p>Schwarz, G. (1978). Estimating the dimension of a model. *The Annals of
+Statistics*, 6(2), 461–464. <a href="https://doi.org/10.1214/aos/1176344136" class="external-link">doi:10.1214/aos/1176344136</a></p>
     </div>
 
     <div class="section level2">
@@ -287,7 +299,7 @@ Optimisation Using Derivatives: The rgenoud Package for R.
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Payton Yau.</p>
+  <p>Developed by Payton Yau, Suhirthakumar Puvanendran.</p>
 </div>
 
 <div class="pkgdown-footer-right">

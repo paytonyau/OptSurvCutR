@@ -144,35 +144,25 @@ summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE, s
   # 4-TIER STABILITY ASSESSMENT ENGINE
   # ===================================================================
 
+  # The denominator must be the spread of the PREDICTOR, so that a threshold's
+  # uncertainty is judged against the range of values it could have taken.
+  # There is deliberately no fallback: if the predictor is unavailable, the
+  # relative width is undefined and is reported as such. Substituting any other
+  # quantity (e.g. the bootstrap distribution of a cut-point) produces a
+  # self-referential ratio that is always large and silently wrong.
   if (!is.null(object$userdata) && !is.null(object$userdata$factor)) {
-    p10 <- stats::quantile(object$userdata$factor, 0.10, na.rm = TRUE)
-    p90 <- stats::quantile(object$userdata$factor, 0.90, na.rm = TRUE)
-    data_spread <- p90 - p10
-  } else if (!is.null(object$bootstrap_distribution)) {
-    # ✅ FIXED: Force drop vector evaluation to secure quantile parsing across tibble structures
-    target_vec <- object$bootstrap_distribution[, 1, drop = TRUE]
-    p10 <- stats::quantile(target_vec, 0.10, na.rm = TRUE)
-    p90 <- stats::quantile(target_vec, 0.90, na.rm = TRUE)
-    data_spread <- p90 - p10
+    predictor_values <- object$userdata$factor
+    p10 <- stats::quantile(predictor_values, 0.10, na.rm = TRUE)
+    p90 <- stats::quantile(predictor_values, 0.90, na.rm = TRUE)
+    data_spread <- as.numeric(p90 - p10)
   } else {
     data_spread <- NA_real_
   }
 
-  cut_names <- rownames(object$confidence_intervals)
-  medians <- vapply(cut_names, function(n) {
-    clean_n <- gsub("[^0-9]", "", n)
-    # ✅ FIXED: Exact name reconstruction prevents grep collisions on high-dimensional models (e.g. Cut 1 vs Cut 10)
-    target_name <- paste0("Cut", clean_n)
-    match_idx <- which(names(object$boot_summary) == target_name)
-    if (length(match_idx) == 0) {
-      return(NA_real_)
-    }
-    object$boot_summary[[match_idx]]$median
-  }, FUN.VALUE = numeric(1))
-
-  if (is.na(data_spread) || is.infinite(data_spread) || data_spread <= 0) {
-    data_spread <- suppressWarnings(max(abs(medians), na.rm = TRUE))
-    if (data_spread == 0 || is.infinite(data_spread)) data_spread <- 1
+  # A degenerate predictor (P10 == P90) makes the relative width undefined
+  # rather than infinite. Flag it instead of substituting a placeholder.
+  if (!is.na(data_spread) && (!is.finite(data_spread) || data_spread <= 0)) {
+    data_spread <- NA_real_
   }
 
   lower_ci <- object$confidence_intervals$Lower
@@ -213,8 +203,20 @@ summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE, s
   cat("\nStability Assessment:\n")
   cat("---------------------\n")
 
+  # `tier` is set on every branch below and returned in `object$stability`, so
+  # callers can act on the classification programmatically instead of parsing
+  # console text.
+  tier <- NA_character_
+  tier_label <- NA_character_
+
   if (!is.finite(max_rciw) || is.na(stability_pct)) {
-    cli::cli_alert_warning("Stability could not be calculated (missing or infinite CI data).")
+    cli::cli_alert_warning("Stability could not be calculated.")
+    cli::cli_bullets(c(
+      "*" = "The relative width requires the predictor values, which are stored in the
+             {.field userdata} element of the {.fn find_cutpoint} result.",
+      "*" = "This can also occur if the predictor's 10th and 90th percentiles are equal,
+             or if the confidence intervals contain missing values."
+    ))
   } else {
     cli::cli_text("Maximum CI Width (Relative to 10th-90th Percentile Range): {.strong {stability_pct}%}\n")
 
@@ -222,30 +224,66 @@ summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE, s
     has_overlap <- is_multi_cut && !is_perfectly_separated
     has_distinct_separation <- is_multi_cut && is_perfectly_separated
 
-    if (max_rciw < 0.30) {
+    if (!is_multi_cut) {
+      # -------------------------------------------------------------
+      # Single cut-point: interval separation is undefined with only
+      # one boundary, so the model is graded on relative width alone.
+      # -------------------------------------------------------------
+      if (max_rciw < 0.30) {
+        tier <- "Tier 1"
+        tier_label <- "OPTIMAL"
+        cli::cli_alert_success("Model Status: OPTIMAL (Tier 1)")
+        cli::cli_text("The threshold is highly consistent across resamples ({stability_pct}%).")
+      } else if (max_rciw <= 0.60) {
+        tier <- "Tier 2"
+        tier_label <- "DISTINCT"
+        cli::cli_alert_success("Model Status: DISTINCT (Tier 2)")
+        cli::cli_text("The threshold varies moderately across resamples ({stability_pct}%).")
+      } else {
+        tier <- "Tier 4"
+        tier_label <- "UNSTABLE"
+        cli::cli_alert_danger("Model Status: UNSTABLE (Tier 4)")
+        cli::cli_bullets(c(
+          "!" = "The threshold varies widely across resamples ({stability_pct}%).",
+          "x" = "Recommendation: increase {.arg nmin}, or report the threshold as an interval rather than a point value."
+        ))
+      }
+    } else if (max_rciw < 0.30) {
       if (has_overlap) {
+        tier <- "Tier 3"
+        tier_label <- "CAUTION"
         cli::cli_alert_warning("Model Status: CAUTION (Tier 3) - OVERLAP DOWNGRADE")
         cli::cli_text("The mathematical variance is very low ({stability_pct}%), but the Confidence Intervals overlap.")
         cli::cli_bullets(c(
           "*" = "Consider reducing {.arg num_cuts} if distinct separation is required for clinical application."
         ))
       } else {
+        tier <- "Tier 1"
+        tier_label <- "OPTIMAL"
         cli::cli_alert_success("Model Status: OPTIMAL (Tier 1)")
         cli::cli_text("The thresholds are highly consistent across samples with clean separation between risk cohorts.")
       }
     } else if (max_rciw >= 0.30 && max_rciw <= 0.60) {
       if (has_distinct_separation) {
+        tier <- "Tier 2"
+        tier_label <- "DISTINCT"
         cli::cli_alert_success("Model Status: DISTINCT (Tier 2)")
         cli::cli_text("The relative mathematical variance is moderate ({stability_pct}%), but 95% Confidence Intervals do not overlap.")
       } else {
+        tier <- "Tier 3"
+        tier_label <- "CAUTION"
         cli::cli_alert_warning("Model Status: CAUTION (Tier 3)")
         cli::cli_text("Moderate instability detected ({stability_pct}%), and Confidence Intervals overlap.")
       }
     } else {
       if (has_distinct_separation) {
+        tier <- "Tier 2"
+        tier_label <- "DISTINCT"
         cli::cli_alert_success("Model Status: DISTINCT (Tier 2) - SEPARATION OVERRIDE")
         cli::cli_text("The relative mathematical variance is high ({stability_pct}%), but 95% Confidence Intervals do not overlap.")
       } else {
+        tier <- "Tier 4"
+        tier_label <- "UNSTABLE"
         cli::cli_alert_danger("Model Status: UNSTABLE (Tier 4)")
         cli::cli_bullets(c(
           "!" = "The primary source of instability is {.strong {worst_cut_name}}.",
@@ -254,6 +292,19 @@ summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE, s
       }
     }
   }
+
+  # Machine-readable stability result, so users do not have to scrape console text.
+  object$stability <- list(
+    tier               = tier,
+    tier_label         = tier_label,
+    percent            = stability_pct,
+    max_relative_width = if (is.finite(max_rciw)) max_rciw else NA_real_,
+    relative_widths    = relative_widths,
+    data_spread        = data_spread,
+    separated          = if (nrow(object$confidence_intervals) > 1) is_perfectly_separated else NA,
+    worst_cut          = worst_cut_name
+  )
+
   cat("\n")
   invisible(object)
 }

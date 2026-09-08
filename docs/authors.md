@@ -5,6 +5,9 @@
 - **Payton Yau**. Author, maintainer, copyright holder.
   [](https://orcid.org/0000-0002-3283-0370)
 
+- **Suhirthakumar Puvanendran**. Author.
+  [](https://orcid.org/0000-0003-2346-0483)
+
 ## Citation
 
 Source:
