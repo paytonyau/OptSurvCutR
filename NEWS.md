@@ -1,26 +1,44 @@
 # OptSurvCutR v0.11.1 (2026-09-18)
 
+## Breaking Changes
+
+* **Stability Tier Labels Renamed:** Renamed `tier_label` values from `"DISTINCT"` to `"CONSISTENT"` and `"CAUTION"` to `"OVERLAPPING"` in `validate_cutpoint()` outputs to describe interval overlap directly. Numeric `tier` designations (`"Tier 1"`–`"Tier 4"`), cutoffs, and logic remain unchanged. Removed internal diagnostic tags (`"- OVERLAP DOWNGRADE"`, `"- SEPARATION OVERRIDE"`). **Downstream code matching literal strings `"DISTINCT"` or `"CAUTION"` must be updated.**
+
+| Tier | Criteria | Diagnostic Interpretation |
+| :--- | :--- | :--- |
+| **1 (OPTIMAL)** | Width < 30%, zero overlap | Highly consistent boundaries across samples |
+| **2 (CONSISTENT)** | Zero overlap, any width | Groups remain distinct; exact boundary may shift |
+| **3 (OVERLAPPING)** | Overlap present, any width | Boundary confidence intervals intersect |
+| **4 (UNSTABLE)** | Width > 60%, no clean separation | Severe instability; likely sample noise overfitting |
+
+## New Features
+
+* **Console Control (`quiet = TRUE`):** Added a `quiet` parameter (default `FALSE`) to `validate_cutpoint()` to suppress progress bars in scripted pipelines and automated test suites.
+* **Test Performance Optimization:** Configured `options(cli.progress_show_after = Inf)` across package tests and vignettes to bypass CLI rendering overhead, reducing local test-suite runtime by ~65% (~418s vs. ~1215s) with zero skipped test logic.
+
 ## Bug Fixes
 
-* **Unadjusted `p_value` Search:** Fixed null log-likelihood extraction in `.get_stat()` when `covariates = NULL`, resolving an issue where `find_cutpoint_number(method = "systematic")` failed candidate screening and defaulted to 0 cuts.
+* **Unadjusted `p_value` Search:** Fixed null log-likelihood extraction in `.get_stat()` from `coxph(~ 1)` when `covariates = NULL`, resolving an issue where `find_cutpoint_number(method = "systematic")` failed screening and defaulted to 0 cuts.
 * **Permutation Tail Direction:** Corrected `.run_permutations()` for `criterion = "p_value"` to evaluate test statistics against the empirical lower tail (`<=`) rather than the upper tail.
-* **Schoenfeld Residual Faceting:** Updated `plot_cutpoint_residuals()` to extract column-separated residuals via `residuals(fit, type = "schoenfeld")`, correctly rendering separate diagnostic panels for each risk tier.
-* **Survival Plot Label:** Updated default Kaplan-Meier y-axis label to endpoint-neutral `"Survival Probability"`.
+* **Schoenfeld Residual Faceting:** Updated `plot_cutpoint_residuals()` to extract column-separated residuals via `residuals(fit, type = "schoenfeld")`, rendering separate diagnostic panels for each non-reference risk tier.
+* **Survival Plot Label:** Updated default Kaplan-Meier y-axis label in `.plot_km_curve()` to endpoint-neutral `"Survival Probability"`.
 
 ## Code Consolidation & Architecture
 
-* **S3 Method De-duplication:** Removed redundant, outdated definitions of `print()`, `summary()`, and `plot()` from `find_cutpoint_number.R`, centralizing canonical implementations in `find_cutpoint_number_methods.R`.
-* **Helper Consolidation:** Removed duplicate `.calc_ic()` from `engine-genetic.R`, retaining `utils-helpers.R` as the single source.
+* **S3 Method De-duplication:** Removed stale, redundant definitions of `print()`, `summary()`, and `plot()` from `find_cutpoint_number.R`, centralizing canonical implementations in `find_cutpoint_number_methods.R`.
+* **Helper Consolidation:** Removed duplicate `.calc_ic()` from `engine-genetic.R`, standardizing on `utils-helpers.R` as the single source.
 
 ## Documentation & Maintenance
 
-* **CRAN Example Speed:** Replaced the `find_cutpoint_number()` example with a fast (<1s) synthetic simulation to eliminate execution-time NOTEs.
-* **Link & Build Hygiene:** Converted README links to absolute URLs, updated redirected URLs in `NEWS.md`, normalized `CONTRIBUTING.md`, and removed redundant `data("colon")` calls in vignettes.
+* **Example Optimization:** Replaced the `find_cutpoint_number()` example with a fast (<1s) synthetic two-cluster simulation to eliminate execution-time NOTEs.
+* **Console Wording:** Updated the `validate_cutpoint()` stability header to `"Widest relative width (P10-P90): X%"` for consistency with percentile interval terminology.
+* **Link & Build Hygiene:** Converted README links to absolute URLs, updated redirected URLs in `NEWS.md`, normalized `CONTRIBUTING.md`, and removed redundant `data("colon")` lookups in vignettes.
 
 ## Testing & Quality Assurance
 
 * **Regression Tests:** Added tests verifying unadjusted systematic p-value searches, empirical p-value tail directions, and `hazard_ratio` metric extraction.
-* **CRAN Test Throttling:** Wrapped high-generation genetic searches and intensive bootstrap routines in `skip_on_cran()` to ensure sub-minute test suite execution.
+* **Tier Label Assertions:** Added tests confirming `tier_label` returns `"OVERLAPPING"` or `"CONSISTENT"` and never legacy terms.
+* **CRAN Test Throttling:** Guarded high-replicate bootstrap routines and heavy systematic tests in `test-workflow-integration.R` and `test-stability-metric.R` with `skip_on_cran()`.
 
 # OptSurvCutR v0.11.0 (2026-09-08)
 

@@ -71,7 +71,7 @@ val_res <- validate_cutpoint(
   cutpoint_result = cut_res,
   num_replicates = 500, n_cores = 2, seed = 123
 )
-summary(val_res)                       # Tier 3: adjacent intervals overlap
+summary(val_res)                       # Tier 3 (OVERLAPPING): adjacent intervals overlap
 summary(val_res)$stability$tier        # same result, programmatically
 
 # 4. Act on it - a single threshold proves highly reproducible
@@ -105,13 +105,15 @@ Full analysis: `vignette("bilirubin", package = "OptSurvCutR")`.
 
 ## What's New
 
-### v0.11.1 - two correctness fixes
+### v0.11.1 - two correctness fixes, one label change, one new argument
 
 If you used either combination below under v0.11.0, re-run with v0.11.1.
 
 * **No-covariate model selection:** `find_cutpoint_number(method = "systematic")` could silently return a 0-cut model regardless of the data when `covariates = NULL`, due to a null-model indexing error. Models with covariates were unaffected.
 * **Permutation p-value direction:** `criterion = "p_value"` with `n_perm > 0` computed the permutation-adjusted p-value in the wrong direction, understating significance. `"logrank"` and `"hazard_ratio"` were unaffected.
 * Also fixed: multi-cut Schoenfeld diagnostic panels collapsing into one mislabelled "Cohort G" facet, and a Kaplan-Meier y-axis label that assumed an overall-survival endpoint.
+* **Breaking:** Tier labels `"CAUTION"` and `"DISTINCT"` are renamed to `"OVERLAPPING"` and `"CONSISTENT"`. The numeric `tier` field and tier thresholds are unchanged - this affects only the `tier_label` string and console wording. Code matching on the old label strings needs updating.
+* **New:** `validate_cutpoint(..., quiet = TRUE)` suppresses the "Bootstrapping" progress bar - useful in scripts, test suites, or anywhere a live progress bar isn't wanted. Default behaviour is unchanged.
 
 Full technical detail in `NEWS.md`.
 

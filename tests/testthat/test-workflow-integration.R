@@ -42,6 +42,13 @@ make_workflow_data <- function(n = 300, seed = 1, with_covariate = TRUE) {
 }
 
 test_that("the three-step workflow preserves state across functions", {
+  # skip_on_cran(): fits a 2-cut systematic model (99 candidate positions)
+  # inside a 30-replicate bootstrap - observed at several minutes locally.
+  # Full coverage of this path is retained via CI and local runs, which is
+  # what matters for a handoff-correctness test; CRAN's check-time budget
+  # is better spent on the cheaper tests in this file.
+  skip_on_cran()
+
   d <- make_workflow_data(n = 300, seed = 1)
 
   num <- find_cutpoint_number(
@@ -94,6 +101,10 @@ test_that("the three-step workflow preserves state across functions", {
 })
 
 test_that("confidence intervals are ordered consistently with the thresholds", {
+  # skip_on_cran(): same cost driver as the previous test - a 2-cut
+  # systematic search (99 candidates) inside a bootstrap loop.
+  skip_on_cran()
+
   d <- make_workflow_data(n = 300, seed = 2)
 
   cut <- find_cutpoint(

@@ -6,6 +6,16 @@
 library(survival)
 library(cli)
 
+# Suppress cli progress bars (validate_cutpoint()'s "Bootstrapping" bar)
+# for the whole test session. This is an interim measure: the underlying
+# fix is a `quiet` argument on validate_cutpoint() (see validate_cutpoint.R,
+# this release), but tests calling an already-installed version without
+# that argument still need this to avoid hundreds of lines of per-step
+# progress output in test logs. Safe to remove once every test in this
+# suite explicitly passes quiet = TRUE and the package's minimum required
+# version reflects that.
+options(cli.progress_show_after = Inf)
+
 # --- 1. Pure Deterministic Global Generation ---
 set.seed(42)
 n_test <- 60

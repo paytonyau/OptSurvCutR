@@ -38,6 +38,13 @@
 #' @param seed Optional integer for reproducible results.
 #' @param nmin Minimum group size for bootstrap runs. Defaults to 90\%
 #' of original \code{nmin} to reduce failures.
+#' @param quiet Logical. If \code{TRUE}, suppresses the sequential-run
+#' progress bar (shown when \code{n_cores = 1}). Console status and
+#' summary messages are unaffected. Default is \code{FALSE}. Set to
+#' \code{TRUE} in automated contexts such as test suites, vignette
+#' builds, and non-interactive scripts, where a live progress bar
+#' produces long, line-by-line console output rather than a useful
+#' status indicator.
 #' @param ... Additional arguments passed to \code{\link{find_cutpoint}}
 #' (e.g., \code{pop.size}, \code{max.generations} for genetic algorithm).
 #'
@@ -93,7 +100,7 @@
 #' }
 validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
                               n_cores = 1,
-                              seed = NULL, nmin = NULL, ...) {
+                              seed = NULL, nmin = NULL, quiet = FALSE, ...) {
   # --- 1. Validate Input and Set Seed ---
   if (!inherits(cutpoint_result, "find_cutpoint")) {
     cli::cli_abort("Input must be a `find_cutpoint` object.")
@@ -217,7 +224,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
   }
 
   # --- 4. Main Bootstrap Loop ---
-  if (cores_to_use == 1) {
+  if (cores_to_use == 1 && !quiet) {
     pb <- cli::cli_progress_bar("Bootstrapping", total = num_replicates)
   }
 
@@ -233,7 +240,7 @@ validate_cutpoint <- function(cutpoint_result, num_replicates = 500,
     .packages = c("survival", "OptSurvCutR"),
     .errorhandling = "pass"
   ) %dopar% {
-    if (cores_to_use == 1) {
+    if (cores_to_use == 1 && !quiet) {
       cli::cli_progress_update(id = pb)
     }
 

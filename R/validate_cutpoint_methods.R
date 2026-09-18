@@ -218,7 +218,7 @@ summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE, s
              or if the confidence intervals contain missing values."
     ))
   } else {
-    cli::cli_text("Maximum CI Width (Relative to 10th-90th Percentile Range): {.strong {stability_pct}%}\n")
+    cli::cli_text("Widest relative width (P10-P90): {.strong {stability_pct}%}\n")
 
     is_multi_cut <- nrow(object$confidence_intervals) > 1
     has_overlap <- is_multi_cut && !is_perfectly_separated
@@ -233,61 +233,61 @@ summary.validate_cutpoint_result <- function(object, show_descriptives = TRUE, s
         tier <- "Tier 1"
         tier_label <- "OPTIMAL"
         cli::cli_alert_success("Model Status: OPTIMAL (Tier 1)")
-        cli::cli_text("The threshold is highly consistent across resamples ({stability_pct}%).")
+        cli::cli_text("Highly consistent ({stability_pct}%).")
       } else if (max_rciw <= 0.60) {
         tier <- "Tier 2"
-        tier_label <- "DISTINCT"
-        cli::cli_alert_success("Model Status: DISTINCT (Tier 2)")
-        cli::cli_text("The threshold varies moderately across resamples ({stability_pct}%).")
+        tier_label <- "CONSISTENT"
+        cli::cli_alert_success("Model Status: CONSISTENT (Tier 2)")
+        cli::cli_text("Moderate variation ({stability_pct}%).")
       } else {
         tier <- "Tier 4"
         tier_label <- "UNSTABLE"
         cli::cli_alert_danger("Model Status: UNSTABLE (Tier 4)")
         cli::cli_bullets(c(
-          "!" = "The threshold varies widely across resamples ({stability_pct}%).",
-          "x" = "Recommendation: increase {.arg nmin}, or report the threshold as an interval rather than a point value."
+          "!" = "Wide variation ({stability_pct}%).",
+          "x" = "Report as an interval, or increase {.arg nmin}."
         ))
       }
     } else if (max_rciw < 0.30) {
       if (has_overlap) {
         tier <- "Tier 3"
-        tier_label <- "CAUTION"
-        cli::cli_alert_warning("Model Status: CAUTION (Tier 3) - OVERLAP DOWNGRADE")
-        cli::cli_text("The mathematical variance is very low ({stability_pct}%), but the Confidence Intervals overlap.")
+        tier_label <- "OVERLAPPING"
+        cli::cli_alert_warning("Model Status: OVERLAPPING (Tier 3)")
+        cli::cli_text("Low variance ({stability_pct}%), intervals overlap.")
         cli::cli_bullets(c(
-          "*" = "Consider reducing {.arg num_cuts} if distinct separation is required for clinical application."
+          "*" = "If clean group separation is required, consider reducing {.arg num_cuts}."
         ))
       } else {
         tier <- "Tier 1"
         tier_label <- "OPTIMAL"
         cli::cli_alert_success("Model Status: OPTIMAL (Tier 1)")
-        cli::cli_text("The thresholds are highly consistent across samples with clean separation between risk cohorts.")
+        cli::cli_text("Highly consistent ({stability_pct}%), cleanly separated.")
       }
     } else if (max_rciw >= 0.30 && max_rciw <= 0.60) {
       if (has_distinct_separation) {
         tier <- "Tier 2"
-        tier_label <- "DISTINCT"
-        cli::cli_alert_success("Model Status: DISTINCT (Tier 2)")
-        cli::cli_text("The relative mathematical variance is moderate ({stability_pct}%), but 95% Confidence Intervals do not overlap.")
+        tier_label <- "CONSISTENT"
+        cli::cli_alert_success("Model Status: CONSISTENT (Tier 2)")
+        cli::cli_text("Moderate variance ({stability_pct}%), intervals separated.")
       } else {
         tier <- "Tier 3"
-        tier_label <- "CAUTION"
-        cli::cli_alert_warning("Model Status: CAUTION (Tier 3)")
-        cli::cli_text("Moderate instability detected ({stability_pct}%), and Confidence Intervals overlap.")
+        tier_label <- "OVERLAPPING"
+        cli::cli_alert_warning("Model Status: OVERLAPPING (Tier 3)")
+        cli::cli_text("Moderate instability ({stability_pct}%), intervals overlap.")
       }
     } else {
       if (has_distinct_separation) {
         tier <- "Tier 2"
-        tier_label <- "DISTINCT"
-        cli::cli_alert_success("Model Status: DISTINCT (Tier 2) - SEPARATION OVERRIDE")
-        cli::cli_text("The relative mathematical variance is high ({stability_pct}%), but 95% Confidence Intervals do not overlap.")
+        tier_label <- "CONSISTENT"
+        cli::cli_alert_success("Model Status: CONSISTENT (Tier 2)")
+        cli::cli_text("High variance ({stability_pct}%), intervals separated.")
       } else {
         tier <- "Tier 4"
         tier_label <- "UNSTABLE"
         cli::cli_alert_danger("Model Status: UNSTABLE (Tier 4)")
         cli::cli_bullets(c(
-          "!" = "The primary source of instability is {.strong {worst_cut_name}}.",
-          "x" = "Recommendation: Reduce {.arg num_cuts} or increase {.arg nmin}."
+          "!" = "Main source of instability: {.strong {worst_cut_name}}.",
+          "x" = "Reduce {.arg num_cuts} or increase {.arg nmin}."
         ))
       }
     }

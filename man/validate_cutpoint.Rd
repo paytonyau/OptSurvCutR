@@ -10,6 +10,7 @@ validate_cutpoint(
   n_cores = 1,
   seed = NULL,
   nmin = NULL,
+  quiet = FALSE,
   ...
 )
 }
@@ -25,6 +26,14 @@ validate_cutpoint(
 
 \item{nmin}{Minimum group size for bootstrap runs. Defaults to 90\%
 of original \code{nmin} to reduce failures.}
+
+\item{quiet}{Logical. If \code{TRUE}, suppresses the sequential-run
+progress bar (shown when \code{n_cores = 1}). Console status and
+summary messages are unaffected. Default is \code{FALSE}. Set to
+\code{TRUE} in automated contexts such as test suites, vignette
+builds, and non-interactive scripts, where a live progress bar
+produces long, line-by-line console output rather than a useful
+status indicator.}
 
 \item{...}{Additional arguments passed to \code{\link{find_cutpoint}}
 (e.g., \code{pop.size}, \code{max.generations} for genetic algorithm).}

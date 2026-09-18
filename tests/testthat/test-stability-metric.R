@@ -85,6 +85,14 @@ test_that("relative width is computed against the predictor's P90-P10 range", {
 # ------------------------------------------------------------------
 
 test_that("Tier 1 is reachable for a well-separated threshold", {
+  # skip_on_cran(): the largest fixture and replicate count in this file
+  # (n = 800, 150 replicates) - the specific case this test exists to
+  # guard (Tier 1 reachability) needs enough replicates for a stable
+  # width estimate to land under 30%, and a smaller n/replicate count
+  # risks a false failure from bootstrap noise rather than a genuine
+  # regression. Retained at full size in CI and local runs.
+  skip_on_cran()
+
   # Before v0.11.0 the relative width always exceeded 100%, so no input of any
   # kind could be classified Tier 1.
   d <- make_threshold_data(n = 800, seed = 13, cut = 50, hr = 4)
@@ -155,4 +163,45 @@ test_that("summary() returns the documented stability fields", {
   # summary() must not alter the rest of the object
   expect_identical(s$original_cuts, val$original_cuts)
   expect_identical(s$confidence_intervals, val$confidence_intervals)
+})
+
+# ------------------------------------------------------------------
+# 7. tier_label wording (renamed from CAUTION/DISTINCT this cycle)
+# ------------------------------------------------------------------
+
+test_that("tier_label uses the current wording, not the retired CAUTION/DISTINCT names", {
+  # skip_on_cran(): reuses the same n = 800, 150-replicate fixture as the
+  # "Tier 1 is reachable" test above, plus a second 2-cut systematic fit.
+  skip_on_cran()
+
+  # CAUTION and DISTINCT were renamed to OVERLAPPING and CONSISTENT to avoid
+  # implying failure (CAUTION) for a result that is actually the paper's
+  # central, useful finding, and to remove the "precision" vs "width"
+  # inversion CAUTION's sibling wording carried. tier (the numeric Tier N
+  # value) is unaffected and is covered separately above; this test guards
+  # the human-readable label specifically, since nothing else in this file
+  # touches tier_label's string value.
+  #
+  # Tier 1 and Tier 4 labels (OPTIMAL, UNSTABLE) were not renamed and are
+  # included here only as a sanity check that the rename did not spread
+  # further than intended.
+
+  d_optimal <- make_threshold_data(n = 800, seed = 13, cut = 50, hr = 4)
+  cp_optimal <- fit_single_cut(d_optimal, 13)
+  val_optimal <- validate_cutpoint(cp_optimal, num_replicates = 150, n_cores = 1, seed = 13)
+  expect_identical(summary(val_optimal)$stability$tier_label, "OPTIMAL")
+
+  # A multi-cut, moderate-width, overlapping case should read OVERLAPPING,
+  # never the retired CAUTION.
+  d_overlap <- make_threshold_data(n = 300, seed = 12, cut = 50, hr = 1.3)
+  cp_overlap <- find_cutpoint(d_overlap, "marker", "time", "event",
+    num_cuts = 2, method = "systematic",
+    nmin = 0.2, n_perm = 0, seed = 12
+  )
+  skip_if(anyNA(cp_overlap$optimal_cuts), "No valid two-cut solution found for this seed")
+  val_overlap <- validate_cutpoint(cp_overlap, num_replicates = 40, n_cores = 1, seed = 12)
+  label_overlap <- summary(val_overlap)$stability$tier_label
+
+  expect_true(label_overlap %in% c("OPTIMAL", "CONSISTENT", "OVERLAPPING", "UNSTABLE"))
+  expect_false(label_overlap %in% c("CAUTION", "DISTINCT"))
 })

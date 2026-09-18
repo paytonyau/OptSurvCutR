@@ -156,7 +156,9 @@ test_that("S3 rendering paths adjust for non-proportional hazards and vector dim
     )
   })
 
-  expect_gt(length(capture.output(summary.find_cutpoint_number_result(res_ph_fail, show_ph_test = TRUE))), 0)
+  expect_gt(length(suppressWarnings(
+    capture.output(summary.find_cutpoint_number_result(res_ph_fail, show_ph_test = TRUE))
+  )), 0)
   expect_s3_class(plot(res_ph_fail), "ggplot")
 
   # Cover early exit plot code

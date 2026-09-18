@@ -25,6 +25,9 @@ knitr::opts_chunk$set(
   warning = FALSE, message = TRUE
 )
 options(cli.num_colors = 1)
+# Suppress cli progress bars (validate_cutpoint()'s "Bootstrapping" bar):
+# same rationale as bilirubin.Rmd - see that vignette's setup chunk.
+options(cli.progress_show_after = Inf)
 ```
 
 # Introduction
@@ -85,7 +88,12 @@ for death (`etype`). Modelling both without filtering would treat each
 patient as two independent observations.
 
 ```{r load-data}
-data("colon", package = "survival")
+# library(survival), loaded above, already exposes `colon` as a lazy-loaded
+# object. An explicit data("colon", package = "survival") call here would
+# emit a spurious "data set 'colon' not found" warning in a clean session -
+# the dataset lives inside survival's multi-object cancer.rda, and data()'s
+# own name-based lookup does not resolve it the same way library() does.
+# Confirmed harmless and unnecessary; see the equivalent fix in Figure_3.R.
 
 analysis_data <- colon %>%
   filter(etype == 1) %>%                      # recurrence records only

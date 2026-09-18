@@ -22,6 +22,12 @@ knitr::opts_chunk$set(
   warning = TRUE, message = TRUE
 )
 options(cli.num_colors = 1)
+# Suppress cli progress bars (validate_cutpoint()'s "Bootstrapping" bar):
+# a live progress bar re-renders on every step during a vignette knit,
+# producing hundreds of lines of output in the rendered document rather
+# than a live terminal display. Interim measure until every
+# validate_cutpoint() call below is updated to pass quiet = TRUE directly.
+options(cli.progress_show_after = Inf)
 ```
 
 # Introduction
