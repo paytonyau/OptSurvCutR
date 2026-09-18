@@ -97,6 +97,18 @@
     }
   }
 
-  p_perm <- (sum(valid_nulls >= obs_stat) + 1) / (length(valid_nulls) + 1)
+  # Direction of extremeness depends on the criterion, matching the
+  # `direction` logic in .systematic_search() (engine-systematic.R): for
+  # "p_value", smaller values are more extreme (a smaller LRT p-value is
+  # stronger evidence against the null); for "logrank" and "hazard_ratio",
+  # larger values are more extreme. The previous unconditional
+  # `sum(valid_nulls >= obs_stat)` was correct only for the latter two and
+  # produced incorrect permutation-adjusted p-values whenever
+  # criterion = "p_value" was combined with n_perm > 0.
+  if (identical(criterion, "p_value")) {
+    p_perm <- (sum(valid_nulls <= obs_stat) + 1) / (length(valid_nulls) + 1)
+  } else {
+    p_perm <- (sum(valid_nulls >= obs_stat) + 1) / (length(valid_nulls) + 1)
+  }
   return(p_perm)
 }

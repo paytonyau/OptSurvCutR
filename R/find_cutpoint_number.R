@@ -88,25 +88,25 @@
 #' if (requireNamespace("survival", quietly = TRUE)) {
 #'   library(survival)
 #'
-#'   # Generate a pristine simulated clinical tracking baseline template
 #'   set.seed(42)
+#'   n <- 100
+#'   biomarker <- rnorm(n, mean = 6, sd = 1.2)
 #'   sim_data <- data.frame(
-#'     time = rexp(40, rate = 0.1),
-#'     event = sample(c(0, 1), 40, replace = TRUE),
-#'     biomarker = rnorm(40, mean = 6, sd = 1.2)
+#'     time      = rexp(n, rate = 0.05 + 0.03 * (biomarker > 6)),
+#'     event     = rbinom(n, 1, 0.8),
+#'     biomarker = biomarker
 #'   )
 #'
-#'   # Sweep information criteria fit columns up to a 2-cut matrix max
 #'   num_fit <- find_cutpoint_number(
-#'     data = sim_data,
-#'     predictor = "biomarker",
-#'     outcome_time = "time",
+#'     data          = sim_data,
+#'     predictor     = "biomarker",
+#'     outcome_time  = "time",
 #'     outcome_event = "event",
-#'     max_cuts = 2,
-#'     method = "systematic",
-#'     criterion = "BIC",
-#'     nmin = 5,
-#'     quiet = TRUE
+#'     max_cuts      = 1,
+#'     method        = "systematic",
+#'     criterion     = "BIC",
+#'     nmin          = 0.2,
+#'     quiet         = TRUE
 #'   )
 #'   summary(num_fit)
 #' }

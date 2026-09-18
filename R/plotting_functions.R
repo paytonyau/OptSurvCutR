@@ -331,21 +331,55 @@ plot_cutpoint_residuals <- function(x, ...) {
     cli::cli_abort("Proportional hazards evaluation failed due to a singular model matrix.")
   }
 
+  # cox.zph()$y POOLS multi-degree-of-freedom terms into a single column
+  # named after the term (here "group"), not one column per coefficient,
+  # whenever the stratifying factor has more than 2 levels (num_cuts > 1).
+  # Confirmed against survival 3.8.11: cox.zph(coxph(Surv(time,event)~group))
+  # with a 3-level group returns dim(zph$y) == c(n, 1), colnames == "group",
+  # even under transform = "identity". resid(fit, type = "schoenfeld")
+  # returns the per-coefficient residuals cox.zph pools away (dim
+  # c(n, num_cuts), colnames c("group2", "group3", ...)), but does not
+  # carry cox.zph's transformed time axis. The fix below uses cox.zph()
+  # only for the transformed time axis (zph$x) and the global p-value
+  # (zph$table), and takes the actual per-stratum residual VALUES from
+  # resid(), aligning the two by row position (both are ordered by event
+  # time and have the same length). For a single cut-point (one
+  # coefficient), cox.zph()$y already returns one named column and this
+  # produces the same result as before.
   time_vec <- zph$x
-  residual_matrix <- zph$y
-  col_names <- colnames(residual_matrix)
+  raw_resid <- stats::residuals(fit, type = "schoenfeld")
 
+  # residuals() drops to a plain (unnamed) numeric vector, not a matrix,
+  # when there is exactly one coefficient (num_cuts == 1); restore a
+  # column name in that case so the logic below is uniform.
+  if (is.null(dim(raw_resid))) {
+    raw_resid <- matrix(raw_resid, ncol = 1, dimnames = list(NULL, "group2"))
+  }
+
+  col_names <- colnames(raw_resid)
   target_cols <- grep("^group", col_names, value = TRUE)
   if (length(target_cols) == 0) {
     cli::cli_inform("No stratified group metrics available for diagnostic modeling.")
     return(invisible(NULL))
   }
 
+  if (nrow(raw_resid) != length(time_vec)) {
+    cli::cli_abort(paste(
+      "Internal error: residual matrix and transformed-time vector have",
+      "mismatched lengths; cannot align Schoenfeld diagnostics."
+    ))
+  }
+
   long_list <- lapply(target_cols, function(col) {
     data.frame(
       Time = time_vec,
-      Residual = residual_matrix[, col],
-      Cohort = gsub("group", "Cohort G", col, fixed = TRUE)
+      Residual = raw_resid[, col],
+      # e.g. "group2" -> "Cohort G2": gsub only strips the literal prefix
+      # "group", leaving the coefficient's own level number intact, so
+      # each stratum keeps a distinguishing label instead of collapsing
+      # to the generic "Cohort G" that resulted from relabelling
+      # cox.zph()'s single pooled "group" column.
+      Cohort = gsub("^group", "Cohort G", col)
     )
   })
   plot_df <- do.call(rbind, long_list)
@@ -579,7 +613,16 @@ plot_validation <- function(validation_result,
 #' @importFrom grDevices colorRampPalette
 #' @noRd
 .plot_km_curve <- function(x, df, title = "Kaplan-Meier Survival Estimation",
-                           xlab = "Follow-up Time", ylab = "Overall Survival Probability", ...) {
+                           xlab = "Follow-up Time",
+                           # "Overall Survival Probability" was the default here,
+                           # which is wrong for any non-OS endpoint (recurrence-free,
+                           # transplant-free, progression-free survival, etc.) unless
+                           # the caller explicitly overrides ylab. "Survival
+                           # Probability" is correct regardless of endpoint; callers
+                           # wanting endpoint-specific wording already pass ylab
+                           # explicitly (see Figure_2.R / Figure_3.R in the case
+                           # study scripts).
+                           ylab = "Survival Probability", ...) {
   if (!requireNamespace("survminer", quietly = TRUE)) {
     cli::cli_abort("Package {.pkg survminer} is required to render outcome tracking charts.")
   }

@@ -1,104 +1,51 @@
+# OptSurvCutR v0.11.1 (2026-09-18)
+
+## Bug Fixes
+
+* **`p_value` Criterion on Unadjusted Models:** Fixed `.get_stat()` null log-likelihood extraction from `coxph(~ 1)`, which previously returned `NA` when `covariates = NULL`. This resolves an issue where `find_cutpoint_number(method = "systematic")` failed candidate threshold screening and defaulted to 0 cuts on unadjusted datasets.
+* **Permutation Test Direction:** Corrected empirical tail evaluation in `.run_permutations()` for `criterion = "p_value"`, ensuring extreme test statistics evaluate using the lower tail ($\le$) rather than the upper tail ($\ge$).
+* **Schoenfeld Residual Faceting:** Updated `plot_cutpoint_residuals()` to extract column-separated residuals from `residuals(fit, type = "schoenfeld")` instead of pooled `cox.zph()$y` output. Multi-cut models now correctly render separate diagnostic facets for each non-reference risk tier (e.g., `"Cohort G2"`, `"Cohort G3"`).
+* **Survival Plot Axis Label:** Updated default y-axis label in `.plot_km_curve()` from `"Overall Survival Probability"` to endpoint-neutral `"Survival Probability"`.
+
+## Documentation & Maintenance
+
+* **Example Optimization:** Replaced the `find_cutpoint_number()` example with a fast (<1s) two-cluster simulation with a distinct boundary, resolving a CRAN execution-time NOTE.
+* **CRAN Compliance & Links:** Renamed `CONTRIBUTING.md` to uppercase, updated `.Rbuildignore`, and converted repository links in `README.md` to absolute URLs to fix CRAN URI NOTEs.
+* **URL Maintenance:** Updated redirected conference URLs in `NEWS.md`.
+
+## Testing & Quality Assurance
+
+* **Regression Tests:** Added tests verifying unadjusted `p_value` systematic search behavior and validating empirical p-value calculation logic.
+* **CRAN Execution Speed:** Guarded high-generation genetic searches and high-replicate bootstrap routines with `skip_on_cran()`.
+
+## Known Issues
+
+* **Vignette Data Lookup:** A redundant `data("colon")` call in `crc.Rmd` emits a benign lookup warning when package `survival` is already attached.
+* **Code Consolidation:** Identical definitions of `.calc_ic()` and S3 method helpers across engine scripts are scheduled for consolidation in v0.11.2.
+
 # OptSurvCutR v0.11.0 (2026-09-08)
 
-The validation summary now carries the predictor into the result, so relative confidence
-interval widths are computed against the predictor's 10th–90th percentile spread rather
-than a self-referential bootstrap proxy. Stability tiers are assigned consistently and
-exposed through a machine-readable `stability` list. Both case study vignettes and the
-package documentation have been updated to reflect the revised reporting.
+## Bug Fixes
 
-## Bug Fixes (Important)
+* **Stability Metric Denominator:** Corrected `summary.validate_cutpoint_result()` to calculate relative confidence interval width against the predictor's empirical 10th–90th percentile range ($P_{90} - P_{10}$) by preserving `userdata` in `validate_cutpoint()`. This resolves an issue where reported widths were artificially inflated and Stability Tier 1 was unreachable.
+* **Silent Fallback Removal:** Removed arbitrary fallback denominators (`bootstrap_distribution[, 1]` and medians). Undefined data spreads or degenerate discrete predictors now return explicit diagnostic warnings rather than substituted metrics.
+* **Single Cut-point Classification:** Single-threshold models are now classified strictly on relative width (< 30% Tier 1, 30%–60% Tier 2, > 60% Tier 4), eliminating invalid Tier 3 assignments that require adjacent interval overlap.
 
-* **Stability Metric Denominator:** `summary.validate_cutpoint_result()` computed the
-  relative confidence interval width against the bootstrap distribution of the first
-  cut-point rather than the 10th–90th percentile range of the predictor. The cause was
-  that `validate_cutpoint()` did not carry the `userdata` element into its returned
-  object, so the predictor values were unavailable to the summary method and an internal
-  fallback was silently used instead. Reported relative widths were consequently inflated
-  by roughly an order of magnitude, and **Stability Tier 1 was unreachable for any
-  input**. Stability tiers reported by version 0.10.1 and earlier should be recomputed.
+## API Changes & Enhancements
 
-* **Removal of Silent Fallbacks:** The two fallback denominators
-  (`bootstrap_distribution[, 1]` and `max(abs(medians))`) have been removed. Where the
-  predictor values are unavailable, or where the 10th and 90th percentiles of a highly
-  discrete predictor coincide, the relative width is now reported as undefined with a
-  diagnostic message rather than substituted with an unrelated quantity.
+* **Programmatic Stability Access:** Added a machine-readable `$stability` list to `summary.validate_cutpoint_result()` exposing tier classifications, per-cut relative widths, interval separation status, and data spread for automated batch workflows.
+* **Data Retention:** `validate_cutpoint()` now retains input analysis data in `userdata`, ensuring structural parity with `find_cutpoint()`.
 
-* **Single Cut-point Classification:** Models with one cut-point have no adjacent
-  interval, so interval separation is undefined and `has_distinct_separation` could never
-  evaluate to `TRUE`. Such models could therefore only be assigned Tier 1 or Tier 4.
-  Single-threshold models are now graded on relative width alone (< 30% Tier 1, 30–60%
-  Tier 2, > 60% Tier 4) and can no longer be assigned Tier 3, which requires overlap.
+## Documentation & Vignettes
 
-## API Changes
+* **Stability Tier Clarification:** Clarified that the 4-tier matrix evaluates two independent diagnostic dimensions (interval separation and coordinate precision) rather than an ordinal rank.
+* **Standards & Vignettes:** Expanded `@srrstats {G1.1}` to detail methodological origins, re-rendered both clinical vignettes using corrected metrics, and updated `README.md` examples with the Mayo Clinic PBC cohort.
+* **Console Diagnostics:** Corrected typos and generalised console output across the systematic search engine to report actual candidate counts dynamically.
 
-* **Machine-readable Stability Output:** `summary.validate_cutpoint_result()` now attaches
-  a `stability` list to the returned object, containing `tier`, `tier_label`, `percent`,
-  `max_relative_width`, `relative_widths` (per cut-point), `data_spread`, `separated` and
-  `worst_cut`. Tier assignment and interval widths can now be accessed programmatically
-  instead of parsed from console output, which supports batch screening of multiple
-  predictors.
+## Testing & Quality Assurance
 
-* **Predictor Values Retained:** `validate_cutpoint()` now returns the analysis data in
-  the `userdata` element, consistent with `find_cutpoint()`.
-
-## Documentation
-
-* **Tier Classification Documentation:** Clarified that the four tiers summarise two
-  independent diagnostics — interval separation and relative width — and do not constitute
-  an ordinal scale; whether Tier 2 or Tier 3 is preferable depends on whether separation
-  or boundary precision matters for the intended application. Documented that the 30% and
-  60% boundaries are pragmatic conventions adopted for interpretability rather than
-  calibrated thresholds.
-
-* **Diagnostic Messaging:** Where stability cannot be calculated, the message now
-  identifies the required input (`userdata$factor`) and the conditions under which the
-  metric is undefined.
-
-* **Console Messages:** Corrected spelling in three user-facing messages in the systematic
-  search engine, and generalised a hard-coded message to report the number of candidate
-  positions and cut-points actually being searched.
-
-* **Standards Compliance:** Expanded `@srrstats {G1.1}` to document the methodological
-  origin of the approach (maximally selected rank statistics, information-theoretic model
-  selection, multivariable Cox optimisation, and bootstrap resampling), and to clarify
-  that the multi-threshold problem lies outside the stated scope of `maxstat`, `survminer`
-  and `cutpointr` rather than representing a deficiency in those packages. Narrowed
-  `@srrstats {G1.5}` to describe the comparison actually provided.
-
-* **Vignettes:** Both case study vignettes were re-run against the corrected metric and
-  the reported stability tiers updated accordingly. Guidance on replicate counts,
-  permutation counts and the interpretation of overlapping confidence intervals has been
-  expanded, and clinical background added for both cohorts.
-
-* **README:** Replaced the simulated example, in which the information criterion selected
-  zero cut-points, with the Mayo Clinic PBC analysis reported in the manuscript. Revised
-  language describing what the bootstrap assessment establishes, and reserved claims of
-  rOpenSci compliance until review has concluded.
-
-## Testing
-
-* **Regression Coverage:** Added `tests/testthat/test-stability-metric.R`, verifying that
-  `userdata` survives into the validation object, that the relative width is computed
-  against the predictor's percentile range and not the bootstrap distribution, that
-  single-cut models are never assigned Tier 3, that undefined cases return no tier rather
-  than an incorrect one, and that `summary()` returns the documented `stability` fields.
-
-* **Reachability Test:** Added an explicit test that Tier 1 is attainable for a
-  well-separated threshold in a large sample. The defect above was characterised by an
-  entire classification category being unreachable, which value-comparison tests alone
-  would not have detected.
-
-* **Workflow Integration Tests:** Added `tests/testthat/test-workflow-integration.R`,
-  which runs the three core functions in sequence and asserts that state is preserved
-  across them: the number of thresholds located matches the number selected, one
-  confidence interval and one relative width is reported per threshold, the predictor is
-  identical at every stage, and covariates used during the search are reused during
-  validation. Both defects fixed in this release were handoff failures between functions
-  rather than faults within them, which unit tests cannot detect.
-
-## Dependencies
-
-* No changes to package dependencies in this release.
+* **Metric Regression & Reachability:** Added `test-stability-metric.R` to verify data inheritance, validate that single-cut models avoid Tier 3, and confirm that Tier 1 is empirically reachable on well-separated data.
+* **Workflow Integration Tests:** Added `test-workflow-integration.R` to ensure state and covariate preservation across the complete three-step pipeline (`find_cutpoint_number()` -> `find_cutpoint()` -> `validate_cutpoint()`).
 
 
 # OptSurvCutR v0.10.1 (2026-04-09)
@@ -256,7 +203,7 @@ This patch release addresses CRAN reviewer feedback and polishes the package's c
 
 ## COMMUNITY & OUTREACH
 
-**Presentations:** Presented at FOSDEM 2026 in the Bioinformatics & Computational Biology DevRoom in Brussels, Belgium. [View lightning talk details](https://fosdem.org/2026/schedule/event/9JQJ9M-bioinformatics_lighthning_talks/)
+**Presentations:** Presented at FOSDEM 2026 in the Bioinformatics & Computational Biology DevRoom in Brussels, Belgium. [View lightning talk details](https://archive.fosdem.org/2026/schedule/event/9JQJ9M-bioinformatics_lighthning_talks/)
 
 **Presentations:** Presented at R!SK 2026 (February 18–19, 2026). This 100% online conference focuses on evaluating, measuring, and mitigating risk across diverse industries including healthcare, finance, and insurance. The event featured deep content sessions and live Q&A interactions. [View presentation abstract](https://rconsortium.github.io/Risk_website/Abstracts.html#payton-yau)
 

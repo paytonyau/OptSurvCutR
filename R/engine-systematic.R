@@ -216,7 +216,15 @@
       if (is.null(fit_null) || is.null(fit$loglik)) {
         return(NA)
       }
-      lrt_stat <- 2 * (fit$loglik[2] - fit_null$loglik[2])
+      # fit_null$loglik has length 1 when the null model has no covariates
+      # (coxph(Surv(time, event) ~ 1) returns a single log-likelihood, not a
+      # c(null, fitted) pair). Using fit_null$loglik[2] in that case silently
+      # returns NA for every candidate cut, which find_cutpoint_number()
+      # then reports as "no valid cut-points found" regardless of whether a
+      # real split exists in the data. Take the last element, which is the
+      # fitted null log-likelihood in both the length-1 and length-2 cases.
+      null_ll <- fit_null$loglik[length(fit_null$loglik)]
+      lrt_stat <- 2 * (fit$loglik[2] - null_ll)
       return(stats::pchisq(lrt_stat, df = num_cuts, lower.tail = FALSE))
     }
   }
