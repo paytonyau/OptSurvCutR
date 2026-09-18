@@ -2,26 +2,25 @@
 
 ## Bug Fixes
 
-* **`p_value` Criterion on Unadjusted Models:** Fixed `.get_stat()` null log-likelihood extraction from `coxph(~ 1)`, which previously returned `NA` when `covariates = NULL`. This resolves an issue where `find_cutpoint_number(method = "systematic")` failed candidate threshold screening and defaulted to 0 cuts on unadjusted datasets.
-* **Permutation Test Direction:** Corrected empirical tail evaluation in `.run_permutations()` for `criterion = "p_value"`, ensuring extreme test statistics evaluate using the lower tail ($\le$) rather than the upper tail ($\ge$).
-* **Schoenfeld Residual Faceting:** Updated `plot_cutpoint_residuals()` to extract column-separated residuals from `residuals(fit, type = "schoenfeld")` instead of pooled `cox.zph()$y` output. Multi-cut models now correctly render separate diagnostic facets for each non-reference risk tier (e.g., `"Cohort G2"`, `"Cohort G3"`).
-* **Survival Plot Axis Label:** Updated default y-axis label in `.plot_km_curve()` from `"Overall Survival Probability"` to endpoint-neutral `"Survival Probability"`.
+* **Unadjusted `p_value` Search:** Fixed null log-likelihood extraction in `.get_stat()` when `covariates = NULL`, resolving an issue where `find_cutpoint_number(method = "systematic")` failed candidate screening and defaulted to 0 cuts.
+* **Permutation Tail Direction:** Corrected `.run_permutations()` for `criterion = "p_value"` to evaluate test statistics against the empirical lower tail (`<=`) rather than the upper tail.
+* **Schoenfeld Residual Faceting:** Updated `plot_cutpoint_residuals()` to extract column-separated residuals via `residuals(fit, type = "schoenfeld")`, correctly rendering separate diagnostic panels for each risk tier.
+* **Survival Plot Label:** Updated default Kaplan-Meier y-axis label to endpoint-neutral `"Survival Probability"`.
+
+## Code Consolidation & Architecture
+
+* **S3 Method De-duplication:** Removed redundant, outdated definitions of `print()`, `summary()`, and `plot()` from `find_cutpoint_number.R`, centralizing canonical implementations in `find_cutpoint_number_methods.R`.
+* **Helper Consolidation:** Removed duplicate `.calc_ic()` from `engine-genetic.R`, retaining `utils-helpers.R` as the single source.
 
 ## Documentation & Maintenance
 
-* **Example Optimization:** Replaced the `find_cutpoint_number()` example with a fast (<1s) two-cluster simulation with a distinct boundary, resolving a CRAN execution-time NOTE.
-* **CRAN Compliance & Links:** Renamed `CONTRIBUTING.md` to uppercase, updated `.Rbuildignore`, and converted repository links in `README.md` to absolute URLs to fix CRAN URI NOTEs.
-* **URL Maintenance:** Updated redirected conference URLs in `NEWS.md`.
+* **CRAN Example Speed:** Replaced the `find_cutpoint_number()` example with a fast (<1s) synthetic simulation to eliminate execution-time NOTEs.
+* **Link & Build Hygiene:** Converted README links to absolute URLs, updated redirected URLs in `NEWS.md`, normalized `CONTRIBUTING.md`, and removed redundant `data("colon")` calls in vignettes.
 
 ## Testing & Quality Assurance
 
-* **Regression Tests:** Added tests verifying unadjusted `p_value` systematic search behavior and validating empirical p-value calculation logic.
-* **CRAN Execution Speed:** Guarded high-generation genetic searches and high-replicate bootstrap routines with `skip_on_cran()`.
-
-## Known Issues
-
-* **Vignette Data Lookup:** A redundant `data("colon")` call in `crc.Rmd` emits a benign lookup warning when package `survival` is already attached.
-* **Code Consolidation:** Identical definitions of `.calc_ic()` and S3 method helpers across engine scripts are scheduled for consolidation in v0.11.2.
+* **Regression Tests:** Added tests verifying unadjusted systematic p-value searches, empirical p-value tail directions, and `hazard_ratio` metric extraction.
+* **CRAN Test Throttling:** Wrapped high-generation genetic searches and intensive bootstrap routines in `skip_on_cran()` to ensure sub-minute test suite execution.
 
 # OptSurvCutR v0.11.0 (2026-09-08)
 

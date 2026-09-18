@@ -39,21 +39,6 @@ find_cutpoint_number(
 )
 
 \method{plot}{find_cutpoint_number_result}(x, y, ...)
-
-\method{print}{find_cutpoint_number_result}(x, ...)
-
-\method{summary}{find_cutpoint_number_result}(
-  object,
-  show_comparison_table = TRUE,
-  show_best_model_details = TRUE,
-  show_group_counts = TRUE,
-  show_medians = TRUE,
-  show_ph_test = TRUE,
-  plot.it = FALSE,
-  ...
-)
-
-\method{plot}{find_cutpoint_number_result}(x, y, ...)
 }
 \arguments{
 \item{data}{Input data frame.}

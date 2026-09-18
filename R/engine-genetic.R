@@ -303,41 +303,6 @@
   return(results)
 }
 
-#' Internal helper: Calculate Information Criterion (AIC, AICc, or BIC)
-#'
-#' @description
-#' Computes AIC, AICc, or BIC from a `coxph` object or log-likelihood.
-#'
-#' @inheritParams find_cutpoint_number
-#' @param model Fitted `coxph` object or list with `loglik` component.
-#' @param k Number of parameters (degrees of freedom).
-#' @param n Sample size.
-#'
-#' @return Single numeric IC value (or `NA` on failure).
-#'
-#' @importFrom stats as.formula
-#' @noRd
-.calc_ic <- function(model, k, n, criterion) {
-  if (is.null(model) || !is.list(model) || is.null(model$loglik)) {
-    return(NA_real_)
-  }
-  logL <- model$loglik[2]
-  if (is.na(logL)) {
-    return(NA_real_)
-  }
-  if (criterion == "BIC" && (is.na(n) || n <= 0)) {
-    return(NA_real_)
-  }
-  if (criterion == "BIC") {
-    return(-2 * logL + k * log(n))
-  } else if (criterion == "AICc") {
-    if ((n - k - 1) <= 0) {
-      return(NA_real_)
-    }
-    aic <- -2 * logL + 2 * k
-    aicc <- aic + (2 * k * (k + 1)) / (n - k - 1)
-    return(aicc)
-  } else {
-    return(-2 * logL + 2 * k)
-  }
-}
+# .calc_ic() was previously duplicated here identically to the copy in
+# utils-helpers.R. That is now the single source; this file relies on it
+# being loaded from there, the same way engine-systematic.R already does.
