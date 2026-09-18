@@ -1,132 +1,152 @@
 # Changelog
 
+## OptSurvCutR v0.11.1 (2026-09-18)
+
+### Breaking Changes
+
+- **Stability Tier Labels Renamed:** Renamed `tier_label` values from
+  `"DISTINCT"` to `"CONSISTENT"` and `"CAUTION"` to `"OVERLAPPING"` in
+  [`validate_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/validate_cutpoint.md)
+  outputs to describe interval overlap directly. Numeric `tier`
+  designations (`"Tier 1"`–`"Tier 4"`), cutoffs, and logic remain
+  unchanged. Removed internal diagnostic tags (`"- OVERLAP DOWNGRADE"`,
+  `"- SEPARATION OVERRIDE"`). **Downstream code matching literal strings
+  `"DISTINCT"` or `"CAUTION"` must be updated.**
+
+| Tier | Criteria | Diagnostic Interpretation |
+|:---|:---|:---|
+| **1 (OPTIMAL)** | Width \< 30%, zero overlap | Highly consistent boundaries across samples |
+| **2 (CONSISTENT)** | Zero overlap, any width | Groups remain distinct; exact boundary may shift |
+| **3 (OVERLAPPING)** | Overlap present, any width | Boundary confidence intervals intersect |
+| **4 (UNSTABLE)** | Width \> 60%, no clean separation | Severe instability; likely sample noise overfitting |
+
+### New Features
+
+- **Console Control (`quiet = TRUE`):** Added a `quiet` parameter
+  (default `FALSE`) to
+  [`validate_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/validate_cutpoint.md)
+  to suppress progress bars in scripted pipelines and automated test
+  suites.
+- **Test Performance Optimization:** Configured
+  `options(cli.progress_show_after = Inf)` across package tests and
+  vignettes to bypass CLI rendering overhead, reducing local test-suite
+  runtime by ~65% (~418s vs. ~1215s) with zero skipped test logic.
+
+### Bug Fixes
+
+- **Unadjusted `p_value` Search:** Fixed null log-likelihood extraction
+  in `.get_stat()` from `coxph(~ 1)` when `covariates = NULL`, resolving
+  an issue where `find_cutpoint_number(method = "systematic")` failed
+  screening and defaulted to 0 cuts.
+- **Permutation Tail Direction:** Corrected `.run_permutations()` for
+  `criterion = "p_value"` to evaluate test statistics against the
+  empirical lower tail (`<=`) rather than the upper tail.
+- **Schoenfeld Residual Faceting:** Updated
+  [`plot_cutpoint_residuals()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_cutpoint_residuals.md)
+  to extract column-separated residuals via
+  `residuals(fit, type = "schoenfeld")`, rendering separate diagnostic
+  panels for each non-reference risk tier.
+- **Survival Plot Label:** Updated default Kaplan-Meier y-axis label in
+  `.plot_km_curve()` to endpoint-neutral `"Survival Probability"`.
+
+### Code Consolidation & Architecture
+
+- **S3 Method De-duplication:** Removed stale, redundant definitions of
+  [`print()`](https://rdrr.io/r/base/print.html),
+  [`summary()`](https://rdrr.io/r/base/summary.html), and
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) from
+  `find_cutpoint_number.R`, centralizing canonical implementations in
+  `find_cutpoint_number_methods.R`.
+- **Helper Consolidation:** Removed duplicate `.calc_ic()` from
+  `engine-genetic.R`, standardizing on `utils-helpers.R` as the single
+  source.
+
+### Documentation & Maintenance
+
+- **Example Optimization:** Replaced the
+  [`find_cutpoint_number()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md)
+  example with a fast (\<1s) synthetic two-cluster simulation to
+  eliminate execution-time NOTEs.
+- **Console Wording:** Updated the
+  [`validate_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/validate_cutpoint.md)
+  stability header to `"Widest relative width (P10-P90): X%"` for
+  consistency with percentile interval terminology.
+- **Link & Build Hygiene:** Converted README links to absolute URLs,
+  updated redirected URLs in `NEWS.md`, normalized `CONTRIBUTING.md`,
+  and removed redundant `data("colon")` lookups in vignettes.
+
+### Testing & Quality Assurance
+
+- **Regression Tests:** Added tests verifying unadjusted systematic
+  p-value searches, empirical p-value tail directions, and
+  `hazard_ratio` metric extraction.
+- **Tier Label Assertions:** Added tests confirming `tier_label` returns
+  `"OVERLAPPING"` or `"CONSISTENT"` and never legacy terms.
+- **CRAN Test Throttling:** Guarded high-replicate bootstrap routines
+  and heavy systematic tests in `test-workflow-integration.R` and
+  `test-stability-metric.R` with `skip_on_cran()`.
+
 ## OptSurvCutR v0.11.0 (2026-09-08)
 
-The validation summary now carries the predictor into the result, so
-relative confidence interval widths are computed against the predictor’s
-10th–90th percentile spread rather than a self-referential bootstrap
-proxy. Stability tiers are assigned consistently and exposed through a
-machine-readable `stability` list. Both case study vignettes and the
-package documentation have been updated to reflect the revised
-reporting.
+### Bug Fixes
 
-### Bug Fixes (Important)
-
-- **Stability Metric Denominator:**
+- **Stability Metric Denominator:** Corrected
   [`summary.validate_cutpoint_result()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
-  computed the relative confidence interval width against the bootstrap
-  distribution of the first cut-point rather than the 10th–90th
-  percentile range of the predictor. The cause was that
-  [`validate_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/validate_cutpoint.md)
-  did not carry the `userdata` element into its returned object, so the
-  predictor values were unavailable to the summary method and an
-  internal fallback was silently used instead. Reported relative widths
-  were consequently inflated by roughly an order of magnitude, and
-  **Stability Tier 1 was unreachable for any input**. Stability tiers
-  reported by version 0.10.1 and earlier should be recomputed.
+  to calculate relative confidence interval width against the
+  predictor’s empirical 10th–90th percentile range ($`P_{90} - P_{10}`$)
+  by preserving `userdata` in
+  [`validate_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/validate_cutpoint.md).
+  This resolves an issue where reported widths were artificially
+  inflated and Stability Tier 1 was unreachable.
+- **Silent Fallback Removal:** Removed arbitrary fallback denominators
+  (`bootstrap_distribution[, 1]` and medians). Undefined data spreads or
+  degenerate discrete predictors now return explicit diagnostic warnings
+  rather than substituted metrics.
+- **Single Cut-point Classification:** Single-threshold models are now
+  classified strictly on relative width (\< 30% Tier 1, 30%–60% Tier 2,
+  \> 60% Tier 4), eliminating invalid Tier 3 assignments that require
+  adjacent interval overlap.
 
-- **Removal of Silent Fallbacks:** The two fallback denominators
-  (`bootstrap_distribution[, 1]` and `max(abs(medians))`) have been
-  removed. Where the predictor values are unavailable, or where the 10th
-  and 90th percentiles of a highly discrete predictor coincide, the
-  relative width is now reported as undefined with a diagnostic message
-  rather than substituted with an unrelated quantity.
+### API Changes & Enhancements
 
-- **Single Cut-point Classification:** Models with one cut-point have no
-  adjacent interval, so interval separation is undefined and
-  `has_distinct_separation` could never evaluate to `TRUE`. Such models
-  could therefore only be assigned Tier 1 or Tier 4. Single-threshold
-  models are now graded on relative width alone (\< 30% Tier 1, 30–60%
-  Tier 2, \> 60% Tier 4) and can no longer be assigned Tier 3, which
-  requires overlap.
-
-### API Changes
-
-- **Machine-readable Stability Output:**
+- **Programmatic Stability Access:** Added a machine-readable
+  `$stability` list to
   [`summary.validate_cutpoint_result()`](https://paytonyau.github.io/OptSurvCutR/reference/plot_validation.md)
-  now attaches a `stability` list to the returned object, containing
-  `tier`, `tier_label`, `percent`, `max_relative_width`,
-  `relative_widths` (per cut-point), `data_spread`, `separated` and
-  `worst_cut`. Tier assignment and interval widths can now be accessed
-  programmatically instead of parsed from console output, which supports
-  batch screening of multiple predictors.
-
-- **Predictor Values Retained:**
+  exposing tier classifications, per-cut relative widths, interval
+  separation status, and data spread for automated batch workflows.
+- **Data Retention:**
   [`validate_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/validate_cutpoint.md)
-  now returns the analysis data in the `userdata` element, consistent
-  with
+  now retains input analysis data in `userdata`, ensuring structural
+  parity with
   [`find_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint.md).
 
-### Documentation
+### Documentation & Vignettes
 
-- **Tier Classification Documentation:** Clarified that the four tiers
-  summarise two independent diagnostics — interval separation and
-  relative width — and do not constitute an ordinal scale; whether Tier
-  2 or Tier 3 is preferable depends on whether separation or boundary
-  precision matters for the intended application. Documented that the
-  30% and 60% boundaries are pragmatic conventions adopted for
-  interpretability rather than calibrated thresholds.
+- **Stability Tier Clarification:** Clarified that the 4-tier matrix
+  evaluates two independent diagnostic dimensions (interval separation
+  and coordinate precision) rather than an ordinal rank.
+- **Standards & Vignettes:** Expanded `@srrstats {G1.1}` to detail
+  methodological origins, re-rendered both clinical vignettes using
+  corrected metrics, and updated `README.md` examples with the Mayo
+  Clinic PBC cohort.
+- **Console Diagnostics:** Corrected typos and generalised console
+  output across the systematic search engine to report actual candidate
+  counts dynamically.
 
-- **Diagnostic Messaging:** Where stability cannot be calculated, the
-  message now identifies the required input (`userdata$factor`) and the
-  conditions under which the metric is undefined.
+### Testing & Quality Assurance
 
-- **Console Messages:** Corrected spelling in three user-facing messages
-  in the systematic search engine, and generalised a hard-coded message
-  to report the number of candidate positions and cut-points actually
-  being searched.
-
-- **Standards Compliance:** Expanded `@srrstats {G1.1}` to document the
-  methodological origin of the approach (maximally selected rank
-  statistics, information-theoretic model selection, multivariable Cox
-  optimisation, and bootstrap resampling), and to clarify that the
-  multi-threshold problem lies outside the stated scope of `maxstat`,
-  `survminer` and `cutpointr` rather than representing a deficiency in
-  those packages. Narrowed `@srrstats {G1.5}` to describe the comparison
-  actually provided.
-
-- **Vignettes:** Both case study vignettes were re-run against the
-  corrected metric and the reported stability tiers updated accordingly.
-  Guidance on replicate counts, permutation counts and the
-  interpretation of overlapping confidence intervals has been expanded,
-  and clinical background added for both cohorts.
-
-- **README:** Replaced the simulated example, in which the information
-  criterion selected zero cut-points, with the Mayo Clinic PBC analysis
-  reported in the manuscript. Revised language describing what the
-  bootstrap assessment establishes, and reserved claims of rOpenSci
-  compliance until review has concluded.
-
-### Testing
-
-- **Regression Coverage:** Added
-  `tests/testthat/test-stability-metric.R`, verifying that `userdata`
-  survives into the validation object, that the relative width is
-  computed against the predictor’s percentile range and not the
-  bootstrap distribution, that single-cut models are never assigned Tier
-  3, that undefined cases return no tier rather than an incorrect one,
-  and that [`summary()`](https://rdrr.io/r/base/summary.html) returns
-  the documented `stability` fields.
-
-- **Reachability Test:** Added an explicit test that Tier 1 is
-  attainable for a well-separated threshold in a large sample. The
-  defect above was characterised by an entire classification category
-  being unreachable, which value-comparison tests alone would not have
-  detected.
-
-- **Workflow Integration Tests:** Added
-  `tests/testthat/test-workflow-integration.R`, which runs the three
-  core functions in sequence and asserts that state is preserved across
-  them: the number of thresholds located matches the number selected,
-  one confidence interval and one relative width is reported per
-  threshold, the predictor is identical at every stage, and covariates
-  used during the search are reused during validation. Both defects
-  fixed in this release were handoff failures between functions rather
-  than faults within them, which unit tests cannot detect.
-
-### Dependencies
-
-- No changes to package dependencies in this release.
+- **Metric Regression & Reachability:** Added `test-stability-metric.R`
+  to verify data inheritance, validate that single-cut models avoid Tier
+  3, and confirm that Tier 1 is empirically reachable on well-separated
+  data.
+- **Workflow Integration Tests:** Added `test-workflow-integration.R` to
+  ensure state and covariate preservation across the complete three-step
+  pipeline
+  ([`find_cutpoint_number()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md)
+  -\>
+  [`find_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint.md)
+  -\>
+  [`validate_cutpoint()`](https://paytonyau.github.io/OptSurvCutR/reference/validate_cutpoint.md)).
 
 ## OptSurvCutR v0.10.1 (2026-04-09)
 
@@ -527,7 +547,7 @@ Abstract](image/graphical_abstract.jpg)
 
 **Presentations:** Presented at FOSDEM 2026 in the Bioinformatics &
 Computational Biology DevRoom in Brussels, Belgium. [View lightning talk
-details](https://fosdem.org/2026/schedule/event/9JQJ9M-bioinformatics_lighthning_talks/)
+details](https://archive.fosdem.org/2026/schedule/event/9JQJ9M-bioinformatics_lighthning_talks/)
 
 **Presentations:** Presented at R!SK 2026 (February 18–19, 2026). This
 100% online conference focuses on evaluating, measuring, and mitigating

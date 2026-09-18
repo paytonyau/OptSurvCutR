@@ -292,7 +292,7 @@ val_res <- validate_cutpoint(
 + ℹ Bootstrap `nmin` not set. Using 55 (90% of original) to improve stability.
 + ℹ Validating 3 cut(s) from 'genetic' search using 'logrank' over regularised coordinate lattice.
 + ℹ Running 30 replicates sequentially (n_cores = 1).
-+ Bootstrapping ■■■■                              10% | ETA: 11sBootstrapping ■■■■■                             13% | ETA: 12sBootstrapping ■■■■■■                            17% | ETA: 13sBootstrapping ■■■■■■■                           20% | ETA: 13sBootstrapping ■■■■■■■■                          23% | ETA: 12sBootstrapping ■■■■■■■■■                         27% | ETA: 12sBootstrapping ■■■■■■■■■■                        30% | ETA: 12sBootstrapping ■■■■■■■■■■■                       33% | ETA: 11sBootstrapping ■■■■■■■■■■■■                      37% | ETA: 11sBootstrapping ■■■■■■■■■■■■■                     40% | ETA: 10sBootstrapping ■■■■■■■■■■■■■■                    43% | ETA: 10sBootstrapping ■■■■■■■■■■■■■■■                   47% | ETA:  9sBootstrapping ■■■■■■■■■■■■■■■■                  50% | ETA:  9sBootstrapping ■■■■■■■■■■■■■■■■■                 53% | ETA:  8sBootstrapping ■■■■■■■■■■■■■■■■■■                57% | ETA:  7sBootstrapping ■■■■■■■■■■■■■■■■■■■               60% | ETA:  7sBootstrapping ■■■■■■■■■■■■■■■■■■■■              63% | ETA:  6sBootstrapping ■■■■■■■■■■■■■■■■■■■■■             67% | ETA:  6sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■            70% | ETA:  5sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■           73% | ETA:  5sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■          77% | ETA:  4sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■         80% | ETA:  3sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■        83% | ETA:  3sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■       87% | ETA:  2sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■■      90% | ETA:  2sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■     93% | ETA:  1sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■    97% | ETA:  1s                                                               ✔ 30 replicates completed.
++ ✔ 30 replicates completed.
 
 summary(val_res)
 + Cut-point Stability Analysis (Bootstrap)
@@ -328,10 +328,9 @@ summary(val_res)
 + 
 + Stability Assessment:
 + ---------------------
-+ Maximum CI Width (Relative to 10th-90th Percentile Range): 54.6%
-+ ✔ Model Status: DISTINCT (Tier 2)
-+ The relative mathematical variance is moderate (54.6%), but 95% Confidence
-+ Intervals do not overlap.
++ Widest relative width (P10-P90): 54.6%
++ ✔ Model Status: CONSISTENT (Tier 2)
++ Moderate variance (54.6%), intervals separated.
 ```
 
 The bootstrap `nmin` is relaxed to 55 automatically. Resampled cohorts
@@ -549,12 +548,12 @@ sessionInfo()
 + [1] stats     graphics  grDevices utils     datasets  methods   base     
 + 
 + other attached packages:
-+ [1] OptSurvCutR_0.11.0 knitr_1.51         ggplot2_4.0.3      dplyr_1.2.1       
-+ [5] survival_3.8-9    
++ [1] OptSurvCutR_0.11.1 knitr_1.52         ggplot2_4.0.3      dplyr_1.2.1       
++ [5] survival_3.8-12   
 + 
 + loaded via a namespace (and not attached):
-+  [1] gtable_0.3.6       xfun_0.60          bslib_0.12.0       htmlwidgets_1.6.4 
-+  [5] rstatix_1.1.0      lattice_0.22-9     vctrs_0.7.3        tools_4.6.1       
++  [1] gtable_0.3.6       xfun_0.61          bslib_0.12.0       htmlwidgets_1.6.4 
++  [5] rstatix_1.1.0      lattice_0.23-1     vctrs_0.7.3        tools_4.6.1       
 +  [9] generics_0.1.4     parallel_4.6.1     tibble_3.3.1       pkgconfig_2.0.3   
 + [13] Matrix_1.7-6       RColorBrewer_1.1-3 S7_0.2.2           desc_1.4.3        
 + [17] lifecycle_1.0.5    compiler_4.6.1     farver_2.1.2       textshaping_1.0.5 
@@ -562,11 +561,11 @@ sessionInfo()
 + [25] yaml_2.3.12        Formula_1.2-6      pillar_1.11.1      pkgdown_2.2.1     
 + [29] car_3.1-5          ggpubr_1.0.0       jquerylib_0.1.4    tidyr_1.3.2       
 + [33] MASS_7.3-66        cachem_1.1.0       survminer_0.5.2    iterators_1.0.14  
-+ [37] rgenoud_5.9-0.11   abind_1.4-8        foreach_1.5.2      nlme_3.1-170      
++ [37] rgenoud_5.9-0.11   abind_1.4-8        foreach_1.5.2      nlme_3.1-171      
 + [41] tidyselect_1.2.1   digest_0.6.39      purrr_1.2.2        labeling_0.4.3    
 + [45] splines_4.6.1      fastmap_1.2.0      grid_4.6.1         cli_3.6.6         
 + [49] magrittr_2.0.5     patchwork_1.3.2    broom_1.0.13       withr_3.0.3       
-+ [53] scales_1.4.0       backports_1.5.1    rmarkdown_2.31     otel_0.2.0        
++ [53] scales_1.4.0       backports_1.5.1    rmarkdown_2.32     otel_0.2.0        
 + [57] gridExtra_2.3.1    ggsignif_0.6.4     ragg_1.5.2         evaluate_1.0.5    
 + [61] doParallel_1.0.17  viridisLite_0.4.3  mgcv_1.9-4         rlang_1.3.0       
 + [65] Rcpp_1.1.2         isoband_0.3.0      glue_1.8.1         rstudioapi_0.19.0 

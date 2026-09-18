@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">OptSurvCutR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.11.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.11.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,37 +44,105 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.11.1" id="optsurvcutr-v0111-2026-09-18">OptSurvCutR v0.11.1 (2026-09-18)<a class="anchor" aria-label="anchor" href="#optsurvcutr-v0111-2026-09-18"></a></h2>
+<div class="section level3">
+<h3 id="breaking-changes-0-11-1">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-11-1"></a></h3>
+<ul><li>
+<strong>Stability Tier Labels Renamed:</strong> Renamed <code>tier_label</code> values from <code>"DISTINCT"</code> to <code>"CONSISTENT"</code> and <code>"CAUTION"</code> to <code>"OVERLAPPING"</code> in <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> outputs to describe interval overlap directly. Numeric <code>tier</code> designations (<code>"Tier 1"</code>–<code>"Tier 4"</code>), cutoffs, and logic remain unchanged. Removed internal diagnostic tags (<code>"- OVERLAP DOWNGRADE"</code>, <code>"- SEPARATION OVERRIDE"</code>). <strong>Downstream code matching literal strings <code>"DISTINCT"</code> or <code>"CAUTION"</code> must be updated.</strong>
+</li>
+</ul><table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th align="left">Tier</th>
+<th align="left">Criteria</th>
+<th align="left">Diagnostic Interpretation</th>
+</tr></thead><tbody><tr><td align="left"><strong>1 (OPTIMAL)</strong></td>
+<td align="left">Width &lt; 30%, zero overlap</td>
+<td align="left">Highly consistent boundaries across samples</td>
+</tr><tr><td align="left"><strong>2 (CONSISTENT)</strong></td>
+<td align="left">Zero overlap, any width</td>
+<td align="left">Groups remain distinct; exact boundary may shift</td>
+</tr><tr><td align="left"><strong>3 (OVERLAPPING)</strong></td>
+<td align="left">Overlap present, any width</td>
+<td align="left">Boundary confidence intervals intersect</td>
+</tr><tr><td align="left"><strong>4 (UNSTABLE)</strong></td>
+<td align="left">Width &gt; 60%, no clean separation</td>
+<td align="left">Severe instability; likely sample noise overfitting</td>
+</tr></tbody></table></div>
+<div class="section level3">
+<h3 id="new-features-0-11-1">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-11-1"></a></h3>
+<ul><li>
+<strong>Console Control (<code>quiet = TRUE</code>):</strong> Added a <code>quiet</code> parameter (default <code>FALSE</code>) to <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> to suppress progress bars in scripted pipelines and automated test suites.</li>
+<li>
+<strong>Test Performance Optimization:</strong> Configured <code>options(cli.progress_show_after = Inf)</code> across package tests and vignettes to bypass CLI rendering overhead, reducing local test-suite runtime by ~65% (~418s vs. ~1215s) with zero skipped test logic.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-11-1">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-11-1"></a></h3>
+<ul><li>
+<strong>Unadjusted <code>p_value</code> Search:</strong> Fixed null log-likelihood extraction in <code>.get_stat()</code> from <code>coxph(~ 1)</code> when <code>covariates = NULL</code>, resolving an issue where <code>find_cutpoint_number(method = "systematic")</code> failed screening and defaulted to 0 cuts.</li>
+<li>
+<strong>Permutation Tail Direction:</strong> Corrected <code>.run_permutations()</code> for <code>criterion = "p_value"</code> to evaluate test statistics against the empirical lower tail (<code>&lt;=</code>) rather than the upper tail.</li>
+<li>
+<strong>Schoenfeld Residual Faceting:</strong> Updated <code><a href="../reference/plot_cutpoint_residuals.html">plot_cutpoint_residuals()</a></code> to extract column-separated residuals via <code>residuals(fit, type = "schoenfeld")</code>, rendering separate diagnostic panels for each non-reference risk tier.</li>
+<li>
+<strong>Survival Plot Label:</strong> Updated default Kaplan-Meier y-axis label in <code>.plot_km_curve()</code> to endpoint-neutral <code>"Survival Probability"</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="code-consolidation--architecture-0-11-1">Code Consolidation &amp; Architecture<a class="anchor" aria-label="anchor" href="#code-consolidation--architecture-0-11-1"></a></h3>
+<ul><li>
+<strong>S3 Method De-duplication:</strong> Removed stale, redundant definitions of <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>, <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>, and <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> from <code>find_cutpoint_number.R</code>, centralizing canonical implementations in <code>find_cutpoint_number_methods.R</code>.</li>
+<li>
+<strong>Helper Consolidation:</strong> Removed duplicate <code>.calc_ic()</code> from <code>engine-genetic.R</code>, standardizing on <code>utils-helpers.R</code> as the single source.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation--maintenance-0-11-1">Documentation &amp; Maintenance<a class="anchor" aria-label="anchor" href="#documentation--maintenance-0-11-1"></a></h3>
+<ul><li>
+<strong>Example Optimization:</strong> Replaced the <code><a href="../reference/find_cutpoint_number.html">find_cutpoint_number()</a></code> example with a fast (&lt;1s) synthetic two-cluster simulation to eliminate execution-time NOTEs.</li>
+<li>
+<strong>Console Wording:</strong> Updated the <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> stability header to <code>"Widest relative width (P10-P90): X%"</code> for consistency with percentile interval terminology.</li>
+<li>
+<strong>Link &amp; Build Hygiene:</strong> Converted README links to absolute URLs, updated redirected URLs in <code>NEWS.md</code>, normalized <code>CONTRIBUTING.md</code>, and removed redundant <code>data("colon")</code> lookups in vignettes.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="testing--quality-assurance-0-11-1">Testing &amp; Quality Assurance<a class="anchor" aria-label="anchor" href="#testing--quality-assurance-0-11-1"></a></h3>
+<ul><li>
+<strong>Regression Tests:</strong> Added tests verifying unadjusted systematic p-value searches, empirical p-value tail directions, and <code>hazard_ratio</code> metric extraction.</li>
+<li>
+<strong>Tier Label Assertions:</strong> Added tests confirming <code>tier_label</code> returns <code>"OVERLAPPING"</code> or <code>"CONSISTENT"</code> and never legacy terms.</li>
+<li>
+<strong>CRAN Test Throttling:</strong> Guarded high-replicate bootstrap routines and heavy systematic tests in <code>test-workflow-integration.R</code> and <code>test-stability-metric.R</code> with <code>skip_on_cran()</code>.</li>
+</ul></div>
+</div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.11.0" id="optsurvcutr-v0110-2026-09-08">OptSurvCutR v0.11.0 (2026-09-08)<a class="anchor" aria-label="anchor" href="#optsurvcutr-v0110-2026-09-08"></a></h2>
-<p>The validation summary now carries the predictor into the result, so relative confidence interval widths are computed against the predictor’s 10th–90th percentile spread rather than a self-referential bootstrap proxy. Stability tiers are assigned consistently and exposed through a machine-readable <code>stability</code> list. Both case study vignettes and the package documentation have been updated to reflect the revised reporting.</p>
 <div class="section level3">
-<h3 id="bug-fixes-important-0-11-0">Bug Fixes (Important)<a class="anchor" aria-label="anchor" href="#bug-fixes-important-0-11-0"></a></h3>
-<ul><li><p><strong>Stability Metric Denominator:</strong> <code><a href="../reference/plot_validation.html">summary.validate_cutpoint_result()</a></code> computed the relative confidence interval width against the bootstrap distribution of the first cut-point rather than the 10th–90th percentile range of the predictor. The cause was that <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> did not carry the <code>userdata</code> element into its returned object, so the predictor values were unavailable to the summary method and an internal fallback was silently used instead. Reported relative widths were consequently inflated by roughly an order of magnitude, and <strong>Stability Tier 1 was unreachable for any input</strong>. Stability tiers reported by version 0.10.1 and earlier should be recomputed.</p></li>
-<li><p><strong>Removal of Silent Fallbacks:</strong> The two fallback denominators (<code>bootstrap_distribution[, 1]</code> and <code>max(abs(medians))</code>) have been removed. Where the predictor values are unavailable, or where the 10th and 90th percentiles of a highly discrete predictor coincide, the relative width is now reported as undefined with a diagnostic message rather than substituted with an unrelated quantity.</p></li>
-<li><p><strong>Single Cut-point Classification:</strong> Models with one cut-point have no adjacent interval, so interval separation is undefined and <code>has_distinct_separation</code> could never evaluate to <code>TRUE</code>. Such models could therefore only be assigned Tier 1 or Tier 4. Single-threshold models are now graded on relative width alone (&lt; 30% Tier 1, 30–60% Tier 2, &gt; 60% Tier 4) and can no longer be assigned Tier 3, which requires overlap.</p></li>
+<h3 id="bug-fixes-0-11-0">Bug Fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-11-0"></a></h3>
+<ul><li>
+<strong>Stability Metric Denominator:</strong> Corrected <code><a href="../reference/plot_validation.html">summary.validate_cutpoint_result()</a></code> to calculate relative confidence interval width against the predictor’s empirical 10th–90th percentile range (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>P</mi><mn>90</mn></msub><mo>−</mo><msub><mi>P</mi><mn>10</mn></msub></mrow><annotation encoding="application/x-tex">P_{90} - P_{10}</annotation></semantics></math>) by preserving <code>userdata</code> in <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code>. This resolves an issue where reported widths were artificially inflated and Stability Tier 1 was unreachable.</li>
+<li>
+<strong>Silent Fallback Removal:</strong> Removed arbitrary fallback denominators (<code>bootstrap_distribution[, 1]</code> and medians). Undefined data spreads or degenerate discrete predictors now return explicit diagnostic warnings rather than substituted metrics.</li>
+<li>
+<strong>Single Cut-point Classification:</strong> Single-threshold models are now classified strictly on relative width (&lt; 30% Tier 1, 30%–60% Tier 2, &gt; 60% Tier 4), eliminating invalid Tier 3 assignments that require adjacent interval overlap.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="api-changes-0-11-0">API Changes<a class="anchor" aria-label="anchor" href="#api-changes-0-11-0"></a></h3>
-<ul><li><p><strong>Machine-readable Stability Output:</strong> <code><a href="../reference/plot_validation.html">summary.validate_cutpoint_result()</a></code> now attaches a <code>stability</code> list to the returned object, containing <code>tier</code>, <code>tier_label</code>, <code>percent</code>, <code>max_relative_width</code>, <code>relative_widths</code> (per cut-point), <code>data_spread</code>, <code>separated</code> and <code>worst_cut</code>. Tier assignment and interval widths can now be accessed programmatically instead of parsed from console output, which supports batch screening of multiple predictors.</p></li>
-<li><p><strong>Predictor Values Retained:</strong> <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> now returns the analysis data in the <code>userdata</code> element, consistent with <code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code>.</p></li>
+<h3 id="api-changes--enhancements-0-11-0">API Changes &amp; Enhancements<a class="anchor" aria-label="anchor" href="#api-changes--enhancements-0-11-0"></a></h3>
+<ul><li>
+<strong>Programmatic Stability Access:</strong> Added a machine-readable <code>$stability</code> list to <code><a href="../reference/plot_validation.html">summary.validate_cutpoint_result()</a></code> exposing tier classifications, per-cut relative widths, interval separation status, and data spread for automated batch workflows.</li>
+<li>
+<strong>Data Retention:</strong> <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code> now retains input analysis data in <code>userdata</code>, ensuring structural parity with <code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code>.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="documentation-0-11-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-11-0"></a></h3>
-<ul><li><p><strong>Tier Classification Documentation:</strong> Clarified that the four tiers summarise two independent diagnostics — interval separation and relative width — and do not constitute an ordinal scale; whether Tier 2 or Tier 3 is preferable depends on whether separation or boundary precision matters for the intended application. Documented that the 30% and 60% boundaries are pragmatic conventions adopted for interpretability rather than calibrated thresholds.</p></li>
-<li><p><strong>Diagnostic Messaging:</strong> Where stability cannot be calculated, the message now identifies the required input (<code>userdata$factor</code>) and the conditions under which the metric is undefined.</p></li>
-<li><p><strong>Console Messages:</strong> Corrected spelling in three user-facing messages in the systematic search engine, and generalised a hard-coded message to report the number of candidate positions and cut-points actually being searched.</p></li>
-<li><p><strong>Standards Compliance:</strong> Expanded <code>@srrstats {G1.1}</code> to document the methodological origin of the approach (maximally selected rank statistics, information-theoretic model selection, multivariable Cox optimisation, and bootstrap resampling), and to clarify that the multi-threshold problem lies outside the stated scope of <code>maxstat</code>, <code>survminer</code> and <code>cutpointr</code> rather than representing a deficiency in those packages. Narrowed <code>@srrstats {G1.5}</code> to describe the comparison actually provided.</p></li>
-<li><p><strong>Vignettes:</strong> Both case study vignettes were re-run against the corrected metric and the reported stability tiers updated accordingly. Guidance on replicate counts, permutation counts and the interpretation of overlapping confidence intervals has been expanded, and clinical background added for both cohorts.</p></li>
-<li><p><strong>README:</strong> Replaced the simulated example, in which the information criterion selected zero cut-points, with the Mayo Clinic PBC analysis reported in the manuscript. Revised language describing what the bootstrap assessment establishes, and reserved claims of rOpenSci compliance until review has concluded.</p></li>
+<h3 id="documentation--vignettes-0-11-0">Documentation &amp; Vignettes<a class="anchor" aria-label="anchor" href="#documentation--vignettes-0-11-0"></a></h3>
+<ul><li>
+<strong>Stability Tier Clarification:</strong> Clarified that the 4-tier matrix evaluates two independent diagnostic dimensions (interval separation and coordinate precision) rather than an ordinal rank.</li>
+<li>
+<strong>Standards &amp; Vignettes:</strong> Expanded <code>@srrstats {G1.1}</code> to detail methodological origins, re-rendered both clinical vignettes using corrected metrics, and updated <code>README.md</code> examples with the Mayo Clinic PBC cohort.</li>
+<li>
+<strong>Console Diagnostics:</strong> Corrected typos and generalised console output across the systematic search engine to report actual candidate counts dynamically.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="testing-0-11-0">Testing<a class="anchor" aria-label="anchor" href="#testing-0-11-0"></a></h3>
-<ul><li><p><strong>Regression Coverage:</strong> Added <code>tests/testthat/test-stability-metric.R</code>, verifying that <code>userdata</code> survives into the validation object, that the relative width is computed against the predictor’s percentile range and not the bootstrap distribution, that single-cut models are never assigned Tier 3, that undefined cases return no tier rather than an incorrect one, and that <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> returns the documented <code>stability</code> fields.</p></li>
-<li><p><strong>Reachability Test:</strong> Added an explicit test that Tier 1 is attainable for a well-separated threshold in a large sample. The defect above was characterised by an entire classification category being unreachable, which value-comparison tests alone would not have detected.</p></li>
-<li><p><strong>Workflow Integration Tests:</strong> Added <code>tests/testthat/test-workflow-integration.R</code>, which runs the three core functions in sequence and asserts that state is preserved across them: the number of thresholds located matches the number selected, one confidence interval and one relative width is reported per threshold, the predictor is identical at every stage, and covariates used during the search are reused during validation. Both defects fixed in this release were handoff failures between functions rather than faults within them, which unit tests cannot detect.</p></li>
-</ul></div>
-<div class="section level3">
-<h3 id="dependencies-0-11-0">Dependencies<a class="anchor" aria-label="anchor" href="#dependencies-0-11-0"></a></h3>
-<ul><li>No changes to package dependencies in this release.</li>
+<h3 id="testing--quality-assurance-0-11-0">Testing &amp; Quality Assurance<a class="anchor" aria-label="anchor" href="#testing--quality-assurance-0-11-0"></a></h3>
+<ul><li>
+<strong>Metric Regression &amp; Reachability:</strong> Added <code>test-stability-metric.R</code> to verify data inheritance, validate that single-cut models avoid Tier 3, and confirm that Tier 1 is empirically reachable on well-separated data.</li>
+<li>
+<strong>Workflow Integration Tests:</strong> Added <code>test-workflow-integration.R</code> to ensure state and covariate preservation across the complete three-step pipeline (<code><a href="../reference/find_cutpoint_number.html">find_cutpoint_number()</a></code> -&gt; <code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code> -&gt; <code><a href="../reference/validate_cutpoint.html">validate_cutpoint()</a></code>).</li>
 </ul></div>
 </div>
     <div class="section level2">
@@ -336,7 +404,7 @@
 </ul></div>
 <div class="section level3">
 <h3 id="community--outreach-0-1-9-3">COMMUNITY &amp; OUTREACH<a class="anchor" aria-label="anchor" href="#community--outreach-0-1-9-3"></a></h3>
-<p><strong>Presentations:</strong> Presented at FOSDEM 2026 in the Bioinformatics &amp; Computational Biology DevRoom in Brussels, Belgium. <a href="https://fosdem.org/2026/schedule/event/9JQJ9M-bioinformatics_lighthning_talks/" class="external-link">View lightning talk details</a></p>
+<p><strong>Presentations:</strong> Presented at FOSDEM 2026 in the Bioinformatics &amp; Computational Biology DevRoom in Brussels, Belgium. <a href="https://archive.fosdem.org/2026/schedule/event/9JQJ9M-bioinformatics_lighthning_talks/" class="external-link">View lightning talk details</a></p>
 <p><strong>Presentations:</strong> Presented at R!SK 2026 (February 18–19, 2026). This 100% online conference focuses on evaluating, measuring, and mitigating risk across diverse industries including healthcare, finance, and insurance. The event featured deep content sessions and live Q&amp;A interactions. <a href="https://rconsortium.github.io/Risk_website/Abstracts.html#payton-yau" class="external-link">View presentation abstract</a></p>
 </div>
 </div>

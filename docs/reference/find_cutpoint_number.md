@@ -41,24 +41,6 @@ summary(
 
 # S3 method for class 'find_cutpoint_number_result'
 plot(x, y, ...)
-
-# S3 method for class 'find_cutpoint_number_result'
-print(x, ...)
-
-# S3 method for class 'find_cutpoint_number_result'
-summary(
-  object,
-  show_comparison_table = TRUE,
-  show_best_model_details = TRUE,
-  show_group_counts = TRUE,
-  show_medians = TRUE,
-  show_ph_test = TRUE,
-  plot.it = FALSE,
-  ...
-)
-
-# S3 method for class 'find_cutpoint_number_result'
-plot(x, y, ...)
 ```
 
 ## Arguments
@@ -188,57 +170,60 @@ calculated in compiled C++ via \`Rcpp\` for optimal performance.
 if (requireNamespace("survival", quietly = TRUE)) {
   library(survival)
 
-  # Generate a pristine simulated clinical tracking baseline template
   set.seed(42)
+  n <- 100
+  biomarker <- rnorm(n, mean = 6, sd = 1.2)
   sim_data <- data.frame(
-    time = rexp(40, rate = 0.1),
-    event = sample(c(0, 1), 40, replace = TRUE),
-    biomarker = rnorm(40, mean = 6, sd = 1.2)
+    time      = rexp(n, rate = 0.05 + 0.03 * (biomarker > 6)),
+    event     = rbinom(n, 1, 0.8),
+    biomarker = biomarker
   )
 
-  # Sweep information criteria fit columns up to a 2-cut matrix max
   num_fit <- find_cutpoint_number(
-    data = sim_data,
-    predictor = "biomarker",
-    outcome_time = "time",
+    data          = sim_data,
+    predictor     = "biomarker",
+    outcome_time  = "time",
     outcome_event = "event",
-    max_cuts = 2,
-    method = "systematic",
-    criterion = "BIC",
-    nmin = 5,
-    quiet = TRUE
+    max_cuts      = 1,
+    method        = "systematic",
+    criterion     = "BIC",
+    nmin          = 0.2,
+    quiet         = TRUE
   )
   summary(num_fit)
 }
+#> ℹ nmin 0.2 is a proportion. Min. group size set to 20.
 #> ℹ Finding optimal cut number: method = systematic
 #> ℹ Profiling IC surface for 1 cut-point(s)...
-#> No valid cut-points found for 1 cut(s).
-#> ℹ Profiling IC surface for 2 cut-point(s)...
-#> No valid cut-points found for 2 cut(s).
-#> ! All tested model cut-points violated localised subgroup size constraints during runtime search iterations.
 #> 
 #> ── Optimal Cut-point Number Analysis (Systematic) ──────────────────────────────
-#> ✔ Best Model: 0 Cut-points (Criterion: BIC)
+#> ✔ Best Model: 1 Cut-points (Criterion: BIC)
+#> ℹ Optimal Thresholds: "5.865"
 #> 
 #> 
 #> ── 1. Model Comparison ──
 #> 
-#>  Marker num_cuts   BIC Delta_BIC BIC_Weight    Evidence
-#>       >        0 120.5         0       100% Substantial
-#>                1    NA        NA        NA%        <NA>
-#>                2    NA        NA        NA%        <NA>
+#>  Marker num_cuts    BIC Delta_BIC BIC_Weight    Evidence
+#>                0 585.82      5.67       5.6%    Moderate
+#>       >        1 580.16      0.00      94.4% Substantial
+#> 
+#> ── 2. Clinical Risk Cohorts ──
+#> 
+#>  Group  N Events          Median_CI
+#>     G1 42     35 25.8 (19.4 - 45.2)
+#>     G2 58     45   11.5 (10 - 20.7)
 #> 
 #> ── 3. Cox Proportional-Hazards ──
 #> 
-#>   Group    HR Lower Upper P_Value Signif
-#>  factor 1.621 1.034 2.543   0.035      *
+#>    Group    HR Lower Upper P_Value Signif
+#>  groupG2 2.421 1.459 4.019   0.001    ***
 #> 
-#> ℹ Overall Model: Concordance = 0.679 | Log-rank p = 0.035
+#> ℹ Overall Model: Concordance = 0.59 | Log-rank p = 0
 #> 
 #> 
 #> ── 4. Time-Dependent Diagnostics (Schoenfeld) ──
 #> 
-#> ✔ Passed: The proportional hazards assumption holds across the follow-up period (Global p = 0.17).
+#> ✔ Passed: The proportional hazards assumption holds across the follow-up period (Global p = 0.279).
 #> 
 #> 
 #> ── 5. Analysis Parameters ──
@@ -246,7 +231,7 @@ if (requireNamespace("survival", quietly = TRUE)) {
 #> * Search Method: Systematic
 #> * Predictor: biomarker
 #> * Criterion: BIC
-#> * Maximum Cuts: 2
-#> * Minimum Group Size (nmin): 5
+#> * Maximum Cuts: 1
+#> * Minimum Group Size (nmin): 20
 #> 
 ```

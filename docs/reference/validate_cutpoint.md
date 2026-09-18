@@ -14,6 +14,7 @@ validate_cutpoint(
   n_cores = 1,
   seed = NULL,
   nmin = NULL,
+  quiet = FALSE,
   ...
 )
 ```
@@ -42,6 +43,15 @@ validate_cutpoint(
 
   Minimum group size for bootstrap runs. Defaults to 90% of original
   `nmin` to reduce failures.
+
+- quiet:
+
+  Logical. If `TRUE`, suppresses the sequential-run progress bar (shown
+  when `n_cores = 1`). Console status and summary messages are
+  unaffected. Default is `FALSE`. Set to `TRUE` in automated contexts
+  such as test suites, vignette builds, and non-interactive scripts,
+  where a live progress bar produces long, line-by-line console output
+  rather than a useful status indicator.
 
 - ...:
 
@@ -147,11 +157,10 @@ if (requireNamespace("survival", quietly = TRUE)) {
 #> 
 #> Stability Assessment:
 #> ---------------------
-#> Maximum CI Width (Relative to 10th-90th Percentile Range): 83.9%
+#> Widest relative width (P10-P90): 83.9%
 #> ✖ Model Status: UNSTABLE (Tier 4)
-#> ! The threshold varies widely across resamples (83.9%).
-#> ✖ Recommendation: increase `nmin`, or report the threshold as an interval
-#>   rather than a point value.
+#> ! Wide variation (83.9%).
+#> ✖ Report as an interval, or increase `nmin`.
 #> 
 
 # }

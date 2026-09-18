@@ -43,7 +43,7 @@ library(survival)
 library(ggplot2)
 library(knitr)
 library(OptSurvCutR)
-+ == OptSurvCutR v0.11.0 ==
++ == OptSurvCutR v0.11.1 ==
 +   Docs: <https://github.com/paytonyau/OptSurvCutR>
 +   Paper: Yau, Payton (2025) bioRxiv 10.1101/2025.10.08.681246
 +   Cite: `citation('OptSurvCutR')`
@@ -72,7 +72,12 @@ for death (`etype`). Modelling both without filtering would treat each
 patient as two independent observations.
 
 ``` r
-data("colon", package = "survival")
+# library(survival), loaded above, already exposes `colon` as a lazy-loaded
+# object. An explicit data("colon", package = "survival") call here would
+# emit a spurious "data set 'colon' not found" warning in a clean session -
+# the dataset lives inside survival's multi-object cancer.rda, and data()'s
+# own name-based lookup does not resolve it the same way library() does.
+# Confirmed harmless and unnecessary; see the equivalent fix in Figure_3.R.
 
 analysis_data <- colon %>%
   filter(etype == 1) %>%                      # recurrence records only
@@ -315,7 +320,7 @@ validation_result <- validate_cutpoint(
 + ℹ Bootstrap `nmin` not set. Using 119 (90% of original) to improve stability.
 + ℹ Validating 2 cut(s) from 'systematic' search using 'logrank' over regularised coordinate lattice.
 + ℹ Running 30 replicates sequentially (n_cores = 1).
-+ Bootstrapping ■■■■■■■■■■■■                      37% | ETA:  2sBootstrapping ■■■■■■■■■■■■■                     40% | ETA:  2sBootstrapping ■■■■■■■■■■■■■■■■                  50% | ETA:  1sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■          77% | ETA:  1sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■        83% | ETA:  0sBootstrapping ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■     93% | ETA:  0s                                                               ✔ 30 replicates completed.
++ ✔ 30 replicates completed.
 
 summary(validation_result)
 + Cut-point Stability Analysis (Bootstrap)
@@ -349,9 +354,9 @@ summary(validation_result)
 + 
 + Stability Assessment:
 + ---------------------
-+ Maximum CI Width (Relative to 10th-90th Percentile Range): 46.8%
-+ ! Model Status: CAUTION (Tier 3)
-+ Moderate instability detected (46.8%), and Confidence Intervals overlap.
++ Widest relative width (P10-P90): 46.8%
++ ! Model Status: OVERLAPPING (Tier 3)
++ Moderate instability (46.8%), intervals overlap.
 ```
 
 | Tier         | Overlap | Width  | Meaning                               |
@@ -398,21 +403,6 @@ least 500 replicates for any reported analysis.
 For the two-cut model the intervals are 1–3 and 3–6. They meet at 3, so
 adjacent groups are not cleanly separated. The lower boundary is
 reasonably precise at 28.6%; the upper one is not.
-
-Reducing to a single cut-point removes the overlap but not the width:
-
-``` r
-
-cut1 <- find_cutpoint(
-  data = analysis_data, predictor = "nodes",
-  outcome_time = "time", outcome_event = "status",
-  covariates = covariates_to_adjust_for,
-  num_cuts = 1, method = "systematic", criterion = "logrank",
-  nmin = NMIN, n_perm = 1000, seed = 123, n_cores = 2
-)
-
-validate_cutpoint(cut1, num_replicates = 500, n_cores = 2, seed = 123)
-```
 
 The threshold is **4 positive nodes** with a bootstrap interval of 2–6.
 The median across resamples is 4 and the interquartile range 3–4, so the
@@ -581,12 +571,12 @@ sessionInfo()
 + [1] stats     graphics  grDevices utils     datasets  methods   base     
 + 
 + other attached packages:
-+ [1] OptSurvCutR_0.11.0 knitr_1.51         ggplot2_4.0.3      survival_3.8-9    
++ [1] OptSurvCutR_0.11.1 knitr_1.52         ggplot2_4.0.3      survival_3.8-12   
 + [5] dplyr_1.2.1       
 + 
 + loaded via a namespace (and not attached):
-+  [1] gtable_0.3.6       xfun_0.60          bslib_0.12.0       htmlwidgets_1.6.4 
-+  [5] rstatix_1.1.0      lattice_0.22-9     vctrs_0.7.3        tools_4.6.1       
++  [1] gtable_0.3.6       xfun_0.61          bslib_0.12.0       htmlwidgets_1.6.4 
++  [5] rstatix_1.1.0      lattice_0.23-1     vctrs_0.7.3        tools_4.6.1       
 +  [9] generics_0.1.4     parallel_4.6.1     tibble_3.3.1       pkgconfig_2.0.3   
 + [13] Matrix_1.7-6       RColorBrewer_1.1-3 S7_0.2.2           desc_1.4.3        
 + [17] lifecycle_1.0.5    compiler_4.6.1     farver_2.1.2       textshaping_1.0.5 
@@ -594,11 +584,11 @@ sessionInfo()
 + [25] yaml_2.3.12        Formula_1.2-6      pillar_1.11.1      pkgdown_2.2.1     
 + [29] car_3.1-5          ggpubr_1.0.0       jquerylib_0.1.4    tidyr_1.3.2       
 + [33] MASS_7.3-66        cachem_1.1.0       survminer_0.5.2    iterators_1.0.14  
-+ [37] rgenoud_5.9-0.11   abind_1.4-8        foreach_1.5.2      nlme_3.1-170      
++ [37] rgenoud_5.9-0.11   abind_1.4-8        foreach_1.5.2      nlme_3.1-171      
 + [41] tidyselect_1.2.1   digest_0.6.39      purrr_1.2.2        labeling_0.4.3    
 + [45] splines_4.6.1      fastmap_1.2.0      grid_4.6.1         cli_3.6.6         
 + [49] magrittr_2.0.5     patchwork_1.3.2    broom_1.0.13       withr_3.0.3       
-+ [53] scales_1.4.0       backports_1.5.1    rmarkdown_2.31     otel_0.2.0        
++ [53] scales_1.4.0       backports_1.5.1    rmarkdown_2.32     otel_0.2.0        
 + [57] gridExtra_2.3.1    ggsignif_0.6.4     ragg_1.5.2         evaluate_1.0.5    
 + [61] doParallel_1.0.17  viridisLite_0.4.3  mgcv_1.9-4         rlang_1.3.0       
 + [65] Rcpp_1.1.2         isoband_0.3.0      glue_1.8.1         rstudioapi_0.19.0 
