@@ -137,7 +137,7 @@ Full technical detail in `NEWS.md`.
 
 ## Contributing
 
-Bug reports and pull requests are welcome - see [CONTRIBUTING.md](https://github.com/paytonyau/OptSurvCutR/blob/main/CONTRIBUTING.md) for code standards and local test workflows.
+Bug reports and pull requests are welcome - see [CONTRIBUTING.md](https://github.com/paytonyau/OptSurvCutR/blob/main/.github/CONTRIBUTING.md) for code standards and local test workflows.
 
 ## Resources
 
