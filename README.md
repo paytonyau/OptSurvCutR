@@ -105,6 +105,14 @@ Full analysis: `vignette("bilirubin", package = "OptSurvCutR")`.
 
 ## What's New
 
+### v0.11.2 - warnings for unseeded genetic searches and cut ceilings
+
+No computed results change in this release.
+
+* **New warning:** genetic searches (`method = "genetic"`) now warn when run without a `seed`, because an unseeded search cannot be reproduced.
+* **New warning:** `find_cutpoint_number()` now warns when the selected model reaches `max_cuts`, since the best model may lie above the ceiling. Consider raising `max_cuts`.
+* **Restored:** the `print()`, `summary()` and `plot()` methods for `find_cutpoint_number()` results.
+* **New vignette:** documents published uses of the package, `vignette("used-in-published-work")`.
 ### v0.11.1 - two correctness fixes, one label change, one new argument
 
 If you used either combination below under v0.11.0, re-run with v0.11.1.
@@ -134,6 +142,7 @@ Bug reports and pull requests are welcome - see [CONTRIBUTING.md](https://github
 ## Resources
 
 - Vignettes: `browseVignettes("OptSurvCutR")`
+- Published uses: `vignette("used-in-published-work", package = "OptSurvCutR")`
 - Manuscript: Yau, Payton T. O. "OptSurvCutR: Validated Cut-point Selection for Survival Analysis." *bioRxiv*, posted October 18, 2025. https://doi.org/10.1101/2025.10.08.681246
 
 ## Citation

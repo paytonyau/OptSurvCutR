@@ -207,8 +207,19 @@
 <h2 id="whats-new">What’s New<a class="anchor" aria-label="anchor" href="#whats-new"></a>
 </h2>
 <div class="section level3">
-<h3 id="v0111---two-correctness-fixes-one-label-change-one-new-argument">v0.11.1 - two correctness fixes, one label change, one new argument<a class="anchor" aria-label="anchor" href="#v0111---two-correctness-fixes-one-label-change-one-new-argument"></a>
+<h3 id="v0112---warnings-for-unseeded-genetic-searches-and-cut-ceilings">v0.11.2 - warnings for unseeded genetic searches and cut ceilings<a class="anchor" aria-label="anchor" href="#v0112---warnings-for-unseeded-genetic-searches-and-cut-ceilings"></a>
 </h3>
+<p>No computed results change in this release.</p>
+<ul>
+<li>
+<strong>New warning:</strong> genetic searches (<code>method = "genetic"</code>) now warn when run without a <code>seed</code>, because an unseeded search cannot be reproduced.</li>
+<li>
+<strong>New warning:</strong> <code><a href="reference/find_cutpoint_number.html">find_cutpoint_number()</a></code> now warns when the selected model reaches <code>max_cuts</code>, since the best model may lie above the ceiling. Consider raising <code>max_cuts</code>.</li>
+<li>
+<strong>Restored:</strong> the <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>, <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> and <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> methods for <code><a href="reference/find_cutpoint_number.html">find_cutpoint_number()</a></code> results.</li>
+<li>
+<strong>New vignette:</strong> documents published uses of the package, <code><a href="articles/used-in-published-work.html">vignette("used-in-published-work")</a></code>. ### v0.11.1 - two correctness fixes, one label change, one new argument</li>
+</ul>
 <p>If you used either combination below under v0.11.0, re-run with v0.11.1.</p>
 <ul>
 <li>
@@ -247,6 +258,8 @@
 </h2>
 <ul>
 <li>Vignettes: <code>browseVignettes("OptSurvCutR")</code>
+</li>
+<li>Published uses: <code><a href="articles/used-in-published-work.html">vignette("used-in-published-work", package = "OptSurvCutR")</a></code>
 </li>
 <li>Manuscript: Yau, Payton T. O. “OptSurvCutR: Validated Cut-point Selection for Survival Analysis.” <em>bioRxiv</em>, posted October 18, 2025. <a href="https://doi.org/10.1101/2025.10.08.681246" class="external-link uri">https://doi.org/10.1101/2025.10.08.681246</a>
 </li>

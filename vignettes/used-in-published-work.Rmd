@@ -1,5 +1,15 @@
 ---
 title: "Used in published work"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Used in published work}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
 
 OptSurvCutR is used by researchers outside the author team. This page records published and preprint work that reports using the package, so that new users can see how it is applied in practice. Each entry cites the paper and summarises what its methods state.

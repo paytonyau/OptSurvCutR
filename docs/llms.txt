@@ -128,7 +128,25 @@ Full analysis:
 
 ## What’s New
 
-### v0.11.1 - two correctness fixes, one label change, one new argument
+### v0.11.2 - warnings for unseeded genetic searches and cut ceilings
+
+No computed results change in this release.
+
+- **New warning:** genetic searches (`method = "genetic"`) now warn when
+  run without a `seed`, because an unseeded search cannot be reproduced.
+- **New warning:**
+  [`find_cutpoint_number()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md)
+  now warns when the selected model reaches `max_cuts`, since the best
+  model may lie above the ceiling. Consider raising `max_cuts`.
+- **Restored:** the [`print()`](https://rdrr.io/r/base/print.html),
+  [`summary()`](https://rdrr.io/r/base/summary.html) and
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html) methods for
+  [`find_cutpoint_number()`](https://paytonyau.github.io/OptSurvCutR/reference/find_cutpoint_number.md)
+  results.
+- **New vignette:** documents published uses of the package,
+  [`vignette("used-in-published-work")`](https://paytonyau.github.io/OptSurvCutR/articles/used-in-published-work.md).
+  \### v0.11.1 - two correctness fixes, one label change, one new
+  argument
 
 If you used either combination below under v0.11.0, re-run with v0.11.1.
 
@@ -185,6 +203,8 @@ for code standards and local test workflows.
 ## Resources
 
 - Vignettes: `browseVignettes("OptSurvCutR")`
+- Published uses:
+  [`vignette("used-in-published-work", package = "OptSurvCutR")`](https://paytonyau.github.io/OptSurvCutR/articles/used-in-published-work.md)
 - Manuscript: Yau, Payton T. O. “OptSurvCutR: Validated Cut-point
   Selection for Survival Analysis.” *bioRxiv*, posted October 18, 2025.
   <https://doi.org/10.1101/2025.10.08.681246>
