@@ -1,0 +1,51 @@
+---
+title: "Used in published work"
+---
+
+OptSurvCutR is used by researchers outside the author team. This page records published and preprint work that reports using the package, so that new users can see how it is applied in practice. Each entry cites the paper and summarises what its methods state.
+
+Entries describe only what each paper says about its use of the package. They are factual records, not endorsements in either direction: listing a paper does not mean the package authors endorse its conclusions. Function names in backticks are our mapping of the methods each paper describes in words. If you are an author and would like an entry corrected or removed, please [open an issue](https://github.com/paytonyau/OptSurvCutR/issues).
+
+## Nuclear medicine and clinical oncology
+
+### Gemmell (2026)
+
+**Status**: PhD thesis, University of Glasgow. Submitted 19 March 2026. Open access via Enlighten: Theses.
+
+**Citation**: Gemmell AJ. Quantitative SPECT-CT and textural analysis for neuro-endocrine tumours. PhD thesis, University of Glasgow. 2026. <https://theses.gla.ac.uk/86259/>
+
+**Field and data**: Neuro-endocrine tumours (NETs) treated with peptide receptor radionuclide therapy (PRRT). Retrospective clinical cohort of 77 patients undergoing 177Lu-DOTATATE PRRT with longitudinal quantitative SPECT-CT imaging (1st and 4th fractions) and EORTC health-related quality of life (HR-QoL) questionnaires.
+
+**How OptSurvCutR was used**: Used to determine optimal prognostic cut-points for continuous quantitative SPECT and radiomic features (such as tumor lesion Sphericity and longitudinal changes in GLCM Correlation) using the log-rank criterion to dichotomize patients into risk groups for overall survival (OS) and patient-reported outcomes.
+
+**What they reported**: An optimal cut-point of 0.794 for tumor lesion Sphericity on first-fraction post-PRRT imaging, which successfully stratified NET patients into distinct risk groups for overall survival (4-year survival 44% vs. 86%, p = 0.013) and predicted patient-reported symptom responses (such as endocrine disease symptoms and diarrhoea).
+
+## Neurology
+
+### Zadegan et al. (2026)
+
+**Status:** Peer-reviewed article, open access. First published 25 September 2026.
+
+**Citation:** Zadegan S, Velammal P, Muthiah K, Jatty M, Adams C. microRNA-7-5p and α-Synuclein SAA Predict Parkinson's Disease Phenoconversion. *Annals of Clinical and Translational Neurology*. 2026. [doi:10.1002/acn3.70539](https://doi.org/10.1002/acn3.70539)
+
+**Field and data:** Prodromal Parkinson's disease. Data from the Parkinson's Progression Markers Initiative (PPMI): 313 participants with whole-blood miR-7-5p or serum neuron-derived extracellular vesicle (NDEV) α-synuclein measurements, of whom 79 developed Parkinson's disease during follow-up.
+
+**How OptSurvCutR was used:** Cut-points for log-transformed miR-7-5p and NDEV α-synuclein were found with the log-rank criterion (`find_cutpoint()`) and then checked by bootstrap resampling with 500 replicates (`validate_cutpoint()`). For miR-7-5p, the analysis was run on each of five imputed datasets.
+
+**What they reported:** Cut-points of 3.31 for log[miR-7-5p] (27.39 reads per million mapped) and 2.91 for log[NDEV α-synuclein] (18.36 pg/mL). From the bootstrap, they reported substantial variability in the selected thresholds (for NDEV α-synuclein, median 2.91, 95% CI 2.21 to 4.74) and described both cut-points as exploratory and requiring validation in an independent cohort.
+
+## Haematology and genetic epidemiology
+
+### Da Silva Faria et al. (2026), preprint
+
+**Status:** Preprint (medRxiv, posted 31 August 2026). Not peer reviewed.
+
+**Citation:** Da Silva Faria S, Bineau J, Moisan R, Legault M-A, Lecluze E, Pincez T. Rare and Common Germline and Somatic Variants Shape Immune Cytopenia Risk and Enable Risk Stratification. *medRxiv*. 2026. [doi:10.64898/2026.08.26.26361484](https://doi.org/10.64898/2026.08.26.26361484)
+
+**Field and data:** Genetic epidemiology of immune cytopenia (immune thrombocytopenia and autoimmune haemolytic anaemia). UK Biobank exome cohort (n = 493,659) and the All of Us Research Program.
+
+**How OptSurvCutR was used:** The genetic search (`find_cutpoint()`, genetic method based on the rgenoud package, log-rank criterion) was used to identify a cut-point for a polygenic risk score for systemic lupus erythematosus in the UK Biobank.
+
+**What they reported:** A cut-point of 3.03 z-scores, used to define high and low polygenic-score groups in cumulative-incidence analyses (their Figure 2B).
+
+*Last updated: 19 October 2026.*

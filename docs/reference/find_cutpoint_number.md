@@ -41,6 +41,24 @@ summary(
 
 # S3 method for class 'find_cutpoint_number_result'
 plot(x, y, ...)
+
+# S3 method for class 'find_cutpoint_number_result'
+print(x, ...)
+
+# S3 method for class 'find_cutpoint_number_result'
+summary(
+  object,
+  show_comparison_table = TRUE,
+  show_best_model_details = TRUE,
+  show_group_counts = TRUE,
+  show_medians = TRUE,
+  show_ph_test = TRUE,
+  plot.it = FALSE,
+  ...
+)
+
+# S3 method for class 'find_cutpoint_number_result'
+plot(x, y, ...)
 ```
 
 ## Arguments
@@ -195,6 +213,7 @@ if (requireNamespace("survival", quietly = TRUE)) {
 #> ℹ nmin 0.2 is a proportion. Min. group size set to 20.
 #> ℹ Finding optimal cut number: method = systematic
 #> ℹ Profiling IC surface for 1 cut-point(s)...
+#> ! Best model hit the `max_cuts` ceiling (1) - a better fit may exist beyond it.
 #> 
 #> ── Optimal Cut-point Number Analysis (Systematic) ──────────────────────────────
 #> ✔ Best Model: 1 Cut-points (Criterion: BIC)

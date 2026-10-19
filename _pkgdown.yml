@@ -55,6 +55,8 @@ navbar:
           href: articles/bilirubin.html
         - text: "Lymph node burden: thresholds in a discrete predictor"
           href: articles/crc.html
+        - text: "Used in published work"
+          href: articles/used-in-published-work.html
     news:
       text: Changelog
       href: news/index.html
@@ -102,7 +104,7 @@ reference:
 # -------------------------------------------------------
 
 footer:
-  left: "Developed by Payton Yau."
+  left: "Developed by Payton Yau & Suhirthakumar Puvanendran"
   right:
     - text: "GitHub"
       href: https://github.com/paytonyau/OptSurvCutR/

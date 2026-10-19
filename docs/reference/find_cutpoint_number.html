@@ -11,7 +11,7 @@ iterations via Rcpp compilation hooks and robust UX constraint warnings."><meta 
 
     <a class="navbar-brand me-2" href="../index.html">OptSurvCutR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.11.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.11.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,6 +30,7 @@ iterations via Rcpp compilation hooks and robust UX constraint warnings."><meta 
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/bilirubin.html">Bilirubin: finding and validating a threshold</a></li>
     <li><a class="dropdown-item" href="../articles/crc.html">Lymph node burden: thresholds in a discrete predictor</a></li>
+    <li><a class="dropdown-item" href="../articles/used-in-published-work.html">Used in published work</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://doi.org/10.1101/2025.10.08.681246" target="_blank">Manuscript</a></li>
@@ -72,6 +73,24 @@ iterations via Rcpp compilation hooks and robust UX constraint warnings.</p>
 <span>  use_cpp <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'find_cutpoint_number_result'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'find_cutpoint_number_result'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span></span>
+<span>  <span class="va">object</span>,</span>
+<span>  show_comparison_table <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  show_best_model_details <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  show_group_counts <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  show_medians <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  show_ph_test <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  plot.it <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'find_cutpoint_number_result'</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'find_cutpoint_number_result'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
@@ -244,6 +263,7 @@ Core vector partitions are calculated in compiled C++ via `Rcpp` for optimal per
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> nmin 0.2 is a proportion. Min. group size set to 20.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Finding optimal cut number: method = <span style="font-weight: bold;">systematic</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Profiling IC surface for 1 cut-point(s)...</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Best model hit the `max_cuts` ceiling (1) - a better fit may exist beyond it.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">──</span> <span style="font-weight: bold;">Optimal Cut-point Number Analysis (Systematic)</span> <span style="color: #00BBBB;">──────────────────────────────</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Best Model: <span style="font-weight: bold;">1 Cut-points</span> (Criterion: BIC)</span>

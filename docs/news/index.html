@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">OptSurvCutR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.11.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.11.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,6 +26,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/bilirubin.html">Bilirubin: finding and validating a threshold</a></li>
     <li><a class="dropdown-item" href="../articles/crc.html">Lymph node burden: thresholds in a discrete predictor</a></li>
+    <li><a class="dropdown-item" href="../articles/used-in-published-work.html">Used in published work</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://doi.org/10.1101/2025.10.08.681246" target="_blank">Manuscript</a></li>
@@ -44,7 +45,92 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.11.1" id="optsurvcutr-v0111-2026-09-18">OptSurvCutR v0.11.1 (2026-09-18)<a class="anchor" aria-label="anchor" href="#optsurvcutr-v0111-2026-09-18"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.11.2" id="optsurvcutr-v0112-2026-09-21">OptSurvCutR v0.11.2 (2026-09-21)<a class="anchor" aria-label="anchor" href="#optsurvcutr-v0112-2026-09-21"></a></h2>
+<div class="section level3">
+<h3 id="new-features-0-11-2">New Features<a class="anchor" aria-label="anchor" href="#new-features-0-11-2"></a></h3>
+<ul><li><p><strong>Genetic Search Seed Warning:</strong> <code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code> and <code><a href="../reference/find_cutpoint_number.html">find_cutpoint_number()</a></code> now warn when <code>method = "genetic"</code> is used without an explicit <code>seed</code>. <code>rgenoud</code>’s evolutionary search is stochastic; without a fixed seed, two calls on identical data and arguments can converge to different cut-point locations. The warning states this plainly and points to <code>seed = &lt;integer&gt;</code> as the fix. In <code><a href="../reference/find_cutpoint.html">find_cutpoint()</a></code>, this warning is intentionally <strong>not</strong> gated behind <code>quiet</code>, unlike this function’s other informational messages, so its behaviour matches <code><a href="../reference/find_cutpoint_number.html">find_cutpoint_number()</a></code>’s equivalent warning, which has no <code>quiet</code> argument to gate behind in the first place.</p></li>
+<li><p><strong><code>max_cuts</code> Ceiling Warning:</strong> <code><a href="../reference/find_cutpoint_number.html">find_cutpoint_number()</a></code> now warns when the selected model’s <code>num_cuts</code> equals the <code>max_cuts</code> ceiling supplied by the caller. A model landing exactly at the ceiling means the search was never permitted to consider a more complex architecture that might fit better — the warning flags this and suggests re-running with a higher <code>max_cuts</code> to check. This directly addresses a real case found during testing: a search capped at <code>max_cuts = 2</code> selected the 2-cut model as best, while re-running with <code>max_cuts = 5</code> on the same data found a 3-cut model with a lower (better) BIC that the capped search could never have found. ## Documentation &amp; Maintenance</p></li>
+<li><p><strong>Genetic Search Budget Table:</strong> The reference table of default <code>pop.size</code>/<code>max.generations</code> values by cut-point count now includes the <code>genetic</code> engine’s defaults at <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">K=1</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">K=2</annotation></semantics></math> (30/30 and 60/40 respectively), which exist in the code but were previously shown only for <code>systematic</code> at those complexities. Added a note clarifying that a larger search budget improves the <em>quality</em> of a genetic search’s result but does not by itself guarantee <em>repeatability</em> — only an explicit <code>seed</code> does that.</p></li>
+</ul><table class="table"><colgroup><col width="20%"><col width="20%"><col width="20%"><col width="20%"><col width="20%"></colgroup><thead><tr><th>Target Complexity (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>K</mi><annotation encoding="application/x-tex">K</annotation></semantics></math> Cuts)</th>
+<th>Execution Method</th>
+<th>Default Population Size (<code>pop.size</code>)</th>
+<th>Default Search Lifespan (<code>max.generations</code>)</th>
+<th>Optimisation Mechanics</th>
+</tr></thead><tbody><tr><td><strong><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">K = 1</annotation></semantics></math> Cut</strong></td>
+<td>
+<code>systematic</code> (recommended)</td>
+<td><em>N/A (Exhaustive Grid)</em></td>
+<td><em>N/A (Exhaustive Grid)</em></td>
+<td>Full 1D Coordinate Vector Sweep</td>
+</tr><tr><td><strong><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">K = 1</annotation></semantics></math> Cut</strong></td>
+<td><code>genetic</code></td>
+<td>30</td>
+<td>30</td>
+<td>1D Index Search (rarely needed — systematic is exhaustive and faster here)</td>
+</tr><tr><td><strong><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">K = 2</annotation></semantics></math> Cuts</strong></td>
+<td>
+<code>systematic</code> (recommended)</td>
+<td><em>N/A (Exhaustive Grid)</em></td>
+<td><em>N/A (Exhaustive Grid)</em></td>
+<td>Full 2D Cross-Lattice Matrix Sweep</td>
+</tr><tr><td><strong><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">K = 2</annotation></semantics></math> Cuts</strong></td>
+<td><code>genetic</code></td>
+<td>60</td>
+<td>40</td>
+<td>2D Index Search (not guaranteed to match systematic’s exhaustive result — see note below)</td>
+</tr><tr><td><strong><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mn>3</mn></mrow><annotation encoding="application/x-tex">K = 3</annotation></semantics></math> Cuts</strong></td>
+<td>
+<code>genetic</code> (required)</td>
+<td>100</td>
+<td>50</td>
+<td>3D Index Hyper-Lattice Traversal</td>
+</tr><tr><td><strong><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mn>4</mn></mrow><annotation encoding="application/x-tex">K = 4</annotation></semantics></math> Cuts</strong></td>
+<td>
+<code>genetic</code> (required)</td>
+<td>120</td>
+<td>55</td>
+<td>4D Hyper-Lattice Spatial Search</td>
+</tr><tr><td><strong><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">K = 5</annotation></semantics></math> Cuts</strong></td>
+<td>
+<code>genetic</code> (required)</td>
+<td>150</td>
+<td>60</td>
+<td>5D Multi-Epitope Surface Clustering</td>
+</tr><tr><td><strong><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mn>6</mn></mrow><annotation encoding="application/x-tex">K = 6</annotation></semantics></math> Cuts</strong></td>
+<td>
+<code>genetic</code> (required)</td>
+<td>180</td>
+<td>65</td>
+<td>6D High-Dimensional Coordinate Scan</td>
+</tr><tr><td><strong><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mn>7</mn></mrow><annotation encoding="application/x-tex">K = 7</annotation></semantics></math> Cuts</strong></td>
+<td>
+<code>genetic</code> (required)</td>
+<td>200</td>
+<td>70</td>
+<td>7D Ultra-Deep Hyper-Volume Optimization</td>
+</tr><tr><td><strong><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>≥</mo><mn>8</mn></mrow><annotation encoding="application/x-tex">K \ge 8</annotation></semantics></math> Cuts</strong></td>
+<td>
+<code>genetic</code> (required)</td>
+<td>250</td>
+<td>80</td>
+<td>Complex Deep Lattice Cluster Optimisation</td>
+</tr><tr><td><strong>Low-Density Data (Discrete)</strong></td>
+<td><code>systematic</code></td>
+<td><em>N/A (Auto-collapsed)</em></td>
+<td><em>N/A (Auto-collapsed)</em></td>
+<td>Rigid Quantile Step Filtering / Cell Floor Defence</td>
+</tr><tr><td><strong>Validation / Bootstrap Loop</strong></td>
+<td><em>Context Snapped</em></td>
+<td>10 (Streamlined default)</td>
+<td>2 (Streamlined default)</td>
+<td>Accelerated Resampling Stability Assessment</td>
+</tr></tbody></table><blockquote>
+<p><strong><code>systematic</code> is exhaustive at <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>≤</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">K \le 2</annotation></semantics></math></strong> — it evaluates every possible cut position (or every pair, for <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">K=2</annotation></semantics></math>) on the candidate grid, so it is guaranteed to find the best available answer and is required above <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">K=2</annotation></semantics></math>, where exhaustive search becomes computationally impractical. **<code>pop.size</code>/<code>max.generations</code> control search <em>quality</em>, not *repeatability<code>.** A larger budget makes</code>genetic<code>more likely to find the true optimum on repeat runs, but does not guarantee identical results between runs on its own. Always pass an explicit</code>seed<code>when using</code>method = “genetic”` for a reproducible result; as of this version, the package emits a warning if no seed is supplied.</p>
+</blockquote>
+</div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.11.1" id="optsurvcutr-v0111-2026-09-18">OptSurvCutR v0.11.1 (2026-09-18)<a class="anchor" aria-label="anchor" href="#optsurvcutr-v0111-2026-09-18"></a></h2><p class="text-muted">CRAN release: 2026-09-18</p>
 <div class="section level3">
 <h3 id="breaking-changes-0-11-1">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-11-1"></a></h3>
 <ul><li>

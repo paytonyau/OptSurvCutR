@@ -548,11 +548,11 @@ sessionInfo()
 + [1] stats     graphics  grDevices utils     datasets  methods   base     
 + 
 + other attached packages:
-+ [1] OptSurvCutR_0.11.1 knitr_1.52         ggplot2_4.0.3      dplyr_1.2.1       
++ [1] OptSurvCutR_0.11.2 knitr_1.52         ggplot2_4.0.3      dplyr_1.2.1       
 + [5] survival_3.8-12   
 + 
 + loaded via a namespace (and not attached):
-+  [1] gtable_0.3.6       xfun_0.61          bslib_0.12.0       htmlwidgets_1.6.4 
++  [1] gtable_0.3.6       xfun_0.62          bslib_0.12.0       htmlwidgets_1.6.4 
 +  [5] rstatix_1.1.0      lattice_0.23-1     vctrs_0.7.3        tools_4.6.1       
 +  [9] generics_0.1.4     parallel_4.6.1     tibble_3.3.1       pkgconfig_2.0.3   
 + [13] Matrix_1.7-6       RColorBrewer_1.1-3 S7_0.2.2           desc_1.4.3        

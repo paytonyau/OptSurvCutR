@@ -242,7 +242,16 @@ find_cutpoint <- function(data, predictor, outcome_time, outcome_event,
     use_cpp <- FALSE
   }
 
-  if (!is.null(seed)) set.seed(seed)
+  # NOTE: this warning intentionally ignores `quiet`, unlike other warnings
+  # in this file, so its behaviour matches find_cutpoint_number.R's
+  # equivalent seed warning - both always print, with no way to suppress.
+  if (!is.null(seed)) {
+    set.seed(seed)
+  } else if (method == "genetic") {
+    cli::cli_alert_warning(
+      "No {.arg seed} set - genetic search results may vary between runs."
+    )
+  }
 
   # Compile underlying search lattice to verify data node supply bounds
   search_grid_probs <- if (!is.null(grid_by)) seq(grid_by, 1 - grid_by, by = grid_by) else seq(0.01, 0.99, by = 0.01)

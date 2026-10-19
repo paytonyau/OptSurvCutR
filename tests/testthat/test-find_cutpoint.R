@@ -247,3 +247,53 @@ test_that("S3 methods for find_cutpoint provide exhaustive branch coverage via e
   captured_lines <- readLines(sink_file)
   expect_gt(length(captured_lines), 0) # UPGRADED: expect_true(x > y) -> expect_gt(x, y)
 })
+
+test_that("hazard_ratio criterion returns a sensible value with and without covariates (coverage, no known bug)", {
+  # .get_stat()'s hazard_ratio branch only reads fit$coefficients, never
+  # fit_null - unlike the p_value branch (fixed in v0.11.1, see NEWS.md),
+  # so it should not be affected by coxph()'s loglik shape differing
+  # between the null-model and covariate-adjusted cases. This test exists
+  # to confirm that stays true, not because a bug is suspected; added
+  # during the v0.11.1 review cycle when the p_value branch's sibling bug
+  # was traced and fixed.
+  skip_on_cran()
+
+  set.seed(404)
+  n <- 100
+  biomarker <- c(rnorm(60, mean = 4, sd = 1), rnorm(40, mean = 8, sd = 1))
+  d <- data.frame(
+    time  = c(stats::rexp(60, rate = 0.05), stats::rexp(40, rate = 0.20)),
+    event = stats::rbinom(n, 1, 0.85),
+    biomarker = biomarker
+  )
+
+  fit_no_cov <- suppressMessages(suppressWarnings(
+    find_cutpoint(
+      data = d, predictor = "biomarker",
+      outcome_time = "time", outcome_event = "event",
+      covariates = NULL, method = "systematic",
+      criterion = "hazard_ratio", num_cuts = 1,
+      nmin = 0.15, quiet = TRUE
+    )
+  ))
+
+  d$dummy_cov <- stats::rnorm(n)
+  fit_with_cov <- suppressMessages(suppressWarnings(
+    find_cutpoint(
+      data = d, predictor = "biomarker",
+      outcome_time = "time", outcome_event = "event",
+      covariates = "dummy_cov", method = "systematic",
+      criterion = "hazard_ratio", num_cuts = 1,
+      nmin = 0.15, quiet = TRUE
+    )
+  ))
+
+  # A real HR should be a finite positive number in both cases - the
+  # historical failure mode guarded against elsewhere in this release
+  # (see the .get_stat p_value fix) was a silent NA/0-cut collapse, not
+  # an error, so this checks the VALUE, not just that the call succeeds.
+  expect_false(anyNA(fit_no_cov$optimal_cuts))
+  expect_false(anyNA(fit_with_cov$optimal_cuts))
+  expect_true(is.finite(fit_no_cov$optimal_stat) && fit_no_cov$optimal_stat > 0)
+  expect_true(is.finite(fit_with_cov$optimal_stat) && fit_with_cov$optimal_stat > 0)
+})

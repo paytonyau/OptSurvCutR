@@ -1,3 +1,31 @@
+# OptSurvCutR v0.11.2 (2026-09-21)
+ 
+## New Features
+ 
+* **Genetic Search Seed Warning:** `find_cutpoint()` and `find_cutpoint_number()` now warn when `method = "genetic"` is used without an explicit `seed`. `rgenoud`'s evolutionary search is stochastic; without a fixed seed, two calls on identical data and arguments can converge to different cut-point locations. The warning states this plainly and points to `seed = <integer>` as the fix. In `find_cutpoint()`, this warning is intentionally **not** gated behind `quiet`, unlike this function's other informational messages, so its behaviour matches `find_cutpoint_number()`'s equivalent warning, which has no `quiet` argument to gate behind in the first place.
+* **`max_cuts` Ceiling Warning:** `find_cutpoint_number()` now warns when the selected model's `num_cuts` equals the `max_cuts` ceiling supplied by the caller. A model landing exactly at the ceiling means the search was never permitted to consider a more complex architecture that might fit better — the warning flags this and suggests re-running with a higher `max_cuts` to check. This directly addresses a real case found during testing: a search capped at `max_cuts = 2` selected the 2-cut model as best, while re-running with `max_cuts = 5` on the same data found a 3-cut model with a lower (better) BIC that the capped search could never have found.
+## Documentation & Maintenance
+ 
+* **Genetic Search Budget Table:** The reference table of default `pop.size`/`max.generations` values by cut-point count now includes the `genetic` engine's defaults at $K=1$ and $K=2$ (30/30 and 60/40 respectively), which exist in the code but were previously shown only for `systematic` at those complexities. Added a note clarifying that a larger search budget improves the *quality* of a genetic search's result but does not by itself guarantee *repeatability* — only an explicit `seed` does that.
+
+| Target Complexity ($K$ Cuts) | Execution Method | Default Population Size (`pop.size`) | Default Search Lifespan (`max.generations`) | Optimisation Mechanics |
+| --- | --- | --- | --- | --- |
+| **$K = 1$ Cut** | `systematic` (recommended) | *N/A (Exhaustive Grid)* | *N/A (Exhaustive Grid)* | Full 1D Coordinate Vector Sweep |
+| **$K = 1$ Cut** | `genetic` | 30 | 30 | 1D Index Search (rarely needed — systematic is exhaustive and faster here) |
+| **$K = 2$ Cuts** | `systematic` (recommended) | *N/A (Exhaustive Grid)* | *N/A (Exhaustive Grid)* | Full 2D Cross-Lattice Matrix Sweep |
+| **$K = 2$ Cuts** | `genetic` | 60 | 40 | 2D Index Search (not guaranteed to match systematic's exhaustive result — see note below) |
+| **$K = 3$ Cuts** | `genetic` (required) | 100 | 50 | 3D Index Hyper-Lattice Traversal |
+| **$K = 4$ Cuts** | `genetic` (required) | 120 | 55 | 4D Hyper-Lattice Spatial Search |
+| **$K = 5$ Cuts** | `genetic` (required) | 150 | 60 | 5D Multi-Epitope Surface Clustering |
+| **$K = 6$ Cuts** | `genetic` (required) | 180 | 65 | 6D High-Dimensional Coordinate Scan |
+| **$K = 7$ Cuts** | `genetic` (required) | 200 | 70 | 7D Ultra-Deep Hyper-Volume Optimization |
+| **$K \ge 8$ Cuts** | `genetic` (required) | 250 | 80 | Complex Deep Lattice Cluster Optimisation |
+| **Low-Density Data (Discrete)** | `systematic` | *N/A (Auto-collapsed)* | *N/A (Auto-collapsed)* | Rigid Quantile Step Filtering / Cell Floor Defence |
+| **Validation / Bootstrap Loop** | *Context Snapped* | 10 (Streamlined default) | 2 (Streamlined default) | Accelerated Resampling Stability Assessment |
+
+> **`systematic` is exhaustive at $K \le 2$** — it evaluates every possible cut position (or every pair, for $K=2$) on the candidate grid, so it is guaranteed to find the best available answer and is required above $K=2$, where exhaustive search becomes computationally impractical.
+> **`pop.size`/`max.generations` control search *quality*, not *repeatability`.** A larger budget makes `genetic` more likely to find the true optimum on repeat runs, but does not guarantee identical results between runs on its own. Always pass an explicit `seed` when using `method = "genetic"` for a reproducible result; as of this version, the package emits a warning if no seed is supplied.
+
 # OptSurvCutR v0.11.1 (2026-09-18)
 
 ## Breaking Changes
